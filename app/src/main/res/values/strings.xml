@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Oslofjorden</string>
+    <string name="title_activity_maps">Map</string>
+    <string name="maps_key">AIzaSyCAn7hLkQZ6yXwfkvCRzFXc7cE0XSJuNgU</string>
+</resources>
