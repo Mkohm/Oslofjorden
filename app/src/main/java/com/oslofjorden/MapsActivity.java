@@ -349,7 +349,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             return GoogleApiAvailability.getInstance().getErrorDialog(
                     this.getActivity(), errorCode, REQUEST_RESOLVE_ERROR);
         }
-
         @Override
         public void onDismiss(DialogInterface dialog) {
             ((MapsActivity) getActivity()).onDialogDismissed();
