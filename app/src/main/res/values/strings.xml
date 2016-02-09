@@ -1,5 +1,6 @@
 <resources>
     <string name="app_name">Oslofjorden</string>
-    <string name="title_activity_maps">Map</string>
+    <string name="title_activity_maps">Oslofjorden</string>
     <string name="maps_key">AIzaSyCAn7hLkQZ6yXwfkvCRzFXc7cE0XSJuNgU</string>
+    <string name="google_app_id">29427722334</string>
 </resources>
