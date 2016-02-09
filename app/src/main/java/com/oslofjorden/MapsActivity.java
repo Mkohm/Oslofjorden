@@ -353,6 +353,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         public void onDismiss(DialogInterface dialog) {
             ((MapsActivity) getActivity()).onDialogDismissed();
         }
-
+        
     }
 }
