@@ -209,7 +209,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         //Add kml file to map
         try {
-            KmlLayer layer = new KmlLayer(mMap, R.raw.kmlpoints, getApplicationContext());
+            KmlLayer layer = new KmlLayer(mMap, R.raw.skolevei, getApplicationContext());
             layer.addLayerToMap();
             //TODO: Fix performance
 
@@ -353,6 +353,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         public void onDismiss(DialogInterface dialog) {
             ((MapsActivity) getActivity()).onDialogDismissed();
         }
-        
+
     }
 }
