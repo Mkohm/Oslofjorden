@@ -7,8 +7,8 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.location.Location;
-import android.location.LocationManager;
 import android.os.Build;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
@@ -18,6 +18,8 @@ import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
@@ -31,13 +33,30 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.VisibleRegion;
+import com.google.maps.android.geojson.GeoJsonFeature;
+import com.google.maps.android.geojson.GeoJsonLayer;
+import com.google.maps.android.geojson.GeoJsonLineStringStyle;
+import com.google.maps.android.geojson.GeoJsonPointStyle;
+import com.google.maps.android.kml.KmlContainer;
 import com.google.maps.android.kml.KmlLayer;
+import com.google.android.gms.maps.GoogleMap.OnCameraChangeListener;
 
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.xmlpull.v1.XmlPullParserException;
 
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+
 //TODO: splashscreen with picture while the other things is loading, stop updating if you are moving on the map
+//TODO: links
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.OnConnectionFailedListener, GoogleApiClient.ConnectionCallbacks, LocationListener {
 
     private GoogleMap mMap;
@@ -45,6 +64,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     double latitude;
     double longitude;
     boolean mRequestingLocationUpdates;
+
+    //
+    boolean locationUpdates;
+
 
     //Variables that the callback onconnectionfailed needs
 
@@ -64,6 +87,34 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_maps);
+        final Button onOffLocationButton = (Button) findViewById(R.id.onofflocationbutton);
+        onOffLocationButton.setAlpha(0.7f);
+
+        onOffLocationButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                if (locationUpdates == true) {
+                    onOffLocationButton.setText("Sporing av");
+                    locationUpdates = false;
+                } else if (locationUpdates == false) {
+                    onOffLocationButton.setText("Sporing på");
+                    locationUpdates = true;
+                }
+
+                if (locationUpdates == true) {
+                    startLocationUpdates();
+                    Log.d("TAG", "starter locationupdates igjen.");
+                } else {
+                    Log.d("TAG", "Stopper location updates.");
+                    stopLocationUpdates();
+
+                }
+
+
+            }
+        });
+
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
@@ -82,6 +133,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mResolvingError = savedInstanceState != null
                 && savedInstanceState.getBoolean(STATE_RESOLVING_ERROR, false);
 
+
+        locationUpdates = true;
 
     }
 
@@ -132,16 +185,76 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mRequestingLocationUpdates = false;
     }
 
+
+    public boolean intersects(LatLngBounds bounds, LatLng southwest, LatLng northeast) {
+        final boolean latIntersects =
+                (bounds.northeast.latitude >= southwest.latitude) && (bounds.southwest.latitude <= northeast.latitude);
+        final boolean lngIntersects =
+                (bounds.northeast.longitude >= southwest.longitude) && (bounds.southwest.longitude <= northeast.longitude);
+
+        return latIntersects && lngIntersects;
+    }
+
+
     @Override
     public void onMapReady(GoogleMap googleMap) {
 
         mMap = googleMap;
+        mMap.getUiSettings().setZoomControlsEnabled(true);
+        mMap.getUiSettings().setMapToolbarEnabled(false);
 
-        // Add a marker in Sydney and move the camera
-        //LatLng lastLocation = new LatLng(-31.90, 115.86);
-        //mMap.moveCamera(CameraUpdateFactory.newLatLng(lastLocation));
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+        mMap.setMyLocationEnabled(true);
+        mMap.getUiSettings().setMyLocationButtonEnabled(false);
+
+
+        mMap.setOnMyLocationButtonClickListener(new GoogleMap.OnMyLocationButtonClickListener() {
+            @Override
+            public boolean onMyLocationButtonClick() {
+
+
+                return false;
+            }
+        });
+
+
+        try {
+
+            GeoJsonLayer jsonLayer = new GeoJsonLayer(mMap, R.raw.alle_kyststier, getApplicationContext());
+
+            for (GeoJsonFeature feature : jsonLayer.getFeatures()) {
+                GeoJsonPointStyle pointStyle = new GeoJsonPointStyle();
+                GeoJsonLineStringStyle stringStyle;
+
+
+                pointStyle.setTitle(feature.getProperty("name"));
+                feature.setPointStyle(pointStyle);
+
+                stringStyle = feature.getLineStringStyle();
+                stringStyle.setColor(Color.BLUE);
+                feature.setLineStringStyle(stringStyle);
+
+            }
+
+            jsonLayer.addLayerToMap();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
 
     }
+
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -161,7 +274,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         int locationMode = 0;
         String locationProviders;
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             try {
                 locationMode = Settings.Secure.getInt(context.getContentResolver(), Settings.Secure.LOCATION_MODE);
 
@@ -171,7 +284,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             return locationMode != Settings.Secure.LOCATION_MODE_OFF;
 
-        }else{
+        } else {
             locationProviders = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.LOCATION_PROVIDERS_ALLOWED);
             return !TextUtils.isEmpty(locationProviders);
         }
@@ -197,33 +310,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         //Enable marker for current location
         mMap.setMyLocationEnabled(true);
 
-        if (isLocationEnabled(getApplicationContext())){
-            Log.d("TAG","Du har på location");
+        if (isLocationEnabled(getApplicationContext())) {
+            Log.d("TAG", "Du har på location");
             //Bra gjør ikke noe mer
-        }
-        else {
-            Log.d("TAG","Du har ikke på location");
+        } else {
+            Log.d("TAG", "Du har ikke på location");
             //TODO: Handle users without location enabled
         }
-
-
-        //Add kml file to map
-        try {
-            KmlLayer layer = new KmlLayer(mMap, R.raw.skolevei, getApplicationContext());
-            layer.addLayerToMap();
-            //TODO: Fix performance
-
-            Log.d("TAG", "La kml til map");
-        } catch (XmlPullParserException e) {
-            Log.d("TAG", "La ikke kml til map");
-            e.printStackTrace();
-        } catch (IOException e) {
-            Log.d("TAG", "La ikke kml til map");
-            e.printStackTrace();
-        }
-
-
-
 
         findAndGoToLastKnownLocation();
 
@@ -231,6 +324,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
     }
+
 
     protected void startLocationUpdates() {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -275,7 +369,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         Log.d("TAG", "test");
         LatLng latLng = new LatLng(latitude, longitude);
         CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, 17);
-        mMap.animateCamera(cameraUpdate);
+        mMap.moveCamera(cameraUpdate);
     }
 
     @Override
@@ -330,12 +424,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     public void onLocationChanged(Location location) {
+
+
         Log.d("TAG", "maps er oppdatert");
         LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
         CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, 17);
         mMap.animateCamera(cameraUpdate);
 
     }
+
 
     /* A fragment to display an error dialog */
     public static class ErrorDialogFragment extends DialogFragment {
@@ -349,6 +446,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             return GoogleApiAvailability.getInstance().getErrorDialog(
                     this.getActivity(), errorCode, REQUEST_RESOLVE_ERROR);
         }
+
         @Override
         public void onDismiss(DialogInterface dialog) {
             ((MapsActivity) getActivity()).onDialogDismissed();
@@ -356,3 +454,5 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     }
 }
+
+
