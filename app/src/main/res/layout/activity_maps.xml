@@ -27,4 +27,14 @@
         android:text="Sporing på"
         android:id="@+id/onofflocationbutton" />
 
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="New Text"
+        android:id="@+id/kyststiInfo"
+        android:layout_gravity="center_horizontal"
+        android:textColor="@android:color/black"
+        android:background="#ffffff"
+        android:autoLink="web"/>
+
 </FrameLayout>

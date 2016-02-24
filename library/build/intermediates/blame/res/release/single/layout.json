@@ -1,0 +1,14 @@
+[
+    {
+        "merged": "/Users/mariuskohmann/AndroidStudioProjects/Oslofjorden/library/build/intermediates/res/merged/release/layout/info_window.xml",
+        "source": "/Users/mariuskohmann/AndroidStudioProjects/Oslofjorden/library/res/layout/info_window.xml"
+    },
+    {
+        "merged": "/Users/mariuskohmann/AndroidStudioProjects/Oslofjorden/library/build/intermediates/res/merged/release/layout/text_bubble.xml",
+        "source": "/Users/mariuskohmann/AndroidStudioProjects/Oslofjorden/library/res/layout/text_bubble.xml"
+    },
+    {
+        "merged": "/Users/mariuskohmann/AndroidStudioProjects/Oslofjorden/library/build/intermediates/res/merged/release/layout/webview.xml",
+        "source": "/Users/mariuskohmann/AndroidStudioProjects/Oslofjorden/library/res/layout/webview.xml"
+    }
+]

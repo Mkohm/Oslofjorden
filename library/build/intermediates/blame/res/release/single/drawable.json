@@ -1,0 +1,18 @@
+[
+    {
+        "merged": "/Users/mariuskohmann/AndroidStudioProjects/Oslofjorden/library/build/intermediates/res/merged/release/drawable/common_signin_btn_text_light.xml",
+        "source": "/Users/mariuskohmann/AndroidStudioProjects/Oslofjorden/library/build/intermediates/exploded-aar/com.google.android.gms/play-services-base/7.8.0/res/drawable/common_signin_btn_text_light.xml"
+    },
+    {
+        "merged": "/Users/mariuskohmann/AndroidStudioProjects/Oslofjorden/library/build/intermediates/res/merged/release/drawable/common_signin_btn_icon_light.xml",
+        "source": "/Users/mariuskohmann/AndroidStudioProjects/Oslofjorden/library/build/intermediates/exploded-aar/com.google.android.gms/play-services-base/7.8.0/res/drawable/common_signin_btn_icon_light.xml"
+    },
+    {
+        "merged": "/Users/mariuskohmann/AndroidStudioProjects/Oslofjorden/library/build/intermediates/res/merged/release/drawable/common_signin_btn_text_dark.xml",
+        "source": "/Users/mariuskohmann/AndroidStudioProjects/Oslofjorden/library/build/intermediates/exploded-aar/com.google.android.gms/play-services-base/7.8.0/res/drawable/common_signin_btn_text_dark.xml"
+    },
+    {
+        "merged": "/Users/mariuskohmann/AndroidStudioProjects/Oslofjorden/library/build/intermediates/res/merged/release/drawable/common_signin_btn_icon_dark.xml",
+        "source": "/Users/mariuskohmann/AndroidStudioProjects/Oslofjorden/library/build/intermediates/exploded-aar/com.google.android.gms/play-services-base/7.8.0/res/drawable/common_signin_btn_icon_dark.xml"
+    }
+]
