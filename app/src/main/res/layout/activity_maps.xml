@@ -18,23 +18,39 @@
 
 
         />
-
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginBottom="6dp">
 
     <Button
+        android:layout_alignParentRight="true"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="right|top"
         android:text="Sporing på"
-        android:id="@+id/onofflocationbutton" />
+        android:id="@+id/onofflocationbutton"
+        android:layout_alignParentStart="false"
+        android:layout_alignParentEnd="false"
+        android:alpha="0.7"
+        android:layout_alignParentLeft="false" />
+
 
     <TextView
-        android:layout_width="wrap_content"
+        android:layout_width="279dp"
         android:layout_height="wrap_content"
-        android:text="New Text"
         android:id="@+id/kyststiInfo"
-        android:layout_gravity="center_horizontal"
-        android:textColor="@android:color/black"
-        android:background="#ffffff"
-        android:autoLink="web"/>
+        android:textColor="@android:color/white"
+        android:autoLink="web"
+        android:text="Dette er en kyststi med en link som skal linke deg til en heftig nettside og kanskje med en lang link som dette: http://stackoverflow.com/questions/16317224/custom-infowindow-with-google-maps-api-v2"
+        android:textAlignment="center"
+        android:layout_toLeftOf="@+id/onofflocationbutton"
+        android:layout_toStartOf="@+id/onofflocationbutton"
+        android:layout_alignParentLeft="false"
+        android:layout_alignParentTop="true"
+        android:gravity="center"
+        android:background="@color/button_material_dark"
+        android:layout_marginTop="6dp"
+        android:alpha="0.7" />
 
+    </RelativeLayout>
 </FrameLayout>

@@ -30,6 +30,9 @@ import org.json.JSONObject;
 import android.annotation.SuppressLint;
 import android.os.Parcelable;
 import android.support.annotation.MainThread;
+import android.support.annotation.StyleRes;
+import android.support.v4.view.ViewPager;
+import android.text.Html;
 import android.util.Log;
 
 import java.util.ArrayList;
@@ -63,6 +66,7 @@ import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 
@@ -112,6 +116,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public static String currentDescription = "Tom";
     public static ArrayList<String> descriptionList = new ArrayList<String>();
     public static int indexInDescriptionList = 0;
+
+    private Polyline currentPolyline;
 
 
 
@@ -266,13 +272,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @Override
             public void onPolylineClick(Polyline polyline) {
                 Log.d("TAG","Du trykket på " + kyststiInfoMap.get(polyline.getPoints()));
-
-
+                currentPolyline = polyline;
 
 
                 //Setter teksten til description
                 kyststiInfo.setText("" + kyststiInfoMap.get(polyline.getPoints()));
                 kyststiInfo.setVisibility(View.VISIBLE);
+
+                currentPolyline.setColor(Color.BLACK);
 
 
 
@@ -285,6 +292,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 Log.d("TAG", "Registrerte trykk på kartet.");
 
                 kyststiInfo.setVisibility(View.INVISIBLE);
+
             }
         });
 
@@ -312,13 +320,19 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                 //Go to the current link, if the link is empty, do nothing
                 if (! link.equals("EMPTY")){
-                    Log.d("TAG", "går til linken: " + link);
+
                     Intent i = new Intent(Intent.ACTION_VIEW);
 
                     //TODO: forsikre seg om at dette er en link så man ikke får feil, fjerne rickroll
+                    if (link.matches("http[s]{0,1}:.{0,}")){
+                        Log.d("TAG", "går til linken: " + link);
+                        i.setData(Uri.parse(link));
+                        startActivity(i);
+                    }
 
-                    i.setData(Uri.parse(link));
-                    startActivity(i);
+
+
+
                 }
 
 
@@ -340,9 +354,28 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 View v = getLayoutInflater().inflate(R.layout.info_window_layout, null);
 
                 // Getting reference to the TextView to set title
-                TextView note = (TextView) v.findViewById(R.id.infoView);
-                note.setMovementMethod(LinkMovementMethod.getInstance());
-                note.setText(marker.getSnippet());
+                TextView title = (TextView) v.findViewById(R.id.infoView);
+
+                title.setMovementMethod(LinkMovementMethod.getInstance());
+
+                //TODO: Test that there is html inside
+                String htmltitle = "<p>" + marker.getTitle() + "</p>";
+
+                //Hvis den ikke er tom og er en url så skal link vises
+                if (marker.getSnippet() != null){
+                    if (marker.getSnippet().matches("http[s]{0,1}:.{0,}")) {
+
+                    Log.d("TAG", "" + marker.getSnippet().matches("http[s]{0,1}:.{0,}"));
+
+                        String htmldescription = "\n <a href=" + marker.getSnippet() + "> <u> Klikk her for mer info </u></a>";
+                        String htmltitledescripton = htmltitle + htmldescription;
+                        title.setText(Html.fromHtml(htmltitledescripton));
+                    }
+                }
+
+                else {
+                    title.setText(Html.fromHtml(htmltitle));
+                }
 
                 //Sets the global variable link to the link that is provided in the snippet
                 if (marker.getSnippet() == null){
@@ -362,8 +395,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             GeoJsonLayer2 jsonLayer = new GeoJsonLayer2(mMap, R.raw.alle_kyststier, getApplicationContext());
 
-            //Loops over the json file
-            int idCounter = 0;
 
             for (GeoJsonFeature2 feature : jsonLayer.getFeatures()) {
                 GeoJsonPointStyle2 pointStyle = new GeoJsonPointStyle2();
@@ -372,25 +403,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                 pointStyle.setTitle(feature.getProperty("name"));
                 feature.setPointStyle(pointStyle);
+
                 pointStyle.setSnippet(feature.getProperty("description"));
 
                 stringStyle = feature.getLineStringStyle();
 
-                if (feature.getGeometry().getType().equals("LineString")){
-                    //kyststiInfoMap.put(stringStyle.getGeometryType(), feature.getProperty("description"));
-
-
-
-                    //This is adding the descripton to the hashmap, back down in the google-utils library
+                if (feature.getGeometry().getType().equals("LineString")) {
                     descriptionList.add(feature.getProperty("description"));
-
-
                 }
-
-                printPoints(stringStyle.toPolylineOptions().getPoints());
-
-
-
 
                 stringStyle.setClickable(true);
                 stringStyle.setColor(Color.BLUE);
@@ -398,14 +418,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                 feature.setLineStringStyle(stringStyle);
 
-                idCounter++;
             }
 
-
-
-
             jsonLayer.addLayerToMap();
-
 
 
         } catch (IOException e) {
@@ -415,15 +430,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
 
     }
-
-    public void printPoints(List list){
-
-        for (int i = 0; i < list.size(); i++){
-            Log.d("TAG", "coordinate "+ list.get(i).toString());
-        }
-    }
-
-
 
 
     @Override
@@ -2029,10 +2035,6 @@ class GeoJsonLayer2 {
                                         GeoJsonLineString2 lineString) {
         PolylineOptions polylineOptions = lineStringStyle.toPolylineOptions();
         // Add coordinates
-        Log.d("TAG", "her kan jeg skrive description");
-
-
-        Log.d("TAG", "Legger til som id: " + lineString.getCoordinates() + " og beskrivelse: " + MapsActivity.currentDescription);
 
         MapsActivity.kyststiInfoMap.put(lineString.getCoordinates(), MapsActivity.descriptionList.get(MapsActivity.indexInDescriptionList));
         MapsActivity.indexInDescriptionList++;
