@@ -1,4 +1,12 @@
 package com.oslofjorden;
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.Result;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
+import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.location.LocationSettingsResult;
+import com.google.android.gms.location.LocationSettingsStates;
+import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.Marker;
@@ -97,7 +105,7 @@ import com.google.maps.android.PolyUtil;
 //TODO: links on trail, satelite, sporing icon, oslofjorden ikon, turn on location
 //TODO: on resume bugs with location?? rickroll
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.OnConnectionFailedListener, GoogleApiClient.ConnectionCallbacks, LocationListener {
+public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.OnConnectionFailedListener, GoogleApiClient.ConnectionCallbacks, LocationListener, ResultCallback {
 
     private GoogleMap mMap;
     GoogleApiClient mGoogleApiClient;
@@ -271,20 +279,24 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.setOnPolylineClickListener(new GoogleMap.OnPolylineClickListener() {
             @Override
             public void onPolylineClick(Polyline polyline) {
-                Log.d("TAG","Du trykket på " + kyststiInfoMap.get(polyline.getPoints()));
+                if (currentPolyline != null){
+                    currentPolyline.setColor(Color.BLUE);
+                }
+
                 currentPolyline = polyline;
 
 
-                //Setter teksten til description
-                kyststiInfo.setText("" + kyststiInfoMap.get(polyline.getPoints()));
+                setKyststiInfoFromDescription(polyline, kyststiInfo);
+
                 kyststiInfo.setVisibility(View.VISIBLE);
-
                 currentPolyline.setColor(Color.BLACK);
-
-
 
             }
         });
+
+
+
+
 
         mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override
@@ -359,7 +371,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 title.setMovementMethod(LinkMovementMethod.getInstance());
 
                 //TODO: Test that there is html inside
-                String htmltitle = "<p>" + marker.getTitle() + "</p>";
+                String markerTitle = "<p>" + marker.getTitle() + "</p>";
 
                 //Hvis den ikke er tom og er en url så skal link vises
                 if (marker.getSnippet() != null){
@@ -367,14 +379,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                     Log.d("TAG", "" + marker.getSnippet().matches("http[s]{0,1}:.{0,}"));
 
-                        String htmldescription = "\n <a href=" + marker.getSnippet() + "> <u> Klikk her for mer info </u></a>";
-                        String htmltitledescripton = htmltitle + htmldescription;
-                        title.setText(Html.fromHtml(htmltitledescripton));
+                        String markerDescription = "\n <a href=" + marker.getSnippet() + "> <u> Klikk her for mer info </u></a>";
+                        String allMarkerDescription = markerTitle + markerDescription;
+
+                        title.setText(Html.fromHtml(allMarkerDescription));
+
                     }
                 }
 
                 else {
-                    title.setText(Html.fromHtml(htmltitle));
+                    title.setText(Html.fromHtml(markerTitle));
                 }
 
                 //Sets the global variable link to the link that is provided in the snippet
@@ -429,6 +443,27 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             e.printStackTrace();
         }
 
+    }
+
+    private void setKyststiInfoFromDescription(Polyline polyline, TextView kyststiInfo) {
+        String description = kyststiInfoMap.get(polyline.getPoints());
+
+        //Setter teksten til description
+        if (description.contains("<a href=")){
+
+            String kyststiTitle = description.substring(0, description.indexOf("<a"));
+            kyststiTitle = "<p>" + kyststiTitle + "</p> ";
+
+            String kyststiLink = description.substring(description.indexOf("<a href=")+9, description.indexOf(">"));
+            kyststiLink = "<a href=\"" + kyststiLink + "\"> <u> Klikk her for mer info</u></a>";
+
+
+            kyststiInfo.setText(Html.fromHtml(kyststiTitle + kyststiLink));
+            kyststiInfo.setMovementMethod(LinkMovementMethod.getInstance());
+
+        } else {
+            kyststiInfo.setText(description);
+        }
     }
 
 
@@ -492,6 +527,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         } else {
             Log.d("TAG", "Du har ikke på location");
             //TODO: Handle users without location enabled
+
         }
 
         findAndGoToLastKnownLocation();
@@ -518,9 +554,58 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mLocationRequest.setInterval(5000);
         mLocationRequest.setFastestInterval(1000);
 
-
         LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
         mRequestingLocationUpdates = true;
+
+
+        //Handle users without location enabled
+        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
+                .addLocationRequest(mLocationRequest);
+
+        PendingResult<LocationSettingsResult> result =
+                LocationServices.SettingsApi.checkLocationSettings(mGoogleApiClient,
+                        builder.build());
+
+        //Make user add location
+        result.setResultCallback(new ResultCallback<LocationSettingsResult>() {
+            @Override
+            public void onResult(LocationSettingsResult result) {
+                final Status status = result.getStatus();
+                final LocationSettingsStates states = result.getLocationSettingsStates();
+                switch (status.getStatusCode()) {
+                    case LocationSettingsStatusCodes.SUCCESS:
+                        // All location settings are satisfied. The client can
+                        // initialize location requests here.
+
+
+                        break;
+                    case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
+                        // Location settings are not satisfied, but this can be fixed
+                        // by showing the user a dialog.
+                        try {
+                            // Show the dialog by calling startResolutionForResult(),
+                            // and check the result in onActivityResult().
+                            status.startResolutionForResult(
+                                    MapsActivity.this,
+                                    0);
+                        } catch (IntentSender.SendIntentException e) {
+                            // Ignore the error.
+                        }
+                        break;
+                    case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
+                        // Location settings are not satisfied. However, we have no way
+                        // to fix the settings so we won't show the dialog.
+                        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLng(new LatLng(59.903079, 10.740479));
+                        mMap.moveCamera(cameraUpdate);
+
+                        break;
+                }
+            }
+
+        });
+
+
+
 
     }
 
@@ -604,11 +689,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         Log.d("TAG", "Oppdaterte posisjon");
         LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
-        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, 17);
+        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, mMap.getCameraPosition().zoom);
         mMap.animateCamera(cameraUpdate);
 
     }
 
+    @Override
+    public void onResult(@NonNull Result result) {
+
+    }
 
 
     /* A fragment to display an error dialog */
