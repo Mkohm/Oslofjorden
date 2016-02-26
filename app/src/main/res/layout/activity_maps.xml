@@ -18,13 +18,38 @@
 
 
         />
-
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginBottom="6dp">
 
     <Button
+        android:layout_alignParentRight="true"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="right|top"
         android:text="Sporing på"
-        android:id="@+id/onofflocationbutton" />
+        android:id="@+id/onofflocationbutton"
+        android:layout_alignParentStart="false"
+        android:layout_alignParentEnd="false"
+        android:alpha="0.7"
+        android:layout_alignParentLeft="false" />
 
+
+    <TextView
+        android:layout_width="279dp"
+        android:layout_height="wrap_content"
+        android:id="@+id/kyststiInfo"
+        android:textColor="@android:color/white"
+        android:text="Kyststi-info"
+        android:textAlignment="center"
+        android:layout_toLeftOf="@+id/onofflocationbutton"
+        android:layout_toStartOf="@+id/onofflocationbutton"
+        android:layout_alignParentLeft="false"
+        android:layout_alignParentTop="true"
+        android:gravity="center"
+        android:background="@color/button_material_dark"
+        android:layout_marginTop="6dp"
+        android:alpha="0.7" />
+
+    </RelativeLayout>
 </FrameLayout>
