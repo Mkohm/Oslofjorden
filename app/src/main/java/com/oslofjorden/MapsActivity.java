@@ -9,6 +9,7 @@ import com.google.android.gms.location.LocationSettingsStates;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polygon;
@@ -19,15 +20,6 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 
 
-import com.google.android.gms.maps.model.BitmapDescriptor;
-import com.google.android.gms.maps.model.MarkerOptions;
-
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Observable;
-
-import com.google.android.gms.maps.model.PolygonOptions;
-
 import java.util.Arrays;
 import java.util.Observable;
 
@@ -35,11 +27,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import android.annotation.SuppressLint;
-import android.os.Parcelable;
-import android.support.annotation.MainThread;
-import android.support.annotation.StyleRes;
-import android.support.v4.view.ViewPager;
 import android.text.Html;
 import android.util.Log;
 
@@ -49,7 +36,6 @@ import java.util.Iterator;
 
 
 import java.util.List;
-import java.util.Observable;
 import java.util.Observer;
 import java.util.Set;
 
@@ -72,13 +58,9 @@ import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
-import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
-
-import java.util.Arrays;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
@@ -96,25 +78,31 @@ import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.internal.IPolylineDelegate;
-import com.google.maps.android.MarkerManager;
-import com.google.maps.android.PolyUtil;
 
 
 //TODO: splashscreen with picture while the other things is loading, stop updating if you are moving on the map
-//TODO: links on trail, satelite, sporing icon, oslofjorden ikon, turn on location
+//TODO:satelite, sporing icon, oslofjorden ikon, turn on location,
 //TODO: on resume bugs with location?? rickroll
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.OnConnectionFailedListener, GoogleApiClient.ConnectionCallbacks, LocationListener, ResultCallback {
+    //For debugging
+    private String TAG = "TAG";
+
 
     private GoogleMap mMap;
     GoogleApiClient mGoogleApiClient;
-    double latitude;
-    double longitude;
+
+    float currentZoom;
+    LatLng currentPosition;
+    CameraPosition currentCameraPosition;
+
+    //If the last location was found, this variable is true, the app then swithches to use lastcameraposition to position the camera onPause/onResume
+    private boolean foundLastLocation = false;
+
     boolean mRequestingLocationUpdates;
 
     //is locationupdates enabled or not
-    boolean locationUpdates;
+    boolean locationUpdatesSwitch;
 
     //current link to link to
     String link = "EMPTY";
@@ -126,6 +114,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public static int indexInDescriptionList = 0;
 
     private Polyline currentPolyline;
+
 
 
 
@@ -148,35 +137,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_maps);
-        final Button onOffLocationButton = (Button) findViewById(R.id.onofflocationbutton);
-        onOffLocationButton.setAlpha(0.7f);
 
-
-
-        onOffLocationButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                if (locationUpdates == true) {
-                    onOffLocationButton.setText("Sporing av");
-                    locationUpdates = false;
-                } else if (locationUpdates == false) {
-                    onOffLocationButton.setText("Sporing på");
-                    locationUpdates = true;
-                }
-
-                if (locationUpdates == true) {
-                    startLocationUpdates();
-                    Log.d("TAG", "starter locationupdates igjen.");
-                } else {
-                    Log.d("TAG", "Stopper location updates.");
-                    stopLocationUpdates();
-
-                }
-
-
-            }
-        });
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
@@ -184,6 +145,19 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
         //Create a new instance of GoogleAPIClient
+        createInstanceOfGoogleAPIClient();
+
+        //Something with running google play services safaly
+        mResolvingError = savedInstanceState != null
+                && savedInstanceState.getBoolean(STATE_RESOLVING_ERROR, false);
+
+
+        //Default value for locationupdates is on
+        locationUpdatesSwitch = true;
+
+    }
+
+    private void createInstanceOfGoogleAPIClient() {
         if (mGoogleApiClient == null) {
             mGoogleApiClient = new GoogleApiClient.Builder(this)
                     .addConnectionCallbacks(this)
@@ -191,14 +165,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     .addApi(LocationServices.API)
                     .build();
         }
-
-        //Something with running google play services safaly
-        mResolvingError = savedInstanceState != null
-                && savedInstanceState.getBoolean(STATE_RESOLVING_ERROR, false);
-
-
-        locationUpdates = true;
-
     }
 
     @Override
@@ -215,37 +181,72 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         mGoogleApiClient.connect();
 
-        super.onStart();
-
         if (!mResolvingError) {  // more about this later
             mGoogleApiClient.connect();
         }
+
+
+        Log.d(TAG, "onStart: " + locationUpdatesSwitch);
+
+        super.onStart();
+
+
     }
 
     @Override
     protected void onResume() {
+
         super.onResume();
+
+
         if (mGoogleApiClient.isConnected() && !mRequestingLocationUpdates) {
-            if (locationUpdates == true){
+            if (locationUpdatesSwitch == true){
                 startLocationUpdates();
+                Log.d(TAG, "onResume: starter location updates" + locationUpdatesSwitch);
             }
 
         }
+
+        if (currentCameraPosition != null){
+            Log.d(TAG, "onResume: flytter til forrige pos" + currentCameraPosition.target.latitude);
+            mMap.moveCamera(CameraUpdateFactory.newCameraPosition(currentCameraPosition));
+
+        }
+
+
     }
 
     @Override
     protected void onStop() {
+        stopLocationUpdates();
         mGoogleApiClient.disconnect();
+
+        Log.d(TAG, "onStop: stopper locationupdates" + locationUpdatesSwitch);
+
         super.onStop();
     }
 
     @Override
     protected void onPause() {
-        super.onPause();
+
+        currentZoom = mMap.getCameraPosition().zoom;
+        currentCameraPosition = mMap.getCameraPosition();
+        Log.d(TAG, "onPause: " + currentCameraPosition.target.latitude);
+
         stopLocationUpdates();
+        Log.d(TAG, "onPause: stopper locationupdates" + locationUpdatesSwitch);
+
+
+
+
+        super.onPause();
+
     }
 
+
+
     protected void stopLocationUpdates() {
+        Log.d(TAG, "stopLocationUpdates");
         LocationServices.FusedLocationApi.removeLocationUpdates(
                 mGoogleApiClient, this);
         mRequestingLocationUpdates = false;
@@ -268,8 +269,40 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onMapReady(GoogleMap googleMap) {
 
         mMap = googleMap;
+        //enable zoom buttons, and remove toolbar when clicking on markers
         mMap.getUiSettings().setZoomControlsEnabled(true);
         mMap.getUiSettings().setMapToolbarEnabled(false);
+
+        //enables location dot, and removes the standard google button
+        if (checkPermission()) return;
+        mMap.setMyLocationEnabled(true);
+        mMap.getUiSettings().setMyLocationButtonEnabled(false);
+
+        final Button onOffLocationButton = (Button) findViewById(R.id.onofflocationbutton);
+        onOffLocationButton.setAlpha(0.7f);
+        onOffLocationButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                if (locationUpdatesSwitch == true) {
+                    onOffLocationButton.setText("Sporing av");
+                    locationUpdatesSwitch = false;
+                } else if (locationUpdatesSwitch == false) {
+                    onOffLocationButton.setText("Sporing på");
+                    locationUpdatesSwitch = true;
+                }
+
+                if (locationUpdatesSwitch == true) {
+                    startLocationUpdates();
+                    Log.d("TAG", "starter locationupdates igjen.");
+                } else {
+                    Log.d("TAG", "Stopper location updates.");
+                    stopLocationUpdates();
+
+                }
+
+            }
+        });
 
 
         final TextView kyststiInfo = (TextView) findViewById(R.id.kyststiInfo);
@@ -295,13 +328,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         });
 
 
-
-
-
         mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override
             public void onMapClick(LatLng latLng) {
-                Log.d("TAG", "Registrerte trykk på kartet.");
 
                 kyststiInfo.setVisibility(View.INVISIBLE);
 
@@ -311,48 +340,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
 
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
-        }
-        mMap.setMyLocationEnabled(true);
-        mMap.getUiSettings().setMyLocationButtonEnabled(false);
-
-        mMap.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
-            @Override
-            public void onInfoWindowClick(Marker marker) {
-                Log.d("TAG", "Trykket på info vindu.");
-
-
-                //Go to the current link, if the link is empty, do nothing
-                if (! link.equals("EMPTY")){
-
-                    Intent i = new Intent(Intent.ACTION_VIEW);
-
-                    //TODO: forsikre seg om at dette er en link så man ikke får feil, fjerne rickroll
-                    if (link.matches("http[s]{0,1}:.{0,}")){
-                        Log.d("TAG", "går til linken: " + link);
-                        i.setData(Uri.parse(link));
-                        startActivity(i);
-                    }
-
-
-
-
-                }
-
-
-
-            }
-        });
-
-
+        //The info window that is popping up when clicking on a marker
         mMap.setInfoWindowAdapter(new GoogleMap.InfoWindowAdapter() {
             @Override
             public View getInfoWindow(Marker marker) {
@@ -368,42 +356,65 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 // Getting reference to the TextView to set title
                 TextView title = (TextView) v.findViewById(R.id.infoView);
 
-                title.setMovementMethod(LinkMovementMethod.getInstance());
-
-                //TODO: Test that there is html inside
-                String markerTitle = "<p>" + marker.getTitle() + "</p>";
-
-                //Hvis den ikke er tom og er en url så skal link vises
-                if (marker.getSnippet() != null){
-                    if (marker.getSnippet().matches("http[s]{0,1}:.{0,}")) {
-
-                    Log.d("TAG", "" + marker.getSnippet().matches("http[s]{0,1}:.{0,}"));
-
-                        String markerDescription = "\n <a href=" + marker.getSnippet() + "> <u> Klikk her for mer info </u></a>";
-                        String allMarkerDescription = markerTitle + markerDescription;
-
-                        title.setText(Html.fromHtml(allMarkerDescription));
-
-                    }
-                }
-
-                else {
-                    title.setText(Html.fromHtml(markerTitle));
-                }
+                setMarkerDescription(marker, title);
 
                 //Sets the global variable link to the link that is provided in the snippet
                 if (marker.getSnippet() == null){
                     link = "EMPTY";
                 } else {
+
+                    //the validation will be taken care of later
                     link = marker.getSnippet();
                 }
+
+
 
                 // Returning the view containing InfoWindow contents
                 return v;
             }
         });
 
+        //The event when you click on the info-window
+        mMap.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
+            @Override
+            public void onInfoWindowClick(Marker marker) {
 
+                //Go to the current link, if the link is empty, do nothing
+                if (! link.equals("EMPTY")){
+
+                    Intent i = new Intent(Intent.ACTION_VIEW);
+
+                    if (link.matches("http[s]{0,1}:.{0,}")){
+                        Log.d("TAG", "går til linken: " + link);
+                        i.setData(Uri.parse(link));
+                        startActivity(i);
+                    }
+
+                }
+
+            }
+        });
+
+
+        addGeoJsonLayerToMapAndAddData();
+
+    }
+
+    private boolean checkPermission() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return true;
+        }
+        return false;
+    }
+
+    private void addGeoJsonLayerToMapAndAddData() {
         try {
 
 
@@ -414,10 +425,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 GeoJsonPointStyle2 pointStyle = new GeoJsonPointStyle2();
                 GeoJsonLineStringStyle2 stringStyle;
 
-
+                //Gets the name property from the json file
                 pointStyle.setTitle(feature.getProperty("name"));
                 feature.setPointStyle(pointStyle);
+                
+                if (feature.getProperty("name").equals("Rodeløkka")){
+                    Log.d(TAG, "addGeoJsonLayerToMapAndAddData: rodeløkke");
+                }
 
+                //Gets the description property from the json file
                 pointStyle.setSnippet(feature.getProperty("description"));
 
                 stringStyle = feature.getLineStringStyle();
@@ -442,7 +458,33 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         } catch (JSONException e) {
             e.printStackTrace();
         }
+    }
 
+    private void setMarkerDescription(Marker marker, TextView title) {
+        title.setMovementMethod(LinkMovementMethod.getInstance());
+
+        String markerTitle = "<p>" + marker.getTitle() + "</p>";
+
+        //Hvis den ikke er tom og er en url så skal link vises
+        if (marker.getSnippet() != null){
+            String markerDescription = "";
+            if (marker.getSnippet().matches("http[s]{0,1}:.{0,}")) {
+
+                markerDescription = "\n <a href=" + marker.getSnippet() + "> <u> Klikk her for mer info </u></a>";
+                String allMarkerDescription = markerTitle + markerDescription;
+
+                title.setText(Html.fromHtml(allMarkerDescription));
+
+            //Det er ikke en link, men kanskje noe annet interessant
+            } else {
+                markerDescription = "<br> <p>" + marker.getSnippet() + "</p>";
+                title.setText(Html.fromHtml(markerDescription));
+            }
+        }
+
+        else {
+            title.setText(Html.fromHtml(markerTitle));
+        }
     }
 
     private void setKyststiInfoFromDescription(Polyline polyline, TextView kyststiInfo) {
@@ -508,37 +550,40 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         //Connected to google play services: This is where the magic happens
 
         //check for permissions to get location
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
-        }
+        if (checkPermission()) return;
         //Enable marker for current location
         mMap.setMyLocationEnabled(true);
 
-        if (isLocationEnabled(getApplicationContext())) {
-            Log.d("TAG", "Du har på location");
-            //Bra gjør ikke noe mer
-        } else {
-            Log.d("TAG", "Du har ikke på location");
-            //TODO: Handle users without location enabled
-
+        //Will finde the last known location only the first time
+        if (!foundLastLocation) {
+            findAndGoToLastKnownLocation();
+            foundLastLocation = true;
         }
 
-        findAndGoToLastKnownLocation();
 
-        startLocationUpdates();
+        if (locationUpdatesSwitch){
+            startLocationUpdates();
+        }
 
 
     }
 
 
     protected void startLocationUpdates() {
+        if (checkPermission()) return;
+
+        Log.d(TAG, "startLocationUpdates: starter loctationupdates");
+
+        //Request locationupdates
+        LocationRequest mLocationRequest = requestLocationUpdates();
+
+        //Handle users without location enabled
+        handleUsersWithoutLocationEnabled(mLocationRequest);
+
+    }
+
+    @NonNull
+    private LocationRequest requestLocationUpdates() {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
             //    ActivityCompat#requestPermissions
@@ -547,8 +592,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             //                                          int[] grantResults)
             // to handle the case where the user grants the permission. See the documentation
             // for ActivityCompat#requestPermissions for more details.
-            return;
+
         }
+
         LocationRequest mLocationRequest = new LocationRequest();
         mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         mLocationRequest.setInterval(5000);
@@ -556,9 +602,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
         mRequestingLocationUpdates = true;
+        return mLocationRequest;
+    }
 
-
-        //Handle users without location enabled
+    private void handleUsersWithoutLocationEnabled(LocationRequest mLocationRequest) {
         LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
                 .addLocationRequest(mLocationRequest);
 
@@ -595,6 +642,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
                         // Location settings are not satisfied. However, we have no way
                         // to fix the settings so we won't show the dialog.
+
+                        //Oslo sentrum
                         CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLng(new LatLng(59.903079, 10.740479));
                         mMap.moveCamera(cameraUpdate);
 
@@ -603,34 +652,25 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
 
         });
-
-
-
-
     }
 
     private void findAndGoToLastKnownLocation() {
         //Find the last known location
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
-        }
-        Location mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-        if (mLastLocation != null) {
-            latitude = mLastLocation.getLatitude();
-            longitude = mLastLocation.getLongitude();
-        }
+        if (checkPermission()) return;
 
-        Log.d("TAG", "test");
-        LatLng latLng = new LatLng(latitude, longitude);
-        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, 17);
+        Location mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+
+        LatLng lastLocation;
+        if (mLastLocation != null) {
+            lastLocation = new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude());
+        } else {
+            //Oslo sentrum
+            lastLocation = new LatLng(59.908588, 10.741165);
+        }
+        Log.d(TAG, "findAndGoToLastKnownLocation: gikk til " +lastLocation.latitude);
+        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(lastLocation, 17);
         mMap.moveCamera(cameraUpdate);
+
     }
 
     @Override
@@ -686,6 +726,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onLocationChanged(Location location) {
 
+        //Updates current location
+        currentPosition = new LatLng(location.getLatitude(), location.getLongitude());
 
         Log.d("TAG", "Oppdaterte posisjon");
         LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
