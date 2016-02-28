@@ -22,6 +22,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -34,7 +35,7 @@ import java.util.Set;
 /**
  * Created by mariuskohmann on 27/02/16.
  */
-public class googleUtils2Classes {
+class googleUtils2Classes {
 
 }
 
@@ -497,6 +498,7 @@ class GeoJsonFeature2 extends Observable implements Observer {
  * To remove the rendered data from the layer
  * {@code layer.removeLayerFromMap();}
  */
+
 class GeoJsonLayer2 {
 
     private final GeoJsonRenderer mRenderer;
@@ -1441,8 +1443,16 @@ class GeoJsonLayer2 {
         PolylineOptions polylineOptions = lineStringStyle.toPolylineOptions();
         // Add coordinates
 
-        MapsActivity.kyststiInfoMap.put(lineString.getCoordinates(), MapsActivity.descriptionList.get(MapsActivity.indexInDescriptionList));
+
+        //Putter description og name inn i et array som så puttes inn i hashmappet
+        String[] arrayElements = new String[2];
+        arrayElements[0] = MapsActivity.descriptionList.get(MapsActivity.indexInDescriptionList);
+        arrayElements[1] = MapsActivity.nameList.get(MapsActivity.indexInNameList);
+
+
+        MapsActivity.kyststiInfoMap.put(lineString.getCoordinates(), arrayElements);
         MapsActivity.indexInDescriptionList++;
+        MapsActivity.indexInNameList++;
 
         polylineOptions.addAll(lineString.getCoordinates());
 

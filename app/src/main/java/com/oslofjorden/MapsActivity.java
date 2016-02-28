@@ -1,4 +1,6 @@
 package com.oslofjorden;
+
+
 import com.google.android.gms.common.api.PendingResult;
 import com.google.android.gms.common.api.Result;
 import com.google.android.gms.common.api.ResultCallback;
@@ -8,36 +10,25 @@ import com.google.android.gms.location.LocationSettingsResult;
 import com.google.android.gms.location.LocationSettingsStates;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.maps.model.Polygon;
-import com.google.android.gms.maps.model.PolygonOptions;
 import com.google.android.gms.maps.model.Polyline;
-import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 
+import android.graphics.Point;
+import android.view.Display;
 
-import java.util.Arrays;
-import java.util.Observable;
-
-import org.json.JSONArray;
 import org.json.JSONException;
-import org.json.JSONObject;
 
 import android.text.Html;
 import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 
 
 import java.util.List;
-import java.util.Observer;
-import java.util.Set;
 
 import android.Manifest;
 import android.app.Dialog;
@@ -59,6 +50,8 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.TranslateAnimation;
 import android.widget.Button;
 import android.widget.TextView;
 
@@ -66,10 +59,7 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
@@ -81,7 +71,7 @@ import com.google.android.gms.maps.SupportMapFragment;
 
 
 //TODO: splashscreen with picture while the other things is loading, promote myself,
-//TODO:satelite, sporing icon, oslofjorden ikon, turn on location, to big infoboxes
+//TODO:satelite, sporing icon, oslofjorden ikon, turn on location, to big infoboxes, toast that recommends location, farger kyststi
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.OnConnectionFailedListener, GoogleApiClient.ConnectionCallbacks, LocationListener, ResultCallback {
     //For debugging
@@ -94,23 +84,27 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     float currentZoom;
     LatLng currentPosition;
     CameraPosition currentCameraPosition;
+    LatLng currentMapClickPosition;
+
+    private boolean kyststiInfoUp = false;
 
     //If the last location was found, this variable is true, the app then swithches to use lastcameraposition to position the camera onPause/onResume
     private boolean foundLastLocation = false;
 
     boolean mRequestingLocationUpdates;
-
     //is locationupdates enabled or not
     boolean locationUpdatesSwitch = true;
 
     //current link to link to
     String link = "EMPTY";
 
-    public static HashMap<List<LatLng>, String> kyststiInfoMap = new HashMap<List<LatLng>, String>();
-    GeoJsonRenderer renderer;
+    public static HashMap<List<LatLng>, String[]> kyststiInfoMap = new HashMap<List<LatLng>, String[]>();
     public static String currentDescription = "Tom";
     public static ArrayList<String> descriptionList = new ArrayList<String>();
     public static int indexInDescriptionList = 0;
+    public static ArrayList<String> nameList = new ArrayList<String>();
+    public static int indexInNameList = 0;
+
 
     private Polyline currentPolyline;
 
@@ -262,8 +256,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         mMap = googleMap;
         //enable zoom buttons, and remove toolbar when clicking on markers
-        mMap.getUiSettings().setZoomControlsEnabled(true);
+        mMap.getUiSettings().setZoomControlsEnabled(false);
         mMap.getUiSettings().setMapToolbarEnabled(false);
+
+
+
+
 
         //enables location dot, and removes the standard google button
         if (checkPermission()) return;
@@ -299,11 +297,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         final TextView kyststiInfo = (TextView) findViewById(R.id.kyststiInfo);
         kyststiInfo.setVisibility(View.INVISIBLE);
-        kyststiInfo.setText("Dette er en kyststi.");
+
+
 
         mMap.setOnPolylineClickListener(new GoogleMap.OnPolylineClickListener() {
             @Override
             public void onPolylineClick(Polyline polyline) {
+
                 if (currentPolyline != null){
                     currentPolyline.setColor(Color.BLUE);
                 }
@@ -311,9 +311,19 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 currentPolyline = polyline;
 
 
-                setKyststiInfoFromDescription(polyline, kyststiInfo);
+                setKyststiInfoFromDescriptionAndName(polyline, kyststiInfo);
 
                 kyststiInfo.setVisibility(View.VISIBLE);
+
+                int maxY = getDeviceMaxY();
+
+                //Hvis det allerede er et infovindu oppe skal det ikke animeres
+                if (! kyststiInfoUp) {
+                    animateKyststiInfoUp(maxY, kyststiInfo);
+                    kyststiInfoUp = true;
+                }
+
+
                 currentPolyline.setColor(Color.BLACK);
 
             }
@@ -322,14 +332,22 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override
-            public void onMapClick(LatLng latLng) {
+            public void onMapClick(final LatLng latLng) {
+                currentMapClickPosition  = latLng;
 
                 kyststiInfo.setVisibility(View.INVISIBLE);
+                int maxY = getDeviceMaxY();
 
+
+                //Hvis kyststiinfo er oppe, lukk den
+                if (kyststiInfoUp) {
+
+                    animateKyststiInfoDown(maxY, kyststiInfo);
+
+                    kyststiInfoUp = false;
+                }
             }
         });
-
-
 
 
         //The info window that is popping up when clicking on a marker
@@ -358,8 +376,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     //the validation will be taken care of later
                     link = marker.getSnippet();
                 }
-
-
 
                 // Returning the view containing InfoWindow contents
                 return v;
@@ -392,6 +408,26 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     }
 
+    private void animateKyststiInfoUp(int maxY, TextView kyststiInfo) {
+        Animation animation = new TranslateAnimation(0, 0, maxY-kyststiInfo.getY(), 0);
+        animation.setDuration(500);
+
+        kyststiInfo.startAnimation(animation);
+    }
+
+    private void animateKyststiInfoDown(int maxY, TextView kyststiInfo) {
+        Animation animation = new TranslateAnimation(0, 0, 0, maxY);
+        animation.setDuration(500);
+        kyststiInfo.startAnimation(animation);
+    }
+
+    private int getDeviceMaxY() {
+        Display mdisp = getWindowManager().getDefaultDisplay();
+        Point mdispSize = new Point();
+        mdisp.getSize(mdispSize);
+        return mdispSize.y;
+    }
+
     private boolean checkPermission() {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
@@ -410,7 +446,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         try {
 
 
-            GeoJsonLayer2 jsonLayer = new GeoJsonLayer2(mMap, R.raw.alle_kyststier, getApplicationContext());
+                GeoJsonLayer2 jsonLayer = new GeoJsonLayer2(mMap, R.raw.alle_kyststier, getApplicationContext());
 
 
             for (GeoJsonFeature2 feature : jsonLayer.getFeatures()) {
@@ -430,9 +466,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                 stringStyle = feature.getLineStringStyle();
 
+                //Hvis det er en kyststi legg til description og navn
                 if (feature.getGeometry().getType().equals("LineString")) {
                     descriptionList.add(feature.getProperty("description"));
+
+                    nameList.add(feature.getProperty("name"));
                 }
+
+
 
                 stringStyle.setClickable(true);
                 stringStyle.setColor(Color.BLUE);
@@ -456,21 +497,21 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         title.setMovementMethod(LinkMovementMethod.getInstance());
 
         String markerTitle = "<p>" + marker.getTitle() + "</p>";
+        Log.d(TAG, "setMarkerDescription: " + markerTitle);
 
         //Hvis den ikke er tom og er en url så skal link vises
         if (marker.getSnippet() != null){
             String markerDescription = "";
             if (marker.getSnippet().matches("http[s]{0,1}:.{0,}")) {
 
-                markerDescription = "\n <a href=" + marker.getSnippet() + "> <u> Klikk her for mer info </u></a>";
-                String allMarkerDescription = markerTitle + markerDescription;
+                markerDescription = "<a href=\"" + marker.getSnippet() + "\"> <u> Klikk her for mer info </u></a>";
 
-                title.setText(Html.fromHtml(allMarkerDescription));
+                title.setText(Html.fromHtml(markerTitle + markerDescription));
 
             //Det er ikke en link, men kanskje noe annet interessant
             } else {
-                markerDescription = "<br> <p>" + marker.getSnippet() + "</p>";
-                title.setText(Html.fromHtml(markerDescription));
+                markerDescription = "<p>" + marker.getSnippet() + "</p>";
+                title.setText(Html.fromHtml(markerTitle + markerDescription));
             }
         }
 
@@ -479,10 +520,51 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
-    private void setKyststiInfoFromDescription(Polyline polyline, TextView kyststiInfo) {
-        String description = kyststiInfoMap.get(polyline.getPoints());
+    private void setKyststiInfoFromDescriptionAndName(Polyline polyline, TextView kyststiInfo) {
+        String description;
+        String name;
 
-        //Setter teksten til description
+        try{
+            name = kyststiInfoMap.get(polyline.getPoints())[1];
+        } catch (Exception e) {
+            Log.d(TAG, "setKyststiInfoFromDescriptionAndName: noe gikk dårlig. " + e);
+            name = null;
+
+        }
+
+        try{
+            description = kyststiInfoMap.get(polyline.getPoints())[0];
+        } catch (Exception e) {
+            Log.d(TAG, "setKyststiInfoFromDescriptionAndName: " + e);
+            description = null;
+        }
+
+
+        //Fant ingenting, tekst settes til her var det ingenting.
+        if (description == null && name == null) {
+            kyststiInfo.setText("Her var det ingenting, gitt!");
+        }
+
+        else if (description == null && name != null){
+            //Setter navnet
+            kyststiInfo.setText(name);
+        }
+
+        else if (description != null && name == null){
+            setKystiDescription(kyststiInfo, description);
+
+
+        }
+
+        else if (description != null && name != null){
+            setKystiDescription(kyststiInfo, description);
+        }
+
+
+    }
+
+    private void setKystiDescription(TextView kyststiInfo, String description) {
+        //Hvis description inneholder link settes denne som description
         if (description.contains("<a href=")){
 
             String kyststiTitle = description.substring(0, description.indexOf("<a"));
@@ -495,8 +577,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             kyststiInfo.setText(Html.fromHtml(kyststiTitle + kyststiLink));
             kyststiInfo.setMovementMethod(LinkMovementMethod.getInstance());
 
+            //Det er ingen link, da settes det som er der
         } else {
-            kyststiInfo.setText(description);
+           kyststiInfo.setText(description);
+        }
+    }
+
+    private void printdescriptions(HashMap<List<LatLng>, String> kyststiinfomap){
+        Log.d(TAG, "printdescriptions: " + kyststiinfomap.values());
+
+        for (String  desc: kyststiinfomap.values()) {
+            Log.d(TAG, "printdescriptions: " + desc);
         }
     }
 
