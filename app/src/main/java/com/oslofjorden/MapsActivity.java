@@ -17,11 +17,8 @@ import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 
-import android.app.Application;
-import android.app.ProgressDialog;
 import android.graphics.Point;
 import android.os.AsyncTask;
-import android.os.Handler;
 import android.view.Display;
 
 import org.json.JSONException;
@@ -29,7 +26,6 @@ import org.json.JSONException;
 import android.text.Html;
 import android.util.Log;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -59,8 +55,6 @@ import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
 import android.widget.Button;
-import android.widget.CursorTreeAdapter;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -68,10 +62,6 @@ import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
 
 import java.io.IOException;
-import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.concurrent.ThreadFactory;
 
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
@@ -81,11 +71,13 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.maps.android.clustering.Cluster;
 import com.google.maps.android.clustering.ClusterItem;
+import com.google.maps.android.clustering.ClusterManager;
 
 
 //TODO: splashscreen with picture while the other things is loading, promote myself,
-//TODO:satelite, sporing icon, oslofjorden ikon, turn on location, to big infoboxes, toast that recommends location, farger kyststi, ask user and no problem
+//TODO:satelite, sporing icon, oslofjorden ikon, turn on location, to big infoboxes, toast that recommends location, farger kyststi, ask user and no problem, detecte ikke internett
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.OnConnectionFailedListener, GoogleApiClient.ConnectionCallbacks, LocationListener, ResultCallback {
     //For debugging
@@ -100,14 +92,19 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     CameraPosition currentCameraPosition;
     LatLng currentMapClickPosition;
 
+    Cluster clickedCluster;
+    MyMarkerOptions clickedClusterItem;
+    public ClusterManager<MyMarkerOptions> mClusterManager;
+
     public static GeoJsonLayer2 jsonLayer;
 
-    private boolean kyststiInfoUp = false;
+    private boolean infobarUp = false;
 
     //If the last location was found, this variable is true, the app then swithches to use lastcameraposition to position the camera onPause/onResume
     private boolean foundLastLocation = false;
 
     boolean mRequestingLocationUpdates;
+    boolean userHasAnsweredLocationTurnOn = false;
     //is locationupdates enabled or not
     boolean locationUpdatesSwitch = true;
 
@@ -209,14 +206,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
         if (mGoogleApiClient.isConnected() && !mRequestingLocationUpdates) {
-            if (locationUpdatesSwitch == true){
+            if (locationUpdatesSwitch == true) {
                 startLocationUpdates();
                 Log.d(TAG, "onResume: starter location updates" + locationUpdatesSwitch);
             }
 
         }
 
-        if (currentCameraPosition != null){
+        if (currentCameraPosition != null) {
             Log.d(TAG, "onResume: flytter til forrige pos" + currentCameraPosition.target.latitude);
             mMap.moveCamera(CameraUpdateFactory.newCameraPosition(currentCameraPosition));
 
@@ -227,10 +224,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     protected void onStop() {
-        stopLocationUpdates();
-        mGoogleApiClient.disconnect();
+        try{
+            stopLocationUpdates();
+            mGoogleApiClient.disconnect();
 
-        Log.d(TAG, "onStop: stopper locationupdates" + locationUpdatesSwitch);
+            Log.d(TAG, "onStop: stopper locationupdates" + locationUpdatesSwitch);
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+
 
         super.onStop();
     }
@@ -238,22 +240,22 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     protected void onPause() {
 
-        currentZoom = mMap.getCameraPosition().zoom;
-        currentCameraPosition = mMap.getCameraPosition();
-        Log.d(TAG, "onPause: " + currentCameraPosition.target.latitude);
+        try {
+            currentZoom = mMap.getCameraPosition().zoom;
+            currentCameraPosition = mMap.getCameraPosition();
+            Log.d(TAG, "onPause: " + currentCameraPosition.target.latitude);
 
-        stopLocationUpdates();
-        Log.d(TAG, "onPause: stopper locationupdates" + locationUpdatesSwitch);
-
-
-
+            stopLocationUpdates();
+            Log.d(TAG, "onPause: stopper locationupdates" + locationUpdatesSwitch);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
 
 
         super.onPause();
 
     }
-
 
 
     protected void stopLocationUpdates() {
@@ -275,8 +277,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
 
-
-
     @Override
     public void onMapReady(GoogleMap googleMap) {
 
@@ -284,9 +284,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         //enable zoom buttons, and remove toolbar when clicking on markers
         mMap.getUiSettings().setZoomControlsEnabled(false);
         mMap.getUiSettings().setMapToolbarEnabled(false);
-
-
-
 
 
         //enables location dot, and removes the standard google button
@@ -325,12 +322,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         kyststiInfo.setVisibility(View.INVISIBLE);
 
 
-
         mMap.setOnPolylineClickListener(new GoogleMap.OnPolylineClickListener() {
             @Override
             public void onPolylineClick(Polyline polyline) {
 
-                if (currentPolyline != null){
+                if (currentPolyline != null) {
                     currentPolyline.setColor(Color.BLUE);
                 }
 
@@ -344,9 +340,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 int maxY = getDeviceMaxY();
 
                 //Hvis det allerede er et infovindu oppe skal det ikke animeres
-                if (! kyststiInfoUp) {
-                    animateKyststiInfoUp(maxY, kyststiInfo);
-                    kyststiInfoUp = true;
+                if (!infobarUp) {
+                    animateInfobarUp(kyststiInfo);
+                    infobarUp = true;
                 }
 
 
@@ -356,58 +352,29 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         });
 
 
+
         mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override
             public void onMapClick(final LatLng latLng) {
-                currentMapClickPosition  = latLng;
+                Log.d(TAG, "onMapClick: ");
+
+
+                currentMapClickPosition = latLng;
 
                 kyststiInfo.setVisibility(View.INVISIBLE);
                 int maxY = getDeviceMaxY();
 
 
                 //Hvis kyststiinfo er oppe, lukk den
-                if (kyststiInfoUp) {
+                if (infobarUp) {
 
-                    animateKyststiInfoDown(maxY, kyststiInfo);
+                    animateInfobarDown(kyststiInfo);
 
-                    kyststiInfoUp = false;
+                    infobarUp = false;
                 }
 
-            }
-        });
 
 
-
-
-        //The info window that is popping up when clicking on a marker
-        mMap.setInfoWindowAdapter(new GoogleMap.InfoWindowAdapter() {
-            @Override
-            public View getInfoWindow(Marker marker) {
-                return null;
-            }
-
-            @Override
-            public View getInfoContents(Marker marker) {
-
-                // Getting view from the layout file info_window_layout
-                View v = getLayoutInflater().inflate(R.layout.info_window_layout, null);
-
-                // Getting reference to the TextView to set title
-                TextView title = (TextView) v.findViewById(R.id.infoView);
-
-                setMarkerDescription(marker, title);
-
-                //Sets the global variable link to the link that is provided in the snippet
-                if (marker.getSnippet() == null){
-                    link = "EMPTY";
-                } else {
-
-                    //the validation will be taken care of later
-                    link = marker.getSnippet();
-                }
-
-                // Returning the view containing InfoWindow contents
-                return v;
             }
         });
 
@@ -417,17 +384,18 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             public void onInfoWindowClick(Marker marker) {
 
                 //Go to the current link, if the link is empty, do nothing
-                if (! link.equals("EMPTY")){
+                if (!link.equals("EMPTY")) {
 
                     Intent i = new Intent(Intent.ACTION_VIEW);
 
-                    if (link.matches("http[s]{0,1}:.{0,}")){
+                    if (link.matches("http[s]{0,1}:.{0,}")) {
                         Log.d("TAG", "går til linken: " + link);
                         i.setData(Uri.parse(link));
                         startActivity(i);
                     }
 
                 }
+
 
             }
         });
@@ -438,19 +406,23 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         addInfoToMap.execute();
 
 
+
+
     }
 
-    private void animateKyststiInfoUp(int maxY, TextView kyststiInfo) {
-        Animation animation = new TranslateAnimation(0, 0, maxY-kyststiInfo.getY(), 0);
+    private void animateInfobarUp(TextView infobar) {
+        int maxY = getDeviceMaxY();
+        Animation animation = new TranslateAnimation(0, 0, maxY - infobar.getY(), 0);
         animation.setDuration(500);
 
-        kyststiInfo.startAnimation(animation);
+        infobar.startAnimation(animation);
     }
 
-    private void animateKyststiInfoDown(int maxY, TextView kyststiInfo) {
+    private void animateInfobarDown(TextView infobar) {
+        int maxY = getDeviceMaxY();
         Animation animation = new TranslateAnimation(0, 0, 0, maxY);
         animation.setDuration(500);
-        kyststiInfo.startAnimation(animation);
+        infobar.startAnimation(animation);
     }
 
     private int getDeviceMaxY() {
@@ -474,7 +446,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         return false;
     }
 
-    public static void addGeoJsonLayerToMap() {
+    public static void addGeoJsonLayerToDataStructure() {
         jsonLayer.addLayerToMap();
     }
 
@@ -485,7 +457,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         for (GeoJsonFeature2 feature : jsonLayer.getFeatures()) {
 
 
-
             GeoJsonPointStyle2 pointStyle = new GeoJsonPointStyle2();
             GeoJsonLineStringStyle2 stringStyle;
 
@@ -493,7 +464,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             pointStyle.setTitle(feature.getProperty("name"));
             feature.setPointStyle(pointStyle);
 
-            if (feature.getProperty("name").equals("Rodeløkka")){
+            if (feature.getProperty("name").equals("Rodeløkka")) {
                 Log.d(TAG, "addGeoJsonLayerToMapAndAddData: rodeløkke");
             }
 
@@ -521,30 +492,27 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
 
-    private void setMarkerDescription(Marker marker, TextView title) {
-        title.setMovementMethod(LinkMovementMethod.getInstance());
+    private void setMarkerDescription(String title, String description, TextView txtMarkerDescription) {
+        txtMarkerDescription.setMovementMethod(LinkMovementMethod.getInstance());
 
-        String markerTitle = "<p>" + marker.getTitle() + "</p>";
-        Log.d(TAG, "setMarkerDescription: " + markerTitle);
+        String markerTitle = "<p>" + title + "</p>";
 
         //Hvis den ikke er tom og er en url så skal link vises
-        if (marker.getSnippet() != null){
+        if (description != null) {
             String markerDescription = "";
-            if (marker.getSnippet().matches("http[s]{0,1}:.{0,}")) {
+            if (description.matches("http[s]{0,1}:.{0,}")) {
 
-                markerDescription = "<a href=\"" + marker.getSnippet() + "\"> <u> Klikk her for mer info </u></a>";
+                markerDescription = "<a href=\"" + description + "\"> <u> Klikk her for mer info </u></a>";
 
-                title.setText(Html.fromHtml(markerTitle + markerDescription));
+                txtMarkerDescription.setText(Html.fromHtml(markerTitle + markerDescription));
 
-            //Det er ikke en link, men kanskje noe annet interessant
+                //Det er ikke en link, men kanskje noe annet interessant
             } else {
-                markerDescription = "<p>" + marker.getSnippet() + "</p>";
-                title.setText(Html.fromHtml(markerTitle + markerDescription));
+                markerDescription = "<p>" + description + "</p>";
+                txtMarkerDescription.setText(Html.fromHtml(markerTitle + markerDescription));
             }
-        }
-
-        else {
-            title.setText(Html.fromHtml(markerTitle));
+        } else {
+            txtMarkerDescription.setText(Html.fromHtml(markerTitle));
         }
     }
 
@@ -552,7 +520,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         String description;
         String name;
 
-        try{
+        try {
             name = kyststiInfoMap.get(polyline.getPoints())[1];
         } catch (Exception e) {
             Log.d(TAG, "setKyststiInfoFromDescriptionAndName: noe gikk dårlig. " + e);
@@ -560,7 +528,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         }
 
-        try{
+        try {
             description = kyststiInfoMap.get(polyline.getPoints())[0];
         } catch (Exception e) {
             Log.d(TAG, "setKyststiInfoFromDescriptionAndName: " + e);
@@ -571,20 +539,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         //Fant ingenting, tekst settes til her var det ingenting.
         if (description == null && name == null) {
             kyststiInfo.setText("Her var det ingenting, gitt!");
-        }
-
-        else if (description == null && name != null){
+        } else if (description == null && name != null) {
             //Setter navnet
             kyststiInfo.setText(name);
-        }
-
-        else if (description != null && name == null){
+        } else if (description != null && name == null) {
             setKystiDescription(kyststiInfo, description);
 
 
-        }
-
-        else if (description != null && name != null){
+        } else if (description != null && name != null) {
             setKystiDescription(kyststiInfo, description);
         }
 
@@ -593,12 +555,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private void setKystiDescription(TextView kyststiInfo, String description) {
         //Hvis description inneholder link settes denne som description
-        if (description.contains("<a href=")){
+        if (description.contains("<a href=")) {
 
             String kyststiTitle = description.substring(0, description.indexOf("<a"));
             kyststiTitle = "<p>" + kyststiTitle + "</p> ";
 
-            String kyststiLink = description.substring(description.indexOf("<a href=")+9, description.indexOf(">"));
+            String kyststiLink = description.substring(description.indexOf("<a href=") + 9, description.indexOf(">"));
             kyststiLink = "<a href=\"" + kyststiLink + "\"> <u> Klikk her for mer info</u></a>";
 
 
@@ -607,14 +569,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             //Det er ingen link, da settes det som er der
         } else {
-           kyststiInfo.setText(description);
+            kyststiInfo.setText(description);
         }
     }
 
-    private void printdescriptions(HashMap<List<LatLng>, String> kyststiinfomap){
+    private void printdescriptions(HashMap<List<LatLng>, String> kyststiinfomap) {
         Log.d(TAG, "printdescriptions: " + kyststiinfomap.values());
 
-        for (String  desc: kyststiinfomap.values()) {
+        for (String desc : kyststiinfomap.values()) {
             Log.d(TAG, "printdescriptions: " + desc);
         }
     }
@@ -672,7 +634,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
 
 
-        if (locationUpdatesSwitch){
+        if (locationUpdatesSwitch) {
             startLocationUpdates();
         }
 
@@ -688,9 +650,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         //Request locationupdates
         LocationRequest mLocationRequest = requestLocationUpdates();
 
-        //Handle users without location enabled
-        handleUsersWithoutLocationEnabled(mLocationRequest);
+        if (! userHasAnsweredLocationTurnOn){
+            //Handle users without location enabled
+            handleUsersWithoutLocationEnabled(mLocationRequest);
 
+        }
+
+    }
+
+    private GoogleMap getMap() {
+        return mMap;
     }
 
     @NonNull
@@ -734,12 +703,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     case LocationSettingsStatusCodes.SUCCESS:
                         // All location settings are satisfied. The client can
                         // initialize location requests here.
+                        userHasAnsweredLocationTurnOn = true;
 
 
                         break;
                     case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
                         // Location settings are not satisfied, but this can be fixed
                         // by showing the user a dialog.
+                        userHasAnsweredLocationTurnOn = true;
                         try {
                             // Show the dialog by calling startResolutionForResult(),
                             // and check the result in onActivityResult().
@@ -753,6 +724,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
                         // Location settings are not satisfied. However, we have no way
                         // to fix the settings so we won't show the dialog.
+                        userHasAnsweredLocationTurnOn = true;
 
                         //Oslo sentrum
                         CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLng(new LatLng(59.903079, 10.740479));
@@ -778,11 +750,51 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             //Oslo sentrum
             lastLocation = new LatLng(59.908588, 10.741165);
         }
-        Log.d(TAG, "findAndGoToLastKnownLocation: gikk til " +lastLocation.latitude);
+        Log.d(TAG, "findAndGoToLastKnownLocation: gikk til " + lastLocation.latitude);
         CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(lastLocation, 17);
         mMap.moveCamera(cameraUpdate);
 
     }
+
+    private void setUpClusterer() {
+        // Declare a variable for the cluster manager.
+
+
+        // Position the map.
+
+        // Initialize the manager with the context and the map.
+        // (Activity extends context, so we can pass 'this' in the constructor.)
+
+
+        mClusterManager = new ClusterManager<MyMarkerOptions>(this, getMap());
+        mMap.setInfoWindowAdapter(mClusterManager.getMarkerManager());
+
+        // Point the map's listeners at the listeners implemented by the cluster
+        // manager.
+        getMap().setOnCameraChangeListener(mClusterManager);
+        getMap().setOnMarkerClickListener(mClusterManager);
+
+        mMap.setOnMarkerClickListener(mClusterManager);
+
+
+        // Add cluster items (markers) to the cluster manager.
+        addItems();
+
+    }
+
+
+
+
+    private void addItems() {
+
+
+        for (MarkerOptions marker : markersReadyToAdd) {
+            mClusterManager.addItem(new MyMarkerOptions(marker));
+        }
+
+
+    }
+
 
     @Override
     public void onConnectionSuspended(int i) {
@@ -880,11 +892,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         protected void onPreExecute() {
 
 
-
         }
 
         @Override
         protected Void doInBackground(Void... params) {
+
 
 
             int counter = 0;
@@ -908,7 +920,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     pointStyle.setTitle(feature.getProperty("name"));
                     feature.setPointStyle(pointStyle);
 
-                    if (feature.getProperty("name").equals("Rodeløkka")){
+                    if (feature.getProperty("name").equals("Rodeløkka")) {
                         Log.d(TAG, "addGeoJsonLayerToMapAndAddData: rodeløkke");
                     }
 
@@ -938,16 +950,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 e.printStackTrace();
             }
 
-            addGeoJsonLayerToMap();
-
-
-            //Set up the cluster manager
-
-
-
-
-
-
+            //
+            addGeoJsonLayerToDataStructure();
 
             return null;
         }
@@ -962,49 +966,85 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         @Override
         protected void onPostExecute(Void aVoid) {
-            //progress.setMessage("Legger masse fine kyststier til kart");
-            //Try do add this in a separate onasynctask
+
+            addPolylinesToMap();
 
 
+            setUpClusterer();
 
-            (new Handler()).postDelayed(new Runnable() {
+
+            final TextView markerInfo = (TextView) findViewById(R.id.kyststiInfo);
+
+
+            mClusterManager.setOnClusterItemClickListener(new ClusterManager.OnClusterItemClickListener<MyMarkerOptions>() {
                 @Override
-                public void run() {
-
-                    //Adds polylines to the map
-                    //for (PolylineOptions polylines : polylinesReadyToAdd){
-
-  //                      mMap.addPolyline(polylines);
-//                    }
-
-                    //Add markers to the map
-                    for (MarkerOptions marker: markersReadyToAdd){
-                        mMap.addMarker(marker);
+                public boolean onClusterItemClick(MyMarkerOptions item) {
+                    markerInfo.setVisibility(View.VISIBLE);
+                    if (! infobarUp){
+                        animateInfobarUp(markerInfo);
+                        infobarUp = true;
                     }
 
-                }
-            }, 1);
 
+
+                    Log.d(TAG, "onClusterItemClick: ");
+                    clickedClusterItem = item;
+                    Log.d(TAG, "onClusterItemClick: " + item.getDescription());
+
+                    setMarkerDescription(item.getTitle(), item.getDescription(), markerInfo);
+
+
+
+                    return false;
+
+                }
+            });
 
 
 
         }
     }
 
+    private void addPolylinesToMap() {
+        for (PolylineOptions polylineOptions : polylinesReadyToAdd){
+            mMap.addPolyline(polylineOptions);
+        }
+    }
 
-    public class MyItem implements ClusterItem {
-        private final LatLng mPosition;
 
-        public MyItem(double lat, double lng) {
-            mPosition = new LatLng(lat, lng);
+    public class MyMarkerOptions implements ClusterItem {
+        private String title;
+        private String description;
+        private final LatLng position;
+
+
+
+        public MyMarkerOptions(MarkerOptions myMarkerOptions) {
+            this.title = myMarkerOptions.getTitle();
+            this.description = myMarkerOptions.getSnippet();
+            this.position = myMarkerOptions.getPosition();
+
         }
 
         @Override
         public LatLng getPosition() {
-            return mPosition;
+            return position;
         }
+
+        public String getDescription() {
+            return description;
+        }
+
+        public String getTitle() {
+            return title;
+        }
+
+
     }
+
+
 }
+
 
 
 
