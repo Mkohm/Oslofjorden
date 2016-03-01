@@ -1,6 +1,7 @@
 package com.oslofjorden;
 
 import android.content.Context;
+import android.test.suitebuilder.annotation.Suppress;
 import android.util.Log;
 
 import com.google.android.gms.maps.GoogleMap;
@@ -28,6 +29,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.Set;
@@ -481,215 +483,6 @@ class GeoJsonFeature2 extends Observable implements Observer {
         if (observable instanceof GeoJsonStyle2) {
             checkRedrawFeature((GeoJsonStyle2) observable);
         }
-    }
-}
-
-/**
- * A class that allows the developer to import GeoJSON data, style it and interact with the
- * imported data.
- *
- * To create a new GeoJsonLayer from a resource stored locally
- * {@code GeoJsonLayer layer = new GeoJsonLayer(getMap(), R.raw.resource,
- * getApplicationContext());}
- *
- * To render the imported GeoJSON data onto the layer
- * {@code layer.addLayerToMap();}
- *
- * To remove the rendered data from the layer
- * {@code layer.removeLayerFromMap();}
- */
-
-class GeoJsonLayer2 {
-
-    private final GeoJsonRenderer mRenderer;
-
-    private LatLngBounds mBoundingBox;
-
-    /**
-     * Creates a new GeoJsonLayer object. Default styles are applied to the GeoJsonFeature objects.
-     *
-     * @param map         map where the layer is to be rendered
-     * @param geoJsonFile GeoJSON data to add to the layer
-     */
-    public GeoJsonLayer2(GoogleMap map, JSONObject geoJsonFile) {
-        if (geoJsonFile == null) {
-            throw new IllegalArgumentException("GeoJSON file cannot be null");
-        }
-
-        mBoundingBox = null;
-        GeoJsonParser parser = new GeoJsonParser(geoJsonFile);
-        // Assign GeoJSON bounding box for FeatureCollection
-        mBoundingBox = parser.getBoundingBox();
-        HashMap<GeoJsonFeature2, Object> geoJsonFeatures = new HashMap<GeoJsonFeature2, Object>();
-        for (GeoJsonFeature2 feature : parser.getFeatures()) {
-            geoJsonFeatures.put(feature, null);
-        }
-        mRenderer = new GeoJsonRenderer(map, geoJsonFeatures);
-    }
-
-    /**
-     * Creates a new GeoJsonLayer object. Default styles are applied to the GeoJsonFeature objects.
-     *
-     * @param map        map where the layer is to be rendered
-     * @param resourceId GeoJSON file to add to the layer
-     * @param context    context of the application, required to open the GeoJSON file
-     * @throws IOException   if the file cannot be open for read
-     * @throws JSONException if the JSON file has invalid syntax and cannot be parsed successfully
-     */
-    public GeoJsonLayer2(GoogleMap map, int resourceId, Context context)
-            throws IOException, JSONException {
-        this(map, createJsonFileObject(context.getResources().openRawResource(resourceId)));
-    }
-
-    /**
-     * Takes a character input stream and converts it into a JSONObject
-     *
-     * @param stream character input stream representing the GeoJSON file
-     * @return JSONObject with the GeoJSON data
-     * @throws IOException   if the file cannot be opened for read
-     * @throws JSONException if the JSON file has poor structure
-     */
-    private static JSONObject createJsonFileObject(InputStream stream)
-            throws IOException, JSONException {
-        String line;
-        StringBuilder result = new StringBuilder();
-        // Reads from stream
-        BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
-        try {
-            // Read each line of the GeoJSON file into a string
-            while ((line = reader.readLine()) != null) {
-                result.append(line);
-            }
-        } finally {
-            reader.close();
-        }
-        // Converts the result string into a JSONObject
-        return new JSONObject(result.toString());
-    }
-
-    /**
-     * Gets an iterable of all GeoJsonFeature elements that have been added to the layer
-     *
-     * @return iterable of GeoJsonFeature elements
-     */
-    public Iterable<GeoJsonFeature2> getFeatures() {
-        return mRenderer.getFeatures();
-    }
-
-    /**
-     * Adds all the GeoJsonFeature objects parsed from the given GeoJSON data onto the map
-     */
-    public void addLayerToMap() {
-        mRenderer.addLayerToMap();
-    }
-
-    /**
-     * Adds a GeoJsonFeature to the layer. If the point, linestring or polygon style is set to
-     * null, the relevant default styles are applied.
-     *
-     * @param feature GeoJsonFeature to add to the layer
-     */
-    public void addFeature(GeoJsonFeature2 feature) {
-        if (feature == null) {
-            throw new IllegalArgumentException("Feature cannot be null");
-        }
-        mRenderer.addFeature(feature);
-    }
-
-    /**
-     * Removes the given GeoJsonFeature from the layer
-     *
-     * @param feature feature to remove
-     */
-    public void removeFeature(GeoJsonFeature2 feature) {
-        if (feature == null) {
-            throw new IllegalArgumentException("Feature cannot be null");
-        }
-        mRenderer.removeFeature(feature);
-    }
-
-    /**
-     * Gets the map on which the layer is rendered
-     *
-     * @return map on which the layer is rendered
-     */
-    public GoogleMap getMap() {
-        return mRenderer.getMap();
-    }
-
-    /**
-     * Renders the layer on the given map. The layer on the current map is removed and
-     * added to the given map.
-     *
-     * @param map to render the layer on, if null the layer is cleared from the current map
-     */
-    public void setMap(GoogleMap map) {
-        mRenderer.setMap(map);
-    }
-
-    /**
-     * Removes all GeoJsonFeatures on the layer from the map
-     */
-    public void removeLayerFromMap() {
-        mRenderer.removeLayerFromMap();
-    }
-
-    /**
-     * Get whether the layer is on the map
-     *
-     * @return true if the layer is on the map, false otherwise
-     */
-    public boolean isLayerOnMap() {
-        return mRenderer.isLayerOnMap();
-    }
-
-    /**
-     * Gets the default style used to render GeoJsonPoints. Any changes to this style will be
-     * reflected in the features that use it.
-     *
-     * @return default style used to render GeoJsonPoints
-     */
-    public GeoJsonPointStyle2 getDefaultPointStyle() {
-        return mRenderer.getDefaultPointStyle();
-    }
-
-    /**
-     * Gets the default style used to render GeoJsonLineStrings. Any changes to this style will be
-     * reflected in the features that use it.
-     *
-     * @return default style used to render GeoJsonLineStrings
-     */
-    public GeoJsonLineStringStyle2 getDefaultLineStringStyle() {
-        return mRenderer.getDefaultLineStringStyle();
-    }
-
-    /**
-     * Gets the default style used to render GeoJsonPolygons. Any changes to this style will be
-     * reflected in the features that use it.
-     *
-     * @return default style used to render GeoJsonPolygons
-     */
-    public GeoJsonPolygonStyle2 getDefaultPolygonStyle() {
-        return mRenderer.getDefaultPolygonStyle();
-    }
-
-    /**
-     * Gets the LatLngBounds containing the coordinates of the bounding box for the
-     * FeatureCollection. If the FeatureCollection did not have a bounding box or if the GeoJSON
-     * file did not contain a FeatureCollection then null will be returned.
-     *
-     * @return LatLngBounds containing bounding box of FeatureCollection, null if no bounding box
-     */
-    public LatLngBounds getBoundingBox() {
-        return mBoundingBox;
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder("Collection{");
-        sb.append("\n Bounding box=").append(mBoundingBox);
-        sb.append("\n}\n");
-        return sb.toString();
     }
 }
 
@@ -1297,6 +1090,7 @@ class GeoJsonLayer2 {
      * @param feature feature to add to the map
      */
     /* package */ void addFeature(GeoJsonFeature2 feature) {
+
         Object mapObject = FEATURE_NOT_ON_MAP;
         setFeatureDefaultStyles(feature);
         if (mLayerOnMap) {
@@ -1412,7 +1206,10 @@ class GeoJsonLayer2 {
     private Marker addPointToMap(GeoJsonPointStyle2 pointStyle, GeoJsonPoint2 point) {
         MarkerOptions markerOptions = pointStyle.toMarkerOptions();
         markerOptions.position(point.getCoordinates());
-        return mMap.addMarker(markerOptions);
+
+        MapsActivity.markersReadyToAdd.add(markerOptions);
+        //return mMap.addMarker(markerOptions);
+        return null;
     }
 
     /**
@@ -1457,8 +1254,9 @@ class GeoJsonLayer2 {
         polylineOptions.addAll(lineString.getCoordinates());
 
 
-
-        return mMap.addPolyline(polylineOptions);
+        MapsActivity.polylinesReadyToAdd.add(polylineOptions);
+        //return mMap.addPolyline(polylineOptions);
+        return null;
     }
 
     /**
@@ -1573,51 +1371,6 @@ class GeoJsonLayer2 {
                 addFeature(feature);
             }
         }
-    }
-}
-
-/**
- * A GeoJsonPoint geometry contains a single {@link com.google.android.gms.maps.model.LatLng}.
- */
-class GeoJsonPoint2 implements GeoJsonGeometry2 {
-
-    private final static String GEOMETRY_TYPE = "Point";
-
-    private final LatLng mCoordinates;
-
-    /**
-     * Creates a new GeoJsonPoint
-     *
-     * @param coordinate coordinate of GeoJsonPoint to store
-     */
-    public GeoJsonPoint2(LatLng coordinate) {
-        if (coordinate == null) {
-            throw new IllegalArgumentException("Coordinate cannot be null");
-        }
-        mCoordinates = coordinate;
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public String getType() {
-        return GEOMETRY_TYPE;
-    }
-
-    /**
-     * Gets the coordinates of the GeoJsonPoint
-     *
-     * @return coordinates of the GeoJsonPoint
-     */
-    public LatLng getCoordinates() {
-        return mCoordinates;
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder(GEOMETRY_TYPE).append("{");
-        sb.append("\n coordinates=").append(mCoordinates);
-        sb.append("\n}\n");
-        return sb.toString();
     }
 }
 

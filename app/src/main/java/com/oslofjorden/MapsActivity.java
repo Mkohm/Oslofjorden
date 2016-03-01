@@ -12,11 +12,16 @@ import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 
+import android.app.Application;
+import android.app.ProgressDialog;
 import android.graphics.Point;
+import android.os.AsyncTask;
+import android.os.Handler;
 import android.view.Display;
 
 import org.json.JSONException;
@@ -24,6 +29,7 @@ import org.json.JSONException;
 import android.text.Html;
 import android.util.Log;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -53,6 +59,8 @@ import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
 import android.widget.Button;
+import android.widget.CursorTreeAdapter;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -60,6 +68,10 @@ import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
 
 import java.io.IOException;
+import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.ThreadFactory;
 
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
@@ -68,23 +80,27 @@ import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.maps.android.clustering.ClusterItem;
 
 
 //TODO: splashscreen with picture while the other things is loading, promote myself,
-//TODO:satelite, sporing icon, oslofjorden ikon, turn on location, to big infoboxes, toast that recommends location, farger kyststi
+//TODO:satelite, sporing icon, oslofjorden ikon, turn on location, to big infoboxes, toast that recommends location, farger kyststi, ask user and no problem
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.OnConnectionFailedListener, GoogleApiClient.ConnectionCallbacks, LocationListener, ResultCallback {
     //For debugging
-    private String TAG = "TAG";
+    private static String TAG = "TAG";
 
 
-    private GoogleMap mMap;
+    private static GoogleMap mMap;
     GoogleApiClient mGoogleApiClient;
 
     float currentZoom;
     LatLng currentPosition;
     CameraPosition currentCameraPosition;
     LatLng currentMapClickPosition;
+
+    public static GeoJsonLayer2 jsonLayer;
 
     private boolean kyststiInfoUp = false;
 
@@ -104,6 +120,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public static int indexInDescriptionList = 0;
     public static ArrayList<String> nameList = new ArrayList<String>();
     public static int indexInNameList = 0;
+
+    public static List<MarkerOptions> markersReadyToAdd = new ArrayList<MarkerOptions>();
+    public static List<PolylineOptions> polylinesReadyToAdd = new ArrayList<PolylineOptions>();
 
 
     private Polyline currentPolyline;
@@ -125,9 +144,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+
+
+
         setContentView(R.layout.activity_maps);
 
-
+        //Removes the oslofjorden picture
+        getWindow().setBackgroundDrawableResource(R.drawable.graybackground);
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
@@ -225,6 +248,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
 
+
+
         super.onPause();
 
     }
@@ -232,6 +257,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
     protected void stopLocationUpdates() {
+        //TODO:error when trying to stop location updates before mgoogleapiclient is connected
         Log.d(TAG, "stopLocationUpdates");
         LocationServices.FusedLocationApi.removeLocationUpdates(
                 mGoogleApiClient, this);
@@ -346,8 +372,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                     kyststiInfoUp = false;
                 }
+
             }
         });
+
+
 
 
         //The info window that is popping up when clicking on a marker
@@ -404,7 +433,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         });
 
 
-        addGeoJsonLayerToMapAndAddData();
+
+        AddInfoToMap addInfoToMap = new AddInfoToMap();
+        addInfoToMap.execute();
+
 
     }
 
@@ -442,56 +474,52 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         return false;
     }
 
-    private void addGeoJsonLayerToMapAndAddData() {
-        try {
+    public static void addGeoJsonLayerToMap() {
+        jsonLayer.addLayerToMap();
+    }
+
+    public static void addMapData() throws IOException, JSONException {
+        jsonLayer = new GeoJsonLayer2(mMap, R.raw.alle_kyststier, MyApplication.getAppContext());
 
 
-                GeoJsonLayer2 jsonLayer = new GeoJsonLayer2(mMap, R.raw.alle_kyststier, getApplicationContext());
-
-
-            for (GeoJsonFeature2 feature : jsonLayer.getFeatures()) {
-                GeoJsonPointStyle2 pointStyle = new GeoJsonPointStyle2();
-                GeoJsonLineStringStyle2 stringStyle;
-
-                //Gets the name property from the json file
-                pointStyle.setTitle(feature.getProperty("name"));
-                feature.setPointStyle(pointStyle);
-                
-                if (feature.getProperty("name").equals("Rodeløkka")){
-                    Log.d(TAG, "addGeoJsonLayerToMapAndAddData: rodeløkke");
-                }
-
-                //Gets the description property from the json file
-                pointStyle.setSnippet(feature.getProperty("description"));
-
-                stringStyle = feature.getLineStringStyle();
-
-                //Hvis det er en kyststi legg til description og navn
-                if (feature.getGeometry().getType().equals("LineString")) {
-                    descriptionList.add(feature.getProperty("description"));
-
-                    nameList.add(feature.getProperty("name"));
-                }
+        for (GeoJsonFeature2 feature : jsonLayer.getFeatures()) {
 
 
 
-                stringStyle.setClickable(true);
-                stringStyle.setColor(Color.BLUE);
+            GeoJsonPointStyle2 pointStyle = new GeoJsonPointStyle2();
+            GeoJsonLineStringStyle2 stringStyle;
 
+            //Gets the name property from the json file
+            pointStyle.setTitle(feature.getProperty("name"));
+            feature.setPointStyle(pointStyle);
 
-                feature.setLineStringStyle(stringStyle);
-
+            if (feature.getProperty("name").equals("Rodeløkka")){
+                Log.d(TAG, "addGeoJsonLayerToMapAndAddData: rodeløkke");
             }
 
-            jsonLayer.addLayerToMap();
+            //Gets the description property from the json file
+            pointStyle.setSnippet(feature.getProperty("description"));
+
+            stringStyle = feature.getLineStringStyle();
+
+            //Hvis det er en kyststi legg til description og navn
+            if (feature.getGeometry().getType().equals("LineString")) {
+                descriptionList.add(feature.getProperty("description"));
+
+                nameList.add(feature.getProperty("name"));
+            }
 
 
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (JSONException e) {
-            e.printStackTrace();
+            stringStyle.setClickable(true);
+            stringStyle.setColor(Color.BLUE);
+
+
+            feature.setLineStringStyle(stringStyle);
+
         }
+
     }
+
 
     private void setMarkerDescription(Marker marker, TextView title) {
         title.setMovementMethod(LinkMovementMethod.getInstance());
@@ -844,7 +872,140 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
 
     }
+
+
+    class AddInfoToMap extends AsyncTask<Void, Integer, Void> {
+
+        @Override
+        protected void onPreExecute() {
+
+
+
+        }
+
+        @Override
+        protected Void doInBackground(Void... params) {
+
+
+            int counter = 0;
+            try {
+                long start = System.nanoTime();
+                //publishProgress(1);
+                jsonLayer = new GeoJsonLayer2(mMap, R.raw.alle_kyststier, MyApplication.getAppContext());
+
+                long elapsed = System.nanoTime() - start;
+                Log.d(TAG, "doInBackground: " + elapsed);
+
+
+                for (GeoJsonFeature2 feature : jsonLayer.getFeatures()) {
+                    counter++;
+                    //publishProgress(1);
+
+                    GeoJsonPointStyle2 pointStyle = new GeoJsonPointStyle2();
+                    GeoJsonLineStringStyle2 stringStyle;
+
+                    //Gets the name property from the json file
+                    pointStyle.setTitle(feature.getProperty("name"));
+                    feature.setPointStyle(pointStyle);
+
+                    if (feature.getProperty("name").equals("Rodeløkka")){
+                        Log.d(TAG, "addGeoJsonLayerToMapAndAddData: rodeløkke");
+                    }
+
+                    //Gets the description property from the json file
+                    pointStyle.setSnippet(feature.getProperty("description"));
+
+                    stringStyle = feature.getLineStringStyle();
+
+                    //Hvis det er en kyststi legg til description og navn
+                    if (feature.getGeometry().getType().equals("LineString")) {
+                        descriptionList.add(feature.getProperty("description"));
+
+                        nameList.add(feature.getProperty("name"));
+                    }
+
+
+                    stringStyle.setClickable(true);
+                    stringStyle.setColor(Color.BLUE);
+
+
+                    feature.setLineStringStyle(stringStyle);
+
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            addGeoJsonLayerToMap();
+
+
+            //Set up the cluster manager
+
+
+
+
+
+
+
+            return null;
+        }
+
+        @Override
+        protected void onProgressUpdate(Integer... values) {
+
+
+            //progress.incrementProgressBy(1);
+            //Log.d(TAG, "onProgressUpdate: " + values[0] + " " + progress.getProgress());
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            //progress.setMessage("Legger masse fine kyststier til kart");
+            //Try do add this in a separate onasynctask
+
+
+
+            (new Handler()).postDelayed(new Runnable() {
+                @Override
+                public void run() {
+
+                    //Adds polylines to the map
+                    //for (PolylineOptions polylines : polylinesReadyToAdd){
+
+  //                      mMap.addPolyline(polylines);
+//                    }
+
+                    //Add markers to the map
+                    for (MarkerOptions marker: markersReadyToAdd){
+                        mMap.addMarker(marker);
+                    }
+
+                }
+            }, 1);
+
+
+
+
+        }
+    }
+
+
+    public class MyItem implements ClusterItem {
+        private final LatLng mPosition;
+
+        public MyItem(double lat, double lng) {
+            mPosition = new LatLng(lat, lng);
+        }
+
+        @Override
+        public LatLng getPosition() {
+            return mPosition;
+        }
+    }
 }
+
 
 
 
