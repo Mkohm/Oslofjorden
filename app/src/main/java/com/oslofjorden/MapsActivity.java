@@ -75,8 +75,10 @@ import com.google.maps.android.clustering.Cluster;
 import com.google.maps.android.clustering.ClusterItem;
 import com.google.maps.android.clustering.ClusterManager;
 
+//TODO: v1 - if user location on button - link bug - still loading please wait
 
-//TODO: splashscreen with picture while the other things is loading, promote myself,
+
+//TODO: splashscreen with picture while the other things is loading, promote myself, handle links better, ask user again if location is off and the user tries to use the locationbutton
 //TODO:satelite, sporing icon, oslofjorden ikon, turn on location, to big infoboxes, toast that recommends location, farger kyststi, ask user and no problem, detecte ikke internett
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.OnConnectionFailedListener, GoogleApiClient.ConnectionCallbacks, LocationListener, ResultCallback {
@@ -103,8 +105,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     //If the last location was found, this variable is true, the app then swithches to use lastcameraposition to position the camera onPause/onResume
     private boolean foundLastLocation = false;
 
+
+    LocationRequest mLocationRequest;
     boolean mRequestingLocationUpdates;
     boolean userHasAnsweredLocationTurnOn = false;
+    boolean userAcceptLocation = false;
     //is locationupdates enabled or not
     boolean locationUpdatesSwitch = true;
 
@@ -140,6 +145,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        //Hvis man hadde location fra start av skal den ikke spørre mer
+        if (isLocationEnabled(getApplicationContext())){
+            userAcceptLocation = true;
+        }
 
 
 
@@ -192,7 +202,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
 
 
-        Log.d(TAG, "onStart: " + locationUpdatesSwitch);
 
         super.onStart();
 
@@ -208,13 +217,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         if (mGoogleApiClient.isConnected() && !mRequestingLocationUpdates) {
             if (locationUpdatesSwitch == true) {
                 startLocationUpdates();
-                Log.d(TAG, "onResume: starter location updates" + locationUpdatesSwitch);
             }
 
         }
 
         if (currentCameraPosition != null) {
-            Log.d(TAG, "onResume: flytter til forrige pos" + currentCameraPosition.target.latitude);
             mMap.moveCamera(CameraUpdateFactory.newCameraPosition(currentCameraPosition));
 
         }
@@ -228,7 +235,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             stopLocationUpdates();
             mGoogleApiClient.disconnect();
 
-            Log.d(TAG, "onStop: stopper locationupdates" + locationUpdatesSwitch);
         } catch (Exception e){
             e.printStackTrace();
         }
@@ -243,10 +249,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         try {
             currentZoom = mMap.getCameraPosition().zoom;
             currentCameraPosition = mMap.getCameraPosition();
-            Log.d(TAG, "onPause: " + currentCameraPosition.target.latitude);
 
             stopLocationUpdates();
-            Log.d(TAG, "onPause: stopper locationupdates" + locationUpdatesSwitch);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -298,18 +302,28 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             public void onClick(View v) {
 
                 if (locationUpdatesSwitch == true) {
+                    Log.d(TAG, "onClick: location var på, skrur av.");
                     onOffLocationButton.setText("Sporing av");
                     locationUpdatesSwitch = false;
                 } else if (locationUpdatesSwitch == false) {
-                    onOffLocationButton.setText("Sporing på");
-                    locationUpdatesSwitch = true;
+
+
+                    if (!userAcceptLocation && !isLocationEnabled(getApplicationContext())){
+                        Log.d(TAG, "onClick: har ikke akkseptet location");
+                        handleUsersWithoutLocationEnabled(mLocationRequest);
+
+                    } else {
+                        Log.d(TAG, "onClick: location var av, skrur på.");
+                        onOffLocationButton.setText("Sporing på");
+                        locationUpdatesSwitch = true;
+                    }
+
+
                 }
 
                 if (locationUpdatesSwitch == true) {
                     startLocationUpdates();
-                    Log.d("TAG", "starter locationupdates igjen.");
                 } else {
-                    Log.d("TAG", "Stopper location updates.");
                     stopLocationUpdates();
 
                 }
@@ -318,7 +332,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         });
 
 
-        final TextView kyststiInfo = (TextView) findViewById(R.id.kyststiInfo);
+        final TextView kyststiInfo = (TextView) findViewById(R.id.infobar);
         kyststiInfo.setVisibility(View.INVISIBLE);
 
 
@@ -408,6 +422,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
 
+
+
     }
 
     private void animateInfobarUp(TextView infobar) {
@@ -423,6 +439,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         Animation animation = new TranslateAnimation(0, 0, 0, maxY);
         animation.setDuration(500);
         infobar.startAnimation(animation);
+
+        infobar.setVisibility(View.INVISIBLE);
     }
 
     private int getDeviceMaxY() {
@@ -552,6 +570,24 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 }
             }
         }
+
+        final Button sporingButton = (Button) findViewById(R.id.onofflocationbutton);
+
+        if (resultCode == 0){
+            Log.d(TAG, "onActivityResult: the user did not choose to use location at the moment.");
+
+            //Sporing button should be off
+            sporingButton.setText("SPORING AV");
+            locationUpdatesSwitch = false;
+            userAcceptLocation = false;
+        } else {
+            Log.d(TAG, "onActivityResult: the user accepted to use location");
+            sporingButton.setText("SPORING PÅ");
+            locationUpdatesSwitch = true;
+            userAcceptLocation = true;
+        }
+
+
     }
 
     public static boolean isLocationEnabled(Context context) {
@@ -633,7 +669,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         }
 
-        LocationRequest mLocationRequest = new LocationRequest();
+        mLocationRequest = new LocationRequest();
         mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         mLocationRequest.setInterval(5000);
         mLocationRequest.setFastestInterval(1000);
@@ -662,19 +698,20 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         // All location settings are satisfied. The client can
                         // initialize location requests here.
                         userHasAnsweredLocationTurnOn = true;
-
+                        Log.d(TAG, "onResult: yes location was enabled");
 
                         break;
                     case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
                         // Location settings are not satisfied, but this can be fixed
                         // by showing the user a dialog.
+
+                        //No is answered
+                        Log.d(TAG, "onResult: location is not on");
                         userHasAnsweredLocationTurnOn = true;
                         try {
                             // Show the dialog by calling startResolutionForResult(),
                             // and check the result in onActivityResult().
-                            status.startResolutionForResult(
-                                    MapsActivity.this,
-                                    0);
+                            status.startResolutionForResult(MapsActivity.this,0);
                         } catch (IntentSender.SendIntentException e) {
                             // Ignore the error.
                         }
@@ -708,7 +745,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             //Oslo sentrum
             lastLocation = new LatLng(59.908588, 10.741165);
         }
-        Log.d(TAG, "findAndGoToLastKnownLocation: gikk til " + lastLocation.latitude);
         CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(lastLocation, 17);
         mMap.moveCamera(cameraUpdate);
 
@@ -843,7 +879,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         @Override
         protected void onPreExecute() {
+            TextView loading = (TextView) findViewById(R.id.infobar);
+            loading.setVisibility(View.VISIBLE);
 
+            loading.setText("Oslofjorden laster inn kyststier.. De vil poppe opp på kartet ditt snart :)");
 
         }
 
@@ -880,8 +919,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             setUpClusterer();
 
+            TextView loading = (TextView) findViewById(R.id.infobar);
+            animateInfobarDown(loading);
 
-            final TextView markerInfo = (TextView) findViewById(R.id.kyststiInfo);
+
+
+            final TextView markerInfo = (TextView) findViewById(R.id.infobar);
             setOnClusterItemClickListener(markerInfo);
 
 
@@ -898,11 +941,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     infobarUp = true;
                 }
 
+    
 
-
-                Log.d(TAG, "onClusterItemClick: ");
                 clickedClusterItem = item;
-                Log.d(TAG, "onClusterItemClick: " + item.getDescription());
 
                 setMarkerDescription(item.getTitle(), item.getDescription(), markerInfo);
 
@@ -926,9 +967,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             pointStyle.setTitle(feature.getProperty("name"));
             feature.setPointStyle(pointStyle);
 
-            if (feature.getProperty("name").equals("Rodeløkka")) {
-                Log.d(TAG, "addGeoJsonLayerToMapAndAddData: rodeløkke");
-            }
 
             //Gets the description property from the json file
             pointStyle.setSnippet(feature.getProperty("description"));
