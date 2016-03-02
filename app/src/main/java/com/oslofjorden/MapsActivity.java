@@ -450,48 +450,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         jsonLayer.addLayerToMap();
     }
 
-    public static void addMapData() throws IOException, JSONException {
-        jsonLayer = new GeoJsonLayer2(mMap, R.raw.alle_kyststier, MyApplication.getAppContext());
-
-
-        for (GeoJsonFeature2 feature : jsonLayer.getFeatures()) {
-
-
-            GeoJsonPointStyle2 pointStyle = new GeoJsonPointStyle2();
-            GeoJsonLineStringStyle2 stringStyle;
-
-            //Gets the name property from the json file
-            pointStyle.setTitle(feature.getProperty("name"));
-            feature.setPointStyle(pointStyle);
-
-            if (feature.getProperty("name").equals("Rodeløkka")) {
-                Log.d(TAG, "addGeoJsonLayerToMapAndAddData: rodeløkke");
-            }
-
-            //Gets the description property from the json file
-            pointStyle.setSnippet(feature.getProperty("description"));
-
-            stringStyle = feature.getLineStringStyle();
-
-            //Hvis det er en kyststi legg til description og navn
-            if (feature.getGeometry().getType().equals("LineString")) {
-                descriptionList.add(feature.getProperty("description"));
-
-                nameList.add(feature.getProperty("name"));
-            }
-
-
-            stringStyle.setClickable(true);
-            stringStyle.setColor(Color.BLUE);
-
-
-            feature.setLineStringStyle(stringStyle);
-
-        }
-
-    }
-
-
     private void setMarkerDescription(String title, String description, TextView txtMarkerDescription) {
         txtMarkerDescription.setMovementMethod(LinkMovementMethod.getInstance());
 
@@ -784,15 +742,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
 
-
     private void addItems() {
-
-
         for (MarkerOptions marker : markersReadyToAdd) {
             mClusterManager.addItem(new MyMarkerOptions(marker));
         }
-
-
     }
 
 
@@ -898,60 +851,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         protected Void doInBackground(Void... params) {
 
 
-
-            int counter = 0;
             try {
-                long start = System.nanoTime();
-                //publishProgress(1);
-                jsonLayer = new GeoJsonLayer2(mMap, R.raw.alle_kyststier, MyApplication.getAppContext());
-
-                long elapsed = System.nanoTime() - start;
-                Log.d(TAG, "doInBackground: " + elapsed);
+                getDataFromFileAndPutInDatastructure();
 
 
-                for (GeoJsonFeature2 feature : jsonLayer.getFeatures()) {
-                    counter++;
-                    //publishProgress(1);
-
-                    GeoJsonPointStyle2 pointStyle = new GeoJsonPointStyle2();
-                    GeoJsonLineStringStyle2 stringStyle;
-
-                    //Gets the name property from the json file
-                    pointStyle.setTitle(feature.getProperty("name"));
-                    feature.setPointStyle(pointStyle);
-
-                    if (feature.getProperty("name").equals("Rodeløkka")) {
-                        Log.d(TAG, "addGeoJsonLayerToMapAndAddData: rodeløkke");
-                    }
-
-                    //Gets the description property from the json file
-                    pointStyle.setSnippet(feature.getProperty("description"));
-
-                    stringStyle = feature.getLineStringStyle();
-
-                    //Hvis det er en kyststi legg til description og navn
-                    if (feature.getGeometry().getType().equals("LineString")) {
-                        descriptionList.add(feature.getProperty("description"));
-
-                        nameList.add(feature.getProperty("name"));
-                    }
-
-
-                    stringStyle.setClickable(true);
-                    stringStyle.setColor(Color.BLUE);
-
-
-                    feature.setLineStringStyle(stringStyle);
-
-                }
             } catch (IOException e) {
                 e.printStackTrace();
             } catch (JSONException e) {
                 e.printStackTrace();
             }
 
-            //
-            addGeoJsonLayerToDataStructure();
 
             return null;
         }
@@ -969,40 +878,79 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             addPolylinesToMap();
 
-
             setUpClusterer();
 
 
             final TextView markerInfo = (TextView) findViewById(R.id.kyststiInfo);
-
-
-            mClusterManager.setOnClusterItemClickListener(new ClusterManager.OnClusterItemClickListener<MyMarkerOptions>() {
-                @Override
-                public boolean onClusterItemClick(MyMarkerOptions item) {
-                    markerInfo.setVisibility(View.VISIBLE);
-                    if (! infobarUp){
-                        animateInfobarUp(markerInfo);
-                        infobarUp = true;
-                    }
-
-
-
-                    Log.d(TAG, "onClusterItemClick: ");
-                    clickedClusterItem = item;
-                    Log.d(TAG, "onClusterItemClick: " + item.getDescription());
-
-                    setMarkerDescription(item.getTitle(), item.getDescription(), markerInfo);
-
-
-
-                    return false;
-
-                }
-            });
-
+            setOnClusterItemClickListener(markerInfo);
 
 
         }
+    }
+
+    private void setOnClusterItemClickListener(final TextView markerInfo) {
+        mClusterManager.setOnClusterItemClickListener(new ClusterManager.OnClusterItemClickListener<MyMarkerOptions>() {
+            @Override
+            public boolean onClusterItemClick(MyMarkerOptions item) {
+                markerInfo.setVisibility(View.VISIBLE);
+                if (! infobarUp){
+                    animateInfobarUp(markerInfo);
+                    infobarUp = true;
+                }
+
+
+
+                Log.d(TAG, "onClusterItemClick: ");
+                clickedClusterItem = item;
+                Log.d(TAG, "onClusterItemClick: " + item.getDescription());
+
+                setMarkerDescription(item.getTitle(), item.getDescription(), markerInfo);
+
+
+
+                return false;
+
+            }
+        });
+    }
+
+    private void getDataFromFileAndPutInDatastructure() throws IOException, JSONException {
+        jsonLayer = new GeoJsonLayer2(mMap, R.raw.alle_kyststier, MyApplication.getAppContext());
+
+        for (GeoJsonFeature2 feature : jsonLayer.getFeatures()) {
+
+            GeoJsonPointStyle2 pointStyle = new GeoJsonPointStyle2();
+            GeoJsonLineStringStyle2 stringStyle;
+
+            //Gets the name property from the json file
+            pointStyle.setTitle(feature.getProperty("name"));
+            feature.setPointStyle(pointStyle);
+
+            if (feature.getProperty("name").equals("Rodeløkka")) {
+                Log.d(TAG, "addGeoJsonLayerToMapAndAddData: rodeløkke");
+            }
+
+            //Gets the description property from the json file
+            pointStyle.setSnippet(feature.getProperty("description"));
+
+            stringStyle = feature.getLineStringStyle();
+
+            //Hvis det er en kyststi legg til description og navn
+            if (feature.getGeometry().getType().equals("LineString")) {
+                descriptionList.add(feature.getProperty("description"));
+
+                nameList.add(feature.getProperty("name"));
+            }
+
+
+            stringStyle.setClickable(true);
+            stringStyle.setColor(Color.BLUE);
+
+
+            feature.setLineStringStyle(stringStyle);
+        }
+
+        addGeoJsonLayerToDataStructure();
     }
 
     private void addPolylinesToMap() {
