@@ -10,6 +10,7 @@ import com.google.android.gms.location.LocationSettingsResult;
 import com.google.android.gms.location.LocationSettingsStates;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.UiSettings;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -19,6 +20,7 @@ import com.google.android.gms.maps.model.LatLngBounds;
 
 import android.graphics.Point;
 import android.os.AsyncTask;
+import android.os.Handler;
 import android.view.Display;
 
 import org.json.JSONException;
@@ -30,6 +32,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 
+import java.util.Iterator;
 import java.util.List;
 
 import android.Manifest;
@@ -288,12 +291,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         //enable zoom buttons, and remove toolbar when clicking on markers
         mMap.getUiSettings().setZoomControlsEnabled(false);
         mMap.getUiSettings().setMapToolbarEnabled(false);
-
+        Log.d(TAG, "onMapReady: " + getMap().getUiSettings().isCompassEnabled());
 
         //enables location dot, and removes the standard google button
         if (checkPermission()) return;
         mMap.setMyLocationEnabled(true);
         mMap.getUiSettings().setMyLocationButtonEnabled(false);
+        mMap.getUiSettings().setCompassEnabled(true);
 
         final Button onOffLocationButton = (Button) findViewById(R.id.onofflocationbutton);
         onOffLocationButton.setAlpha(0.7f);
@@ -915,7 +919,24 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         @Override
         protected void onPostExecute(Void aVoid) {
 
-            addPolylinesToMap();
+          //  addPolylinesToMap();
+            final Iterator<PolylineOptions> iterator = polylinesReadyToAdd.iterator();
+            Log.d(TAG, "onPostExecute: " + polylinesReadyToAdd.size());
+
+
+            final Handler handler = new Handler();
+            handler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    if (iterator.hasNext()){
+                        Log.d(TAG, "run: ");
+                        mMap.addPolyline(iterator.next());
+                        handler.postDelayed(this, 10);
+                    }
+                }
+            }, 100);
+
+
 
             setUpClusterer();
 
