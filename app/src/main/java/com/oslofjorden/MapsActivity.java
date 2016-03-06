@@ -77,9 +77,10 @@ import java.util.List;
 //TODO:link bug, strict mode, remove log
 
 
-
+//Lage egen liste med kyststier i andre farger
 //TODO: splashscreen with picture while the other things is loading, promote myself, handle links better, change algorithm for the clusterer
 //TODO:satelite, sporing icon, toast that recommends location, farger kyststi, ask user and no problem, detecte ikke internett
+//TODO: strings and translate to english
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.OnConnectionFailedListener, GoogleApiClient.ConnectionCallbacks, LocationListener, ResultCallback {
     //For debugging
@@ -268,7 +269,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     protected void stopLocationUpdates() {
         //TODO:error when trying to stop location updates before mgoogleapiclient is connected
-        Log.d(TAG, "stopLocationUpdates");
         LocationServices.FusedLocationApi.removeLocationUpdates(
                 mGoogleApiClient, this);
         mRequestingLocationUpdates = false;
@@ -292,7 +292,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         //enable zoom buttons, and remove toolbar when clicking on markers
         mMap.getUiSettings().setZoomControlsEnabled(false);
         mMap.getUiSettings().setMapToolbarEnabled(false);
-        Log.d(TAG, "onMapReady: " + getMap().getUiSettings().isCompassEnabled());
 
         //enables location dot, and removes the standard google button
         if (checkPermission()) return;
@@ -307,18 +306,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             public void onClick(View v) {
 
                 if (locationUpdatesSwitch == true) {
-                    Log.d(TAG, "onClick: location var på, skrur av.");
                     onOffLocationButton.setText("Sporing av");
                     locationUpdatesSwitch = false;
                 } else if (locationUpdatesSwitch == false) {
 
 
                     if (!userAcceptLocation && !isLocationEnabled(getApplicationContext())){
-                        Log.d(TAG, "onClick: har ikke akkseptet location");
                         handleUsersWithoutLocationEnabled(mLocationRequest);
 
                     } else {
-                        Log.d(TAG, "onClick: location var av, skrur på.");
                         onOffLocationButton.setText("Sporing på");
                         locationUpdatesSwitch = true;
                     }
@@ -397,7 +393,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override
             public void onMapClick(final LatLng latLng) {
-                Log.d(TAG, "onMapClick: ");
 
 
                 currentMapClickPosition = latLng;
@@ -430,7 +425,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     Intent i = new Intent(Intent.ACTION_VIEW);
 
                     if (link.matches("http[s]{0,1}:.{0,}")) {
-                        Log.d("TAG", "går til linken: " + link);
                         i.setData(Uri.parse(link));
                         startActivity(i);
                     }
@@ -526,7 +520,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         try {
             name = kyststiInfoMap.get(polyline.getPoints())[1];
         } catch (Exception e) {
-            Log.d(TAG, "setKyststiInfoFromDescriptionAndName: noe gikk dårlig. " + e);
             name = null;
 
         }
@@ -534,7 +527,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         try {
             description = kyststiInfoMap.get(polyline.getPoints())[0];
         } catch (Exception e) {
-            Log.d(TAG, "setKyststiInfoFromDescriptionAndName: " + e);
             description = null;
         }
 
@@ -577,10 +569,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     private void printdescriptions(HashMap<List<LatLng>, String> kyststiinfomap) {
-        Log.d(TAG, "printdescriptions: " + kyststiinfomap.values());
 
         for (String desc : kyststiinfomap.values()) {
-            Log.d(TAG, "printdescriptions: " + desc);
         }
     }
 
@@ -601,14 +591,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         final Button sporingButton = (Button) findViewById(R.id.onofflocationbutton);
 
         if (resultCode == 0){
-            Log.d(TAG, "onActivityResult: the user did not choose to use location at the moment.");
 
             //Sporing button should be off
             sporingButton.setText("SPORING AV");
             locationUpdatesSwitch = false;
             userAcceptLocation = false;
         } else {
-            Log.d(TAG, "onActivityResult: the user accepted to use location");
             sporingButton.setText("SPORING PÅ");
             locationUpdatesSwitch = true;
             userAcceptLocation = true;
@@ -666,7 +654,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     protected void startLocationUpdates() {
         if (checkPermission()) return;
 
-        Log.d(TAG, "startLocationUpdates: starter loctationupdates");
 
         //Request locationupdates
         LocationRequest mLocationRequest = requestLocationUpdates();
@@ -725,7 +712,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         // All location settings are satisfied. The client can
                         // initialize location requests here.
                         userHasAnsweredLocationTurnOn = true;
-                        Log.d(TAG, "onResult: yes location was enabled");
 
                         break;
                     case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
@@ -733,7 +719,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         // by showing the user a dialog.
 
                         //No is answered
-                        Log.d(TAG, "onResult: location is not on");
                         userHasAnsweredLocationTurnOn = true;
                         try {
                             // Show the dialog by calling startResolutionForResult(),
@@ -868,7 +853,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         //Updates current location
         currentPosition = new LatLng(location.getLatitude(), location.getLongitude());
 
-        Log.d("TAG", "Oppdaterte posisjon");
         LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
         CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, mMap.getCameraPosition().zoom);
         mMap.animateCamera(cameraUpdate);
@@ -935,8 +919,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         protected void onProgressUpdate(Integer... values) {
 
 
-            //progress.incrementProgressBy(1);
-            //Log.d(TAG, "onProgressUpdate: " + values[0] + " " + progress.getProgress());
         }
 
         @Override
@@ -944,7 +926,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
           //  addPolylinesToMap();
             final Iterator<PolylineOptions> iterator = polylinesReadyToAdd.iterator();
-            Log.d(TAG, "onPostExecute: " + polylinesReadyToAdd.size());
             try {
 
                 final Handler handler = new Handler();
