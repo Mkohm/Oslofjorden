@@ -1,83 +1,86 @@
 package com.oslofjorden;
 
 
-import com.google.android.gms.common.api.PendingResult;
-import com.google.android.gms.common.api.Result;
-import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.common.api.Status;
-import com.google.android.gms.location.LocationSettingsRequest;
-import com.google.android.gms.location.LocationSettingsResult;
-import com.google.android.gms.location.LocationSettingsStates;
-import com.google.android.gms.location.LocationSettingsStatusCodes;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.model.CameraPosition;
-import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.maps.model.Polyline;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.LatLngBounds;
-
-import android.graphics.Point;
-import android.os.AsyncTask;
-import android.view.Display;
-
-import org.json.JSONException;
-
-import android.text.Html;
-import android.util.Log;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-
-
-import java.util.List;
-
 import android.Manifest;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentSender;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.graphics.Point;
 import android.location.Location;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Build;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.StrictMode;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
-import android.os.Bundle;
+import android.text.Html;
 import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
+import android.util.Log;
+import android.view.Display;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
-
-import java.io.IOException;
-
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.Result;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.location.LocationSettingsResult;
+import com.google.android.gms.location.LocationSettingsStates;
+import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.CameraPosition;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.maps.android.clustering.Cluster;
 import com.google.maps.android.clustering.ClusterItem;
 import com.google.maps.android.clustering.ClusterManager;
 
+import org.json.JSONException;
 
-//TODO: splashscreen with picture while the other things is loading, promote myself,
-//TODO:satelite, sporing icon, oslofjorden ikon, turn on location, to big infoboxes, toast that recommends location, farger kyststi, ask user and no problem, detecte ikke internett
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+
+//TODO:link bug, strict mode, remove log
+
+
+//Lage egen liste med kyststier i andre farger
+//TODO: splashscreen with picture while the other things is loading, promote myself, handle links better, change algorithm for the clusterer
+//TODO:satelite, sporing icon, toast that recommends location, farger kyststi, ask user and no problem, detecte ikke internett
+//TODO: strings and translate to english
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.OnConnectionFailedListener, GoogleApiClient.ConnectionCallbacks, LocationListener, ResultCallback {
     //For debugging
@@ -103,8 +106,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     //If the last location was found, this variable is true, the app then swithches to use lastcameraposition to position the camera onPause/onResume
     private boolean foundLastLocation = false;
 
+
+    LocationRequest mLocationRequest;
     boolean mRequestingLocationUpdates;
     boolean userHasAnsweredLocationTurnOn = false;
+    boolean userAcceptLocation = false;
     //is locationupdates enabled or not
     boolean locationUpdatesSwitch = true;
 
@@ -139,7 +145,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
+
+
         super.onCreate(savedInstanceState);
+
+        //Hvis man hadde location fra start av skal den ikke spørre mer
+        if (isLocationEnabled(getApplicationContext())){
+            userAcceptLocation = true;
+        }
 
 
 
@@ -192,8 +206,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
 
 
-        Log.d(TAG, "onStart: " + locationUpdatesSwitch);
-
         super.onStart();
 
 
@@ -208,13 +220,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         if (mGoogleApiClient.isConnected() && !mRequestingLocationUpdates) {
             if (locationUpdatesSwitch == true) {
                 startLocationUpdates();
-                Log.d(TAG, "onResume: starter location updates" + locationUpdatesSwitch);
             }
 
         }
 
         if (currentCameraPosition != null) {
-            Log.d(TAG, "onResume: flytter til forrige pos" + currentCameraPosition.target.latitude);
             mMap.moveCamera(CameraUpdateFactory.newCameraPosition(currentCameraPosition));
 
         }
@@ -228,7 +238,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             stopLocationUpdates();
             mGoogleApiClient.disconnect();
 
-            Log.d(TAG, "onStop: stopper locationupdates" + locationUpdatesSwitch);
         } catch (Exception e){
             e.printStackTrace();
         }
@@ -243,10 +252,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         try {
             currentZoom = mMap.getCameraPosition().zoom;
             currentCameraPosition = mMap.getCameraPosition();
-            Log.d(TAG, "onPause: " + currentCameraPosition.target.latitude);
+
+
 
             stopLocationUpdates();
-            Log.d(TAG, "onPause: stopper locationupdates" + locationUpdatesSwitch);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -260,7 +269,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     protected void stopLocationUpdates() {
         //TODO:error when trying to stop location updates before mgoogleapiclient is connected
-        Log.d(TAG, "stopLocationUpdates");
         LocationServices.FusedLocationApi.removeLocationUpdates(
                 mGoogleApiClient, this);
         mRequestingLocationUpdates = false;
@@ -285,11 +293,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.getUiSettings().setZoomControlsEnabled(false);
         mMap.getUiSettings().setMapToolbarEnabled(false);
 
-
         //enables location dot, and removes the standard google button
         if (checkPermission()) return;
         mMap.setMyLocationEnabled(true);
         mMap.getUiSettings().setMyLocationButtonEnabled(false);
+        mMap.getUiSettings().setCompassEnabled(true);
 
         final Button onOffLocationButton = (Button) findViewById(R.id.onofflocationbutton);
         onOffLocationButton.setAlpha(0.7f);
@@ -301,15 +309,22 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     onOffLocationButton.setText("Sporing av");
                     locationUpdatesSwitch = false;
                 } else if (locationUpdatesSwitch == false) {
-                    onOffLocationButton.setText("Sporing på");
-                    locationUpdatesSwitch = true;
+
+
+                    if (!userAcceptLocation && !isLocationEnabled(getApplicationContext())){
+                        handleUsersWithoutLocationEnabled(mLocationRequest);
+
+                    } else {
+                        onOffLocationButton.setText("Sporing på");
+                        locationUpdatesSwitch = true;
+                    }
+
+
                 }
 
                 if (locationUpdatesSwitch == true) {
                     startLocationUpdates();
-                    Log.d("TAG", "starter locationupdates igjen.");
                 } else {
-                    Log.d("TAG", "Stopper location updates.");
                     stopLocationUpdates();
 
                 }
@@ -318,7 +333,29 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         });
 
 
-        final TextView kyststiInfo = (TextView) findViewById(R.id.kyststiInfo);
+
+        SharedPreferences sharedPref = this.getPreferences(Context.MODE_PRIVATE);
+        boolean firstTimeUserLaunchesApp = sharedPref.getBoolean("firstTimeUserLaunchesApp", true);
+
+        if (firstTimeUserLaunchesApp){
+            //Saving that the user has opened the app before
+            SharedPreferences.Editor editor = sharedPref.edit();
+            editor.putBoolean("firstTimeUserLaunchesApp", false);
+            editor.commit();
+
+            //Show message to the user
+            InfoDialog infoDialog = new InfoDialog();
+            infoDialog.show(getSupportFragmentManager(), "test");
+
+        }
+
+
+
+
+        //The first time the user launches the app, this message will be shown
+
+
+        final TextView kyststiInfo = (TextView) findViewById(R.id.infobar);
         kyststiInfo.setVisibility(View.INVISIBLE);
 
 
@@ -356,7 +393,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override
             public void onMapClick(final LatLng latLng) {
-                Log.d(TAG, "onMapClick: ");
 
 
                 currentMapClickPosition = latLng;
@@ -389,7 +425,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     Intent i = new Intent(Intent.ACTION_VIEW);
 
                     if (link.matches("http[s]{0,1}:.{0,}")) {
-                        Log.d("TAG", "går til linken: " + link);
                         i.setData(Uri.parse(link));
                         startActivity(i);
                     }
@@ -404,6 +439,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         AddInfoToMap addInfoToMap = new AddInfoToMap();
         addInfoToMap.execute();
+
+
 
 
 
@@ -423,6 +460,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         Animation animation = new TranslateAnimation(0, 0, 0, maxY);
         animation.setDuration(500);
         infobar.startAnimation(animation);
+
+        infobar.setVisibility(View.INVISIBLE);
     }
 
     private int getDeviceMaxY() {
@@ -481,7 +520,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         try {
             name = kyststiInfoMap.get(polyline.getPoints())[1];
         } catch (Exception e) {
-            Log.d(TAG, "setKyststiInfoFromDescriptionAndName: noe gikk dårlig. " + e);
             name = null;
 
         }
@@ -489,7 +527,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         try {
             description = kyststiInfoMap.get(polyline.getPoints())[0];
         } catch (Exception e) {
-            Log.d(TAG, "setKyststiInfoFromDescriptionAndName: " + e);
             description = null;
         }
 
@@ -532,10 +569,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     private void printdescriptions(HashMap<List<LatLng>, String> kyststiinfomap) {
-        Log.d(TAG, "printdescriptions: " + kyststiinfomap.values());
 
         for (String desc : kyststiinfomap.values()) {
-            Log.d(TAG, "printdescriptions: " + desc);
         }
     }
 
@@ -552,6 +587,22 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 }
             }
         }
+
+        final Button sporingButton = (Button) findViewById(R.id.onofflocationbutton);
+
+        if (resultCode == 0){
+
+            //Sporing button should be off
+            sporingButton.setText("SPORING AV");
+            locationUpdatesSwitch = false;
+            userAcceptLocation = false;
+        } else {
+            sporingButton.setText("SPORING PÅ");
+            locationUpdatesSwitch = true;
+            userAcceptLocation = true;
+        }
+
+
     }
 
     public static boolean isLocationEnabled(Context context) {
@@ -603,7 +654,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     protected void startLocationUpdates() {
         if (checkPermission()) return;
 
-        Log.d(TAG, "startLocationUpdates: starter loctationupdates");
 
         //Request locationupdates
         LocationRequest mLocationRequest = requestLocationUpdates();
@@ -633,7 +683,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         }
 
-        LocationRequest mLocationRequest = new LocationRequest();
+        mLocationRequest = new LocationRequest();
         mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         mLocationRequest.setInterval(5000);
         mLocationRequest.setFastestInterval(1000);
@@ -663,18 +713,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         // initialize location requests here.
                         userHasAnsweredLocationTurnOn = true;
 
-
                         break;
                     case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
                         // Location settings are not satisfied, but this can be fixed
                         // by showing the user a dialog.
+
+                        //No is answered
                         userHasAnsweredLocationTurnOn = true;
                         try {
                             // Show the dialog by calling startResolutionForResult(),
                             // and check the result in onActivityResult().
-                            status.startResolutionForResult(
-                                    MapsActivity.this,
-                                    0);
+                            status.startResolutionForResult(MapsActivity.this,0);
                         } catch (IntentSender.SendIntentException e) {
                             // Ignore the error.
                         }
@@ -708,7 +757,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             //Oslo sentrum
             lastLocation = new LatLng(59.908588, 10.741165);
         }
-        Log.d(TAG, "findAndGoToLastKnownLocation: gikk til " + lastLocation.latitude);
         CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(lastLocation, 17);
         mMap.moveCamera(cameraUpdate);
 
@@ -805,7 +853,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         //Updates current location
         currentPosition = new LatLng(location.getLatitude(), location.getLongitude());
 
-        Log.d("TAG", "Oppdaterte posisjon");
         LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
         CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, mMap.getCameraPosition().zoom);
         mMap.animateCamera(cameraUpdate);
@@ -843,7 +890,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         @Override
         protected void onPreExecute() {
+            TextView loading = (TextView) findViewById(R.id.infobar);
+            loading.setVisibility(View.VISIBLE);
 
+            loading.setText("Oslofjorden laster inn kyststier.. De vil poppe opp på kartet ditt snart :)");
 
         }
 
@@ -869,19 +919,45 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         protected void onProgressUpdate(Integer... values) {
 
 
-            //progress.incrementProgressBy(1);
-            //Log.d(TAG, "onProgressUpdate: " + values[0] + " " + progress.getProgress());
         }
 
         @Override
         protected void onPostExecute(Void aVoid) {
 
-            addPolylinesToMap();
+          //  addPolylinesToMap();
+            final Iterator<PolylineOptions> iterator = polylinesReadyToAdd.iterator();
+            try {
 
-            setUpClusterer();
+                final Handler handler = new Handler();
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (iterator.hasNext()){
+                            mMap.addPolyline(iterator.next());
+                            handler.postDelayed(this, 10);
+                        }
+                    }
+                }, 100);
+            } catch (Exception e){
+                e.printStackTrace();
+                Toast.makeText(getApplicationContext(), "Dette gikk dårlig, kyststier ble ikke lastet inn.", Toast.LENGTH_SHORT).show();
+            }
+
+            try {
+                setUpClusterer();
+            } catch (Exception e) {
+                e.printStackTrace();
+                Toast.makeText(getApplicationContext(), "Dette gikk dårlig, markers ble ikke lastet inn.", Toast.LENGTH_SHORT).show();
+            }
 
 
-            final TextView markerInfo = (TextView) findViewById(R.id.kyststiInfo);
+
+            TextView loading = (TextView) findViewById(R.id.infobar);
+            animateInfobarDown(loading);
+
+
+
+            final TextView markerInfo = (TextView) findViewById(R.id.infobar);
             setOnClusterItemClickListener(markerInfo);
 
 
@@ -898,11 +974,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     infobarUp = true;
                 }
 
+    
 
-
-                Log.d(TAG, "onClusterItemClick: ");
                 clickedClusterItem = item;
-                Log.d(TAG, "onClusterItemClick: " + item.getDescription());
 
                 setMarkerDescription(item.getTitle(), item.getDescription(), markerInfo);
 
@@ -926,9 +1000,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             pointStyle.setTitle(feature.getProperty("name"));
             feature.setPointStyle(pointStyle);
 
-            if (feature.getProperty("name").equals("Rodeløkka")) {
-                Log.d(TAG, "addGeoJsonLayerToMapAndAddData: rodeløkke");
-            }
 
             //Gets the description property from the json file
             pointStyle.setSnippet(feature.getProperty("description"));
@@ -991,9 +1062,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
 
+
+
 }
-
-
 
 
 
