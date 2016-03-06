@@ -1,88 +1,85 @@
 package com.oslofjorden;
 
 
-import com.google.android.gms.common.api.PendingResult;
-import com.google.android.gms.common.api.Result;
-import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.common.api.Status;
-import com.google.android.gms.location.LocationSettingsRequest;
-import com.google.android.gms.location.LocationSettingsResult;
-import com.google.android.gms.location.LocationSettingsStates;
-import com.google.android.gms.location.LocationSettingsStatusCodes;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.UiSettings;
-import com.google.android.gms.maps.model.CameraPosition;
-import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.maps.model.Polyline;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.LatLngBounds;
-
-import android.graphics.Point;
-import android.os.AsyncTask;
-import android.os.Handler;
-import android.view.Display;
-
-import org.json.JSONException;
-
-import android.text.Html;
-import android.util.Log;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-
-
-import java.util.Iterator;
-import java.util.List;
-
 import android.Manifest;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentSender;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.graphics.Point;
 import android.location.Location;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Build;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.StrictMode;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
-import android.os.Bundle;
+import android.text.Html;
 import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
+import android.util.Log;
+import android.view.Display;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
-
-import java.io.IOException;
-
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.Result;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.location.LocationSettingsResult;
+import com.google.android.gms.location.LocationSettingsStates;
+import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.CameraPosition;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.maps.android.clustering.Cluster;
 import com.google.maps.android.clustering.ClusterItem;
 import com.google.maps.android.clustering.ClusterManager;
 
-//TODO: v1 - if user location on button - link bug - still loading please wait
+import org.json.JSONException;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+
+//TODO:link bug, strict mode, remove log
 
 
-//TODO: splashscreen with picture while the other things is loading, promote myself, handle links better, ask user again if location is off and the user tries to use the locationbutton
-//TODO:satelite, sporing icon, oslofjorden ikon, turn on location, to big infoboxes, toast that recommends location, farger kyststi, ask user and no problem, detecte ikke internett
+
+//TODO: splashscreen with picture while the other things is loading, promote myself, handle links better, change algorithm for the clusterer
+//TODO:satelite, sporing icon, toast that recommends location, farger kyststi, ask user and no problem, detecte ikke internett
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.OnConnectionFailedListener, GoogleApiClient.ConnectionCallbacks, LocationListener, ResultCallback {
     //For debugging
@@ -147,6 +144,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
+
+
         super.onCreate(savedInstanceState);
 
         //Hvis man hadde location fra start av skal den ikke spørre mer
@@ -205,7 +205,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
 
 
-
         super.onStart();
 
 
@@ -252,6 +251,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         try {
             currentZoom = mMap.getCameraPosition().zoom;
             currentCameraPosition = mMap.getCameraPosition();
+
+
 
             stopLocationUpdates();
         } catch (Exception e) {
@@ -334,6 +335,28 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             }
         });
+
+
+
+        SharedPreferences sharedPref = this.getPreferences(Context.MODE_PRIVATE);
+        boolean firstTimeUserLaunchesApp = sharedPref.getBoolean("firstTimeUserLaunchesApp", true);
+
+        if (firstTimeUserLaunchesApp){
+            //Saving that the user has opened the app before
+            SharedPreferences.Editor editor = sharedPref.edit();
+            editor.putBoolean("firstTimeUserLaunchesApp", false);
+            editor.commit();
+
+            //Show message to the user
+            InfoDialog infoDialog = new InfoDialog();
+            infoDialog.show(getSupportFragmentManager(), "test");
+
+        }
+
+
+
+
+        //The first time the user launches the app, this message will be shown
 
 
         final TextView kyststiInfo = (TextView) findViewById(R.id.infobar);
@@ -922,23 +945,31 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
           //  addPolylinesToMap();
             final Iterator<PolylineOptions> iterator = polylinesReadyToAdd.iterator();
             Log.d(TAG, "onPostExecute: " + polylinesReadyToAdd.size());
+            try {
 
-
-            final Handler handler = new Handler();
-            handler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    if (iterator.hasNext()){
-                        Log.d(TAG, "run: ");
-                        mMap.addPolyline(iterator.next());
-                        handler.postDelayed(this, 10);
+                final Handler handler = new Handler();
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (iterator.hasNext()){
+                            mMap.addPolyline(iterator.next());
+                            handler.postDelayed(this, 10);
+                        }
                     }
-                }
-            }, 100);
+                }, 100);
+            } catch (Exception e){
+                e.printStackTrace();
+                Toast.makeText(getApplicationContext(), "Dette gikk dårlig, kyststier ble ikke lastet inn.", Toast.LENGTH_SHORT).show();
+            }
+
+            try {
+                setUpClusterer();
+            } catch (Exception e) {
+                e.printStackTrace();
+                Toast.makeText(getApplicationContext(), "Dette gikk dårlig, markers ble ikke lastet inn.", Toast.LENGTH_SHORT).show();
+            }
 
 
-
-            setUpClusterer();
 
             TextView loading = (TextView) findViewById(R.id.infobar);
             animateInfobarDown(loading);
@@ -1050,9 +1081,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
 
+
+
 }
-
-
 
 
 
