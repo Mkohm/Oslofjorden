@@ -13,7 +13,7 @@ public class InfoDialog extends DialogFragment {
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         // Use the Builder class for convenient dialog construction
         final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        builder.setMessage("Hei! \n\nOslofjorden anbefaler bruk av gps ved bruk av appen, slik at den kan følge deg under turen din. Trykk på kyststier og markører for å få opp mer info. Du kan skru av sporing med knappen øverst til høyre. \n\nGod tur!").setTitle("Oslofjorden");
+        builder.setMessage("Hei! \n\nOslofjorden anbefaler bruk av gps ved bruk av appen, slik at den kan følge deg under turen din.\n\n- Trykk på kyststier og markører for å få opp mer info.\n- Du kan skru av sporing med knappen øverst til høyre. \n- Mer funksjnalitet er på vei, stay tuned.\n\nGod tur!").setTitle("Oslofjorden");
 
 
 
