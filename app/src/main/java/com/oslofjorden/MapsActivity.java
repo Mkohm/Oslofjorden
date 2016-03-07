@@ -24,6 +24,7 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.Fragment;
 import android.text.Html;
 import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
@@ -83,6 +84,8 @@ import java.util.List;
 //TODO: strings and translate to english
 //TODO: add the ok button on the infoscren, add toggle switch for the location button
 //Kræsj når man går ut mens man laster inn data
+// nexus 5: kart kommer opp men standard infobox og ikke noe annet, akkurat som på emulator
+//skrudde av gps, spørsmål om du vil skru på igjen vent.. krøsj
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.OnConnectionFailedListener, GoogleApiClient.ConnectionCallbacks, LocationListener, ResultCallback {
     //For debugging
@@ -145,6 +148,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private static final String STATE_RESOLVING_ERROR = "resolving_error";
     //private static final String TAG = "TAG";
+    
+    private final int PERMISSIONS_OK = 0;
 
 
     @Override
@@ -153,14 +158,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
         super.onCreate(savedInstanceState);
+        Log.d(TAG, "onCreate: ");
 
         //Hvis man hadde location fra start av skal den ikke spørre mer
         if (isLocationEnabled(getApplicationContext())){
             userAcceptLocation = true;
         }
-
-
-
 
         setContentView(R.layout.activity_maps);
 
@@ -291,18 +294,22 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
+        Log.d(TAG, "onMapReady: ");
 
         mMap = googleMap;
         //enable zoom buttons, and remove toolbar when clicking on markers
         mMap.getUiSettings().setZoomControlsEnabled(false);
         mMap.getUiSettings().setMapToolbarEnabled(false);
 
+        Log.d(TAG, "onMapReady: settings");
         //enables location dot, and removes the standard google button
         if (checkPermission()) return;
+        Log.d(TAG, "onMapReady: aftercheck");
         mMap.setMyLocationEnabled(true);
         mMap.getUiSettings().setMyLocationButtonEnabled(false);
         mMap.getUiSettings().setCompassEnabled(true);
 
+        Log.d(TAG, "onMapReady: settings2");
         final Button onOffLocationButton = (Button) findViewById(R.id.onofflocationbutton);
         onOffLocationButton.setAlpha(0.7f);
         onOffLocationButton.setOnClickListener(new View.OnClickListener() {
@@ -439,7 +446,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         });
 
-
+        Log.d(TAG, "onMapReady: 2");
+        
         try {
             if (! infoAddedToMap){
                 AddInfoToMap addInfoToMap = new AddInfoToMap();
@@ -451,10 +459,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         } catch (Exception e){
             e.printStackTrace();
         }
-
-
-
-
 
 
 
@@ -487,16 +491,47 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private boolean checkPermission() {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
+            String[] permissions = {Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION};
+            ActivityCompat.requestPermissions(this, permissions, 1);
             //    ActivityCompat#requestPermissions
             // here to request the missing permissions, and then overriding
             //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
             //                                          int[] grantResults)
+            
             // to handle the case where the user grants the permission. See the documentation
             // for ActivityCompat#requestPermissions for more details.
+
             return true;
+
+
         }
         return false;
     }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case PERMISSIONS_OK: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                    // permission was granted, yay! Do the
+                    // contacts-related task you need to do.
+
+                } else {
+                    Log.d(TAG, "onRequestPermissionsResult: fikk ikke tilgang");
+                    // permission denied, boo! Disable the
+                    // functionality that depends on this permission.
+                }
+                return;
+            }
+
+            // other 'case' lines to check for other
+            // permissions this app might request
+        }
+    }
+
 
     public static void addGeoJsonLayerToDataStructure() {
         jsonLayer.addLayerToMap();
@@ -606,11 +641,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         if (resultCode == 0){
 
             //Sporing button should be off
-            sporingButton.setText("SPORING AV");
+            sporingButton.setText("Sporing av");
             locationUpdatesSwitch = false;
             userAcceptLocation = false;
         } else {
-            sporingButton.setText("SPORING PÅ");
+            sporingButton.setText("Sporing på");
             locationUpdatesSwitch = true;
             userAcceptLocation = true;
         }
@@ -903,6 +938,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         @Override
         protected void onPreExecute() {
+            Log.d(TAG, "onPreExecute: ");
             TextView loading = (TextView) findViewById(R.id.infobar);
             loading.setVisibility(View.VISIBLE);
 
