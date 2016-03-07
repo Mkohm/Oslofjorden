@@ -81,6 +81,8 @@ import java.util.List;
 //TODO: splashscreen with picture while the other things is loading, promote myself, handle links better, change algorithm for the clusterer
 //TODO:satelite, sporing icon, toast that recommends location, farger kyststi, ask user and no problem, detecte ikke internett
 //TODO: strings and translate to english
+//TODO: add the ok button on the infoscren, add toggle switch for the location button
+//Kræsj når man går ut mens man laster inn data
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.OnConnectionFailedListener, GoogleApiClient.ConnectionCallbacks, LocationListener, ResultCallback {
     //For debugging
@@ -94,6 +96,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     LatLng currentPosition;
     CameraPosition currentCameraPosition;
     LatLng currentMapClickPosition;
+
+    boolean infoAddedToMap = false;
 
     Cluster clickedCluster;
     MyMarkerOptions clickedClusterItem;
@@ -436,9 +440,18 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         });
 
 
+        try {
+            if (! infoAddedToMap){
+                AddInfoToMap addInfoToMap = new AddInfoToMap();
+                addInfoToMap.execute();
 
-        AddInfoToMap addInfoToMap = new AddInfoToMap();
-        addInfoToMap.execute();
+            }
+            infoAddedToMap = true;
+
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+
 
 
 
