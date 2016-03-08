@@ -79,13 +79,11 @@ import java.util.List;
 
 
 //Lage egen liste med kyststier i andre farger
-//TODO: splashscreen with picture while the other things is loading, promote myself, handle links better, change algorithm for the clusterer
-//TODO:satelite, sporing icon, toast that recommends location, farger kyststi, ask user and no problem, detecte ikke internett
+//TODO: promote myself, handle links better
+//TODO:farger kystst
 //TODO: strings and translate to english
-//TODO: add the ok button on the infoscren, add toggle switch for the location button
-//Kræsj når man går ut mens man laster inn data
-// nexus 5: kart kommer opp men standard infobox og ikke noe annet, akkurat som på emulator
 //skrudde av gps, spørsmål om du vil skru på igjen vent.. krøsj
+//Adding custom tabs, sheet from material design
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.OnConnectionFailedListener, GoogleApiClient.ConnectionCallbacks, LocationListener, ResultCallback {
     //For debugging
@@ -326,7 +324,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 } else if (locationUpdatesSwitch == false) {
 
 
-                    if (!userAcceptLocation && !isLocationEnabled(getApplicationContext())){
+                    if (!userAcceptLocation || !isLocationEnabled(getApplicationContext())){
                         handleUsersWithoutLocationEnabled(mLocationRequest);
 
                     } else {
