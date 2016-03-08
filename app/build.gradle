@@ -7,8 +7,8 @@ android {
         applicationId 'com.oslofjorden'
         minSdkVersion 16
         targetSdkVersion 23
-        versionName '3.0'
-        versionCode 3
+        versionName '4.0'
+        versionCode 4
 
     }
     buildTypes {
@@ -34,7 +34,6 @@ dependencies {
     compile 'com.google.android.gms:play-services-maps:8.4.0'
     compile 'com.google.maps.android:android-maps-utils:0.4.+'
     compile 'com.android.support:support-v4:23.1.1'
-
     compile "com.android.support:appcompat-v7:${supportLibVersion}"
     compile "com.android.support:design:${supportLibVersion}"
 }
