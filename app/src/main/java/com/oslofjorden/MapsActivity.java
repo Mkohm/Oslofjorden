@@ -21,6 +21,7 @@ import android.os.StrictMode;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
@@ -33,7 +34,6 @@ import android.view.Display;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
-import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -294,30 +294,34 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
-        Log.d(TAG, "onMapReady: ");
 
         mMap = googleMap;
         //enable zoom buttons, and remove toolbar when clicking on markers
         mMap.getUiSettings().setZoomControlsEnabled(false);
         mMap.getUiSettings().setMapToolbarEnabled(false);
 
-        Log.d(TAG, "onMapReady: settings");
         //enables location dot, and removes the standard google button
         if (checkPermission()) return;
-        Log.d(TAG, "onMapReady: aftercheck");
         mMap.setMyLocationEnabled(true);
         mMap.getUiSettings().setMyLocationButtonEnabled(false);
         mMap.getUiSettings().setCompassEnabled(true);
 
-        Log.d(TAG, "onMapReady: settings2");
-        final Button onOffLocationButton = (Button) findViewById(R.id.onofflocationbutton);
-        onOffLocationButton.setAlpha(0.7f);
+        final FloatingActionButton onOffLocationButton = (FloatingActionButton) findViewById(R.id.onofflocationbutton);
+
+        //Sets the initial icon depending on current settings
+        if (isLocationEnabled(getApplicationContext())){
+            onOffLocationButton.setImageResource(R.drawable.location_on_64px);
+        } else {
+            onOffLocationButton.setImageResource(R.drawable.location_off_64px);
+        }
+
         onOffLocationButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 
                 if (locationUpdatesSwitch == true) {
-                    onOffLocationButton.setText("Sporing av");
+                    onOffLocationButton.setImageResource(R.drawable.location_off_64px);
+                    Toast.makeText(getApplicationContext(), "Oppdatering av posisjon - av", Toast.LENGTH_SHORT).show();
                     locationUpdatesSwitch = false;
                 } else if (locationUpdatesSwitch == false) {
 
@@ -326,7 +330,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         handleUsersWithoutLocationEnabled(mLocationRequest);
 
                     } else {
-                        onOffLocationButton.setText("Sporing på");
+                        onOffLocationButton.setImageResource(R.drawable.location_on_64px);
+                        Toast.makeText(getApplicationContext(), "Oppdatering av posisjon - på", Toast.LENGTH_SHORT).show();
                         locationUpdatesSwitch = true;
                     }
 
@@ -505,22 +510,28 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
         }
+        //TODO: return true?
         return false;
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+
+
+
         switch (requestCode) {
             case PERMISSIONS_OK: {
                 // If request is cancelled, the result arrays are empty.
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
 
-                    // permission was granted, yay! Do the
-                    // contacts-related task you need to do.
+                    // permission was granted, yay!
+                    Log.i(TAG, "onRequestPermissionsResult: Fikk tilgang kan nå skru på location");
+                    //Skru på location
+
 
                 } else {
-                    Log.d(TAG, "onRequestPermissionsResult: fikk ikke tilgang");
+                    Log.i(TAG, "onRequestPermissionsResult: Fikk ikke tilgang til location");
                     // permission denied, boo! Disable the
                     // functionality that depends on this permission.
                 }
@@ -636,16 +647,20 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         }
 
-        final Button sporingButton = (Button) findViewById(R.id.onofflocationbutton);
+        final FloatingActionButton onOffLocationButton = (FloatingActionButton) findViewById(R.id.onofflocationbutton);
 
         if (resultCode == 0){
 
             //Sporing button should be off
-            sporingButton.setText("Sporing av");
+            Toast.makeText(getApplicationContext(), "Oppdatering av posisjon - av", Toast.LENGTH_SHORT).show();
+            onOffLocationButton.setImageResource(R.drawable.location_off_64px);
+
             locationUpdatesSwitch = false;
             userAcceptLocation = false;
         } else {
-            sporingButton.setText("Sporing på");
+            Toast.makeText(getApplicationContext(), "Oppdatering av posisjon - på", Toast.LENGTH_SHORT).show();
+            onOffLocationButton.setImageResource(R.drawable.location_on_64px);
+
             locationUpdatesSwitch = true;
             userAcceptLocation = true;
         }
@@ -904,6 +919,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
         CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, mMap.getCameraPosition().zoom);
         mMap.animateCamera(cameraUpdate);
+        Log.i(TAG, "OnLocationChanged: Location oppdatert");
 
     }
 
@@ -1010,6 +1026,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             setOnClusterItemClickListener(markerInfo);
 
 
+            Log.i(TAG, "onPostExecute: Kartinformasjon lastet inn!");
         }
     }
 
