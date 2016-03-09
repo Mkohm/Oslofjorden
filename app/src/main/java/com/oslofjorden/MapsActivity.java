@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.IntentSender;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.location.Location;
@@ -21,19 +22,26 @@ import android.os.StrictMode;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.customtabs.CustomTabsIntent;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.Fragment;
 import android.text.Html;
+import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
+import android.text.style.ClickableSpan;
+import android.text.style.ForegroundColorSpan;
+import android.text.style.URLSpan;
+import android.text.style.UnderlineSpan;
 import android.util.Log;
 import android.view.Display;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
+import android.widget.CheckBox;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -84,14 +92,17 @@ import java.util.List;
 //TODO: strings and translate to english
 //skrudde av gps, spørsmål om du vil skru på igjen vent.. krøsj
 //Adding custom tabs, sheet from material design
+//Binary file of json
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.OnConnectionFailedListener, GoogleApiClient.ConnectionCallbacks, LocationListener, ResultCallback {
+public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.OnConnectionFailedListener, GoogleApiClient.ConnectionCallbacks, LocationListener, ResultCallback, CustomTabActivityHelper.ConnectionCallback {
     //For debugging
     private static String TAG = "TAG";
 
 
     private static GoogleMap mMap;
     GoogleApiClient mGoogleApiClient;
+
+    private CheckBox mCustomBackButtonCheckBox;
 
     float currentZoom;
     LatLng currentPosition;
@@ -150,6 +161,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private final int PERMISSIONS_OK = 0;
 
 
+
+    private CustomTabActivityHelper customTabActivityHelper;
+
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
@@ -162,6 +178,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         if (isLocationEnabled(getApplicationContext())){
             userAcceptLocation = true;
         }
+
+
+        //Set up custom tabs
+        customTabActivityHelper = new CustomTabActivityHelper();
+        customTabActivityHelper.setConnectionCallback(this);
+
+
+
 
         setContentView(R.layout.activity_maps);
 
@@ -179,6 +203,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mResolvingError = savedInstanceState != null
                 && savedInstanceState.getBoolean(STATE_RESOLVING_ERROR, false);
 
+
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        customTabActivityHelper.setConnectionCallback(null);
 
     }
 
@@ -212,6 +243,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
         super.onStart();
+
+        customTabActivityHelper.bindCustomTabsService(this);
+
 
 
     }
@@ -249,6 +283,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
         super.onStop();
+
+        customTabActivityHelper.unbindCustomTabsService(this);
+
     }
 
     @Override
@@ -408,6 +445,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @Override
             public void onMapClick(final LatLng latLng) {
 
+                Log.i(TAG, "onMapClick: Du klikket på kartet.");
 
                 currentMapClickPosition = latLng;
 
@@ -428,7 +466,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         });
 
-        //The event when you click on the info-window
+        /*//The event when you click on the info-window
         mMap.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
             @Override
             public void onInfoWindowClick(Marker marker) {
@@ -447,10 +485,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
             }
-        });
+        });*/
 
-        Log.d(TAG, "onMapReady: 2");
-        
+
         try {
             if (! infoAddedToMap){
                 AddInfoToMap addInfoToMap = new AddInfoToMap();
@@ -549,16 +586,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private void setMarkerDescription(String title, String description, TextView txtMarkerDescription) {
         txtMarkerDescription.setMovementMethod(LinkMovementMethod.getInstance());
 
-        String markerTitle = "<p>" + title + "</p>";
+       String type = "Marker";
+       String markerTitle = "<p>" + title + "</p>";
 
         //Hvis den ikke er tom og er en url så skal link vises
         if (description != null) {
             String markerDescription = "";
             if (description.matches("http[s]{0,1}:.{0,}")) {
 
-                markerDescription = "<a href=\"" + description + "\"> <u> Klikk her for mer info </u></a>";
-
-                txtMarkerDescription.setText(Html.fromHtml(markerTitle + markerDescription));
+                setTextViewHTML(txtMarkerDescription, description, type, title);
 
                 //Det er ikke en link, men kanskje noe annet interessant
             } else {
@@ -568,16 +604,20 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         } else {
             txtMarkerDescription.setText(Html.fromHtml(markerTitle));
         }
+
+
+
     }
 
     private void setKyststiInfoFromDescriptionAndName(Polyline polyline, TextView kyststiInfo) {
         String description;
-        String name;
+        String title;
+        String type = "Polyline";
 
         try {
-            name = kyststiInfoMap.get(polyline.getPoints())[1];
+            title = kyststiInfoMap.get(polyline.getPoints())[1];
         } catch (Exception e) {
-            name = null;
+            title = null;
 
         }
 
@@ -589,40 +629,146 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
         //Fant ingenting, tekst settes til her var det ingenting.
-        if (description == null && name == null) {
+        if (description == null && title == null) {
             kyststiInfo.setText("Her var det ingenting, gitt!");
-        } else if (description == null && name != null) {
+        } else if (description == null && title != null) {
             //Setter navnet
-            kyststiInfo.setText(name);
-        } else if (description != null && name == null) {
-            setKystiDescription(kyststiInfo, description);
+            kyststiInfo.setText(title);
+        } else if (description != null && title == null) {
 
 
-        } else if (description != null && name != null) {
-            setKystiDescription(kyststiInfo, description);
+
+            setTextViewHTML(kyststiInfo, description, type, title);
+
+
+        } else if (description != null && title != null) {
+            setTextViewHTML(kyststiInfo, description, type, title);
         }
 
 
     }
 
-    private void setKystiDescription(TextView kyststiInfo, String description) {
+    /*private String getKystiDescription(TextView kyststiInfo, String description) {
         //Hvis description inneholder link settes denne som description
         if (description.contains("<a href=")) {
 
             String kyststiTitle = description.substring(0, description.indexOf("<a"));
-            kyststiTitle = "<p>" + kyststiTitle + "</p> ";
+
 
             String kyststiLink = description.substring(description.indexOf("<a href=") + 9, description.indexOf(">"));
-            kyststiLink = "<a href=\"" + kyststiLink + "\"> <u> Klikk her for mer info</u></a>";
+            //kyststiLink = "<a href=\"" + kyststiLink + "\"> <u> Klikk her for mer info</u></a>";
 
 
-            kyststiInfo.setText(Html.fromHtml(kyststiTitle + kyststiLink));
-            kyststiInfo.setMovementMethod(LinkMovementMethod.getInstance());
 
             //Det er ingen link, da settes det som er der
         } else {
             kyststiInfo.setText(description);
         }
+
+    }*/
+
+    protected void makeLinkClickable(SpannableStringBuilder strBuilder, final URLSpan span) {
+        int start = strBuilder.getSpanStart(span);
+        int end = strBuilder.getSpanEnd(span);
+        int flags = strBuilder.getSpanFlags(span);
+
+
+        //May launch this link
+        Log.i(TAG, "makeLinkClickable: Gjør link klar for å åpnes.");
+        final Uri uri  = Uri.parse(span.getURL());
+        customTabActivityHelper.mayLaunchUrl(uri, null, null);
+
+        ClickableSpan clickable = new ClickableSpan() {
+            public void onClick(View view) {
+                // Do something with span.getURL() to handle the link click...
+
+
+                CustomTabsIntent.Builder intentBuilder = new CustomTabsIntent.Builder();
+                intentBuilder.setToolbarColor(getResources().getColor(R.color.colorPrimaryDark)).setShowTitle(true);
+
+
+                intentBuilder.setCloseButtonIcon(BitmapFactory.decodeResource(getResources(), R.drawable.ic_arrow_back));
+                intentBuilder.setStartAnimations(getApplicationContext(), R.anim.slide_in_right, R.anim.slide_out_left);
+                intentBuilder.setExitAnimations(MapsActivity.this, android.R.anim.slide_in_left, android.R.anim.slide_out_right);
+
+
+
+                //CustomTabsIntent customTabsIntent = new CustomTabsIntent.Builder(customTabActivityHelper.getSession()).build();
+                CustomTabActivityHelper.openCustomTab(MapsActivity.this, intentBuilder.build(), uri, new WebviewFallback());
+            }
+        };
+
+
+        strBuilder.setSpan(clickable, start, end, flags);
+        strBuilder.removeSpan(span);
+    }
+
+    protected void setTextViewHTML(TextView text, String description, String type, String title) {
+        Log.d(TAG, "setTextViewHTML: description: " + description);
+
+
+        if (type.equals("Marker")){
+            //Extract the url
+
+            CharSequence sequence = Html.fromHtml(description);
+            URLSpan[] urls = {new URLSpan(description)};
+            Log.d(TAG, "setTextViewHTML: URLL:" + urls[0].getURL());
+
+            String descriptionWithoutLink = description.substring(0, description.indexOf("http://"));
+            SpannableStringBuilder withCustomLinkLayout = new SpannableStringBuilder("Tomt");
+            URLSpan[] urls2 = null;
+
+            //If there is a link in the description
+            if (urls.length != 0){
+                //Create the desired format of textview
+                String link = "<a href=\"" + urls[0].getURL() + "\"><u>Klikk her for mer info</u></a>";
+                CharSequence formattedText = Html.fromHtml(link);
+                withCustomLinkLayout = new SpannableStringBuilder(formattedText);
+                urls2 = withCustomLinkLayout.getSpans(0, formattedText.length(), URLSpan.class);
+                withCustomLinkLayout.insert(0, title+ "\n\n");
+            }
+
+
+            for(URLSpan span : urls2) {
+                Log.d(TAG, "setTextViewHTML: span" + span.getURL());
+                makeLinkClickable(withCustomLinkLayout, span);
+            }
+            text.setMovementMethod(LinkMovementMethod.getInstance());
+
+            text.setText(withCustomLinkLayout);
+        }
+
+        if (type.equals("Polyline")) {
+            //Extract the url
+            CharSequence sequence = Html.fromHtml(description);
+            SpannableStringBuilder strBuilder = new SpannableStringBuilder(sequence);
+            URLSpan[] urls = strBuilder.getSpans(0, sequence.length(), URLSpan.class);
+
+            String descriptionWithoutLink = description.substring(0, description.indexOf("<a href"));
+            SpannableStringBuilder withCustomLinkLayout = new SpannableStringBuilder("Tomt");
+            URLSpan[] urls2 = null;
+
+            //If there is a link in the description
+            if (urls.length != 0){
+                //Create the desired format of textview
+                String link = "<a href=\"" + urls[0].getURL() + "\"><u>Klikk her for mer info</u></a>";
+                CharSequence formattedText = Html.fromHtml(link);
+                withCustomLinkLayout = new SpannableStringBuilder(formattedText);
+                urls2 = withCustomLinkLayout.getSpans(0, formattedText.length(), URLSpan.class);
+                withCustomLinkLayout.insert(0, descriptionWithoutLink);
+            }
+
+
+            for(URLSpan span : urls2) {
+                Log.d(TAG, "setTextViewHTML: span" + span.getURL());
+                makeLinkClickable(withCustomLinkLayout, span);
+            }
+            text.setMovementMethod(LinkMovementMethod.getInstance());
+
+            text.setText(withCustomLinkLayout);
+        }
+
+
     }
 
     private void printdescriptions(HashMap<List<LatLng>, String> kyststiinfomap) {
@@ -925,6 +1071,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     public void onResult(@NonNull Result result) {
+
+    }
+
+    @Override
+    public void onCustomTabsConnected() {
+
+    }
+
+    @Override
+    public void onCustomTabsDisconnected() {
 
     }
 

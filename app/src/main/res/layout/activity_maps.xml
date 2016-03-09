@@ -86,5 +86,6 @@
         android:layout_gravity="center_horizontal|bottom"
         android:paddingTop="5dp"
         android:shadowColor="#ffffff"
-        android:paddingBottom="5dp" />
+        android:paddingBottom="5dp"
+        android:clickable="true" />
 </FrameLayout>

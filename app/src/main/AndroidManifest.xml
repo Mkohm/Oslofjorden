@@ -40,6 +40,14 @@
             </intent-filter>
         </activity>
 
+
+        <activity
+            android:name=".WebviewActivity"
+            android:label="Webview"
+            >
+
+        </activity>
+
     </application>
 
 </manifest>
