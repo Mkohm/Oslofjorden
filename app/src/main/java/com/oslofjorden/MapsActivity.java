@@ -744,28 +744,39 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             SpannableStringBuilder strBuilder = new SpannableStringBuilder(sequence);
             URLSpan[] urls = strBuilder.getSpans(0, sequence.length(), URLSpan.class);
 
-            String descriptionWithoutLink = description.substring(0, description.indexOf("<a href"));
-            SpannableStringBuilder withCustomLinkLayout = new SpannableStringBuilder("Tomt");
-            URLSpan[] urls2 = null;
+            String descriptionWithoutLink = "Her var det desverre ingen link";
+            try {
+                descriptionWithoutLink = description.substring(0, description.indexOf("<a href"));
+                SpannableStringBuilder withCustomLinkLayout = new SpannableStringBuilder("Tomt");
+                URLSpan[] urls2 = null;
 
-            //If there is a link in the description
-            if (urls.length != 0){
-                //Create the desired format of textview
-                String link = "<a href=\"" + urls[0].getURL() + "\"><u>Klikk her for mer info</u></a>";
-                CharSequence formattedText = Html.fromHtml(link);
-                withCustomLinkLayout = new SpannableStringBuilder(formattedText);
-                urls2 = withCustomLinkLayout.getSpans(0, formattedText.length(), URLSpan.class);
-                withCustomLinkLayout.insert(0, descriptionWithoutLink);
+                //If there is a link in the description
+                if (urls.length != 0){
+                    //Create the desired format of textview
+                    String link = "<a href=\"" + urls[0].getURL() + "\"><u>Klikk her for mer info</u></a>";
+                    CharSequence formattedText = Html.fromHtml(link);
+                    withCustomLinkLayout = new SpannableStringBuilder(formattedText);
+                    urls2 = withCustomLinkLayout.getSpans(0, formattedText.length(), URLSpan.class);
+                    withCustomLinkLayout.insert(0, descriptionWithoutLink);
+                }
+
+
+                for(URLSpan span : urls2) {
+                    Log.d(TAG, "setTextViewHTML: span" + span.getURL());
+                    makeLinkClickable(withCustomLinkLayout, span);
+                }
+                text.setMovementMethod(LinkMovementMethod.getInstance());
+
+                text.setText(withCustomLinkLayout);
+
+
+            } catch (Exception e){
+                e.printStackTrace();
+                descriptionWithoutLink = "Her var det desverre ingen link";
+                text.setText(descriptionWithoutLink);
             }
 
 
-            for(URLSpan span : urls2) {
-                Log.d(TAG, "setTextViewHTML: span" + span.getURL());
-                makeLinkClickable(withCustomLinkLayout, span);
-            }
-            text.setMovementMethod(LinkMovementMethod.getInstance());
-
-            text.setText(withCustomLinkLayout);
         }
 
 
