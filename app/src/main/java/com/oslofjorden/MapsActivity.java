@@ -93,6 +93,7 @@ import java.util.List;
 //skrudde av gps, spørsmål om du vil skru på igjen vent.. krøsj
 //Adding custom tabs, sheet from material design
 //Binary file of json
+//Renskrive fil eller lage validering
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.OnConnectionFailedListener, GoogleApiClient.ConnectionCallbacks, LocationListener, ResultCallback, CustomTabActivityHelper.ConnectionCallback {
     //For debugging
@@ -714,7 +715,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             URLSpan[] urls = {new URLSpan(description)};
             Log.d(TAG, "setTextViewHTML: URLL:" + urls[0].getURL());
 
-            String descriptionWithoutLink = description.substring(0, description.indexOf("http://"));
+            String descriptionWithoutLink = description.substring(0, description.indexOf("http"));
             SpannableStringBuilder withCustomLinkLayout = new SpannableStringBuilder("Tomt");
             URLSpan[] urls2 = null;
 
