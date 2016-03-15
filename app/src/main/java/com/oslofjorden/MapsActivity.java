@@ -36,6 +36,7 @@ import android.text.style.ClickableSpan;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.URLSpan;
 import android.text.style.UnderlineSpan;
+import android.util.EventLogTags;
 import android.util.Log;
 import android.view.Display;
 import android.view.View;
@@ -85,15 +86,11 @@ import java.util.List;
 
 //TODO:link bug, strict mode, remove log
 
-
-//Lage egen liste med kyststier i andre farger
 //TODO: promote myself, handle links better
-//TODO:farger kystst
-//TODO: strings and translate to english
-//skrudde av gps, spørsmål om du vil skru på igjen vent.. krøsj
-//Adding custom tabs, sheet from material design
-//Binary file of json
+//sheet from material design
 //Renskrive fil eller lage validering
+//Fikse linker (plassbruk på infobox) og hellesøya teltplass (name) + (description)
+//Test webview activity
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.OnConnectionFailedListener, GoogleApiClient.ConnectionCallbacks, LocationListener, ResultCallback, CustomTabActivityHelper.ConnectionCallback {
     //For debugging
@@ -103,7 +100,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private static GoogleMap mMap;
     GoogleApiClient mGoogleApiClient;
 
-    private CheckBox mCustomBackButtonCheckBox;
 
     float currentZoom;
     LatLng currentPosition;
@@ -112,7 +108,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     boolean infoAddedToMap = false;
 
-    Cluster clickedCluster;
     MyMarkerOptions clickedClusterItem;
     public ClusterManager<MyMarkerOptions> mClusterManager;
 
@@ -131,11 +126,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     //is locationupdates enabled or not
     boolean locationUpdatesSwitch = true;
 
-    //current link to link to
-    String link = "EMPTY";
+
 
     public static HashMap<List<LatLng>, String[]> kyststiInfoMap = new HashMap<List<LatLng>, String[]>();
-    public static String currentDescription = "Tom";
     public static ArrayList<String> descriptionList = new ArrayList<String>();
     public static int indexInDescriptionList = 0;
     public static ArrayList<String> nameList = new ArrayList<String>();
@@ -146,7 +139,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
     private Polyline currentPolyline;
-
+    private String currentPolylineDescription;
     //Variables that the callback onconnectionfailed needs
 
     // Request code to use when launching the resolution activity
@@ -157,10 +150,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private boolean mResolvingError = false;
 
     private static final String STATE_RESOLVING_ERROR = "resolving_error";
-    //private static final String TAG = "TAG";
-    
-    private final int PERMISSIONS_OK = 0;
 
+    private final int PERMISSIONS_OK = 0;
 
 
     private CustomTabActivityHelper customTabActivityHelper;
@@ -318,16 +309,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
 
-    public boolean intersects(LatLngBounds bounds, LatLng southwest, LatLng northeast) {
-        final boolean latIntersects =
-                (bounds.northeast.latitude >= southwest.latitude) && (bounds.southwest.latitude <= northeast.latitude);
-        final boolean lngIntersects =
-                (bounds.northeast.longitude >= southwest.longitude) && (bounds.southwest.longitude <= northeast.longitude);
-
-        return latIntersects && lngIntersects;
-    }
-
-
     @Override
     public void onMapReady(GoogleMap googleMap) {
 
@@ -347,6 +328,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         //Sets the initial icon depending on current settings
         if (isLocationEnabled(getApplicationContext())){
             onOffLocationButton.setImageResource(R.drawable.location_on_64px);
+
+
         } else {
             onOffLocationButton.setImageResource(R.drawable.location_off_64px);
         }
@@ -354,6 +337,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         onOffLocationButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Log.d(TAG, "onClick: Stutus switch:" + locationUpdatesSwitch);
 
                 if (locationUpdatesSwitch == true) {
                     onOffLocationButton.setImageResource(R.drawable.location_off_64px);
@@ -363,13 +347,19 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
                     if (!userAcceptLocation || !isLocationEnabled(getApplicationContext())){
+                        Log.d(TAG, "onClick: skal spørre deg om å skru på");
+
                         handleUsersWithoutLocationEnabled(mLocationRequest);
+
+
 
                     } else {
                         onOffLocationButton.setImageResource(R.drawable.location_on_64px);
                         Toast.makeText(getApplicationContext(), "Oppdatering av posisjon - på", Toast.LENGTH_SHORT).show();
                         locationUpdatesSwitch = true;
                     }
+
+
 
 
                 }
@@ -415,11 +405,23 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @Override
             public void onPolylineClick(Polyline polyline) {
 
+
+
+                //Sets the color back to what it was after clicking somewhere else
                 if (currentPolyline != null) {
-                    currentPolyline.setColor(Color.BLUE);
+
+
+                    if (currentPolylineDescription.contains("Sykkelvei") || currentPolylineDescription.contains("sykkelvei")) {
+                        currentPolyline.setColor(Color.GREEN);
+                    } else if (currentPolylineDescription.contains("Ferge") || currentPolylineDescription.contains("ferge")) {
+                        currentPolyline.setColor(Color.RED);
+                    } else {
+                        currentPolyline.setColor(Color.BLUE);
+                    }
                 }
 
                 currentPolyline = polyline;
+                currentPolylineDescription = kyststiInfoMap.get(polyline.getPoints())[0];
 
 
                 setKyststiInfoFromDescriptionAndName(polyline, kyststiInfo);
@@ -466,27 +468,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             }
         });
-
-        /*//The event when you click on the info-window
-        mMap.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
-            @Override
-            public void onInfoWindowClick(Marker marker) {
-
-                //Go to the current link, if the link is empty, do nothing
-                if (!link.equals("EMPTY")) {
-
-                    Intent i = new Intent(Intent.ACTION_VIEW);
-
-                    if (link.matches("http[s]{0,1}:.{0,}")) {
-                        i.setData(Uri.parse(link));
-                        startActivity(i);
-                    }
-
-                }
-
-
-            }
-        });*/
 
 
         try {
@@ -588,7 +569,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         txtMarkerDescription.setMovementMethod(LinkMovementMethod.getInstance());
 
        String type = "Marker";
-       String markerTitle = "<p>" + title + "</p>";
+       String markerTitle =title;
 
         //Hvis den ikke er tom og er en url så skal link vises
         if (description != null) {
@@ -599,11 +580,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                 //Det er ikke en link, men kanskje noe annet interessant
             } else {
-                markerDescription = "<p>" + description + "</p>";
-                txtMarkerDescription.setText(Html.fromHtml(markerTitle + markerDescription));
+                markerDescription = description;
+                txtMarkerDescription.setText(markerTitle + "\n\n" + markerDescription);
             }
         } else {
-            txtMarkerDescription.setText(Html.fromHtml(markerTitle));
+            txtMarkerDescription.setText(markerTitle);
         }
 
 
@@ -649,24 +630,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     }
 
-    /*private String getKystiDescription(TextView kyststiInfo, String description) {
-        //Hvis description inneholder link settes denne som description
-        if (description.contains("<a href=")) {
 
-            String kyststiTitle = description.substring(0, description.indexOf("<a"));
-
-
-            String kyststiLink = description.substring(description.indexOf("<a href=") + 9, description.indexOf(">"));
-            //kyststiLink = "<a href=\"" + kyststiLink + "\"> <u> Klikk her for mer info</u></a>";
-
-
-
-            //Det er ingen link, da settes det som er der
-        } else {
-            kyststiInfo.setText(description);
-        }
-
-    }*/
 
     protected void makeLinkClickable(SpannableStringBuilder strBuilder, final URLSpan span) {
         int start = strBuilder.getSpanStart(span);
@@ -705,19 +669,33 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     protected void setTextViewHTML(TextView text, String description, String type, String title) {
-        Log.d(TAG, "setTextViewHTML: description: " + description);
 
 
         if (type.equals("Marker")){
-            //Extract the url
+            setMarkerInfoText(text, description, title);
+        }
 
-            CharSequence sequence = Html.fromHtml(description);
-            URLSpan[] urls = {new URLSpan(description)};
-            Log.d(TAG, "setTextViewHTML: URLL:" + urls[0].getURL());
+        if (type.equals("Polyline")) {
+            setPolylineInfoText(text, description);
+        }
 
-            String descriptionWithoutLink = description.substring(0, description.indexOf("http"));
+
+    }
+
+    private void setPolylineInfoText(TextView text, String description) {
+        CharSequence sequence = Html.fromHtml(description);
+        SpannableStringBuilder strBuilder = new SpannableStringBuilder(sequence);
+        URLSpan[] urls = strBuilder.getSpans(0, sequence.length(), URLSpan.class);
+
+        String descriptionWithoutLink;
+        try {
+
+
+            descriptionWithoutLink = description.substring(0, description.indexOf("<a href"));
             SpannableStringBuilder withCustomLinkLayout = new SpannableStringBuilder("Tomt");
             URLSpan[] urls2 = null;
+
+
 
             //If there is a link in the description
             if (urls.length != 0){
@@ -726,7 +704,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 CharSequence formattedText = Html.fromHtml(link);
                 withCustomLinkLayout = new SpannableStringBuilder(formattedText);
                 urls2 = withCustomLinkLayout.getSpans(0, formattedText.length(), URLSpan.class);
-                withCustomLinkLayout.insert(0, title+ "\n\n");
+                withCustomLinkLayout.insert(0, descriptionWithoutLink);
+
+                //If the link does not contain www return
+                if (! urls[0].getURL().contains("www")){
+                    text.setText(description);
+                    return;
+                }
+
             }
 
 
@@ -737,56 +722,43 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             text.setMovementMethod(LinkMovementMethod.getInstance());
 
             text.setText(withCustomLinkLayout);
+
+
+        } catch (Exception e){
+            e.printStackTrace();
+            //Det var ingen link her
+           // descriptionWithoutLink = "Her var det desverre ingen link";
+            text.setText(description);
         }
-
-        if (type.equals("Polyline")) {
-            //Extract the url
-            CharSequence sequence = Html.fromHtml(description);
-            SpannableStringBuilder strBuilder = new SpannableStringBuilder(sequence);
-            URLSpan[] urls = strBuilder.getSpans(0, sequence.length(), URLSpan.class);
-
-            String descriptionWithoutLink = "Her var det desverre ingen link";
-            try {
-                descriptionWithoutLink = description.substring(0, description.indexOf("<a href"));
-                SpannableStringBuilder withCustomLinkLayout = new SpannableStringBuilder("Tomt");
-                URLSpan[] urls2 = null;
-
-                //If there is a link in the description
-                if (urls.length != 0){
-                    //Create the desired format of textview
-                    String link = "<a href=\"" + urls[0].getURL() + "\"><u>Klikk her for mer info</u></a>";
-                    CharSequence formattedText = Html.fromHtml(link);
-                    withCustomLinkLayout = new SpannableStringBuilder(formattedText);
-                    urls2 = withCustomLinkLayout.getSpans(0, formattedText.length(), URLSpan.class);
-                    withCustomLinkLayout.insert(0, descriptionWithoutLink);
-                }
-
-
-                for(URLSpan span : urls2) {
-                    Log.d(TAG, "setTextViewHTML: span" + span.getURL());
-                    makeLinkClickable(withCustomLinkLayout, span);
-                }
-                text.setMovementMethod(LinkMovementMethod.getInstance());
-
-                text.setText(withCustomLinkLayout);
-
-
-            } catch (Exception e){
-                e.printStackTrace();
-                descriptionWithoutLink = "Her var det desverre ingen link";
-                text.setText(descriptionWithoutLink);
-            }
-
-
-        }
-
-
     }
 
-    private void printdescriptions(HashMap<List<LatLng>, String> kyststiinfomap) {
+    private void setMarkerInfoText(TextView text, String description, String title) {
+        CharSequence sequence = Html.fromHtml(description);
+        URLSpan[] urls = {new URLSpan(description)};
+        Log.d(TAG, "setTextViewHTML: URLL:" + urls[0].getURL());
 
-        for (String desc : kyststiinfomap.values()) {
+        String descriptionWithoutLink = description.substring(0, description.indexOf("http"));
+        SpannableStringBuilder withCustomLinkLayout = new SpannableStringBuilder("Tomt");
+        URLSpan[] urls2 = null;
+
+        //If there is a link in the description
+        if (urls.length != 0){
+            //Create the desired format of textview
+            String link = "<a href=\"" + urls[0].getURL() + "\"><u>Klikk her for mer info</u></a>";
+            CharSequence formattedText = Html.fromHtml(link);
+            withCustomLinkLayout = new SpannableStringBuilder(formattedText);
+            urls2 = withCustomLinkLayout.getSpans(0, formattedText.length(), URLSpan.class);
+            withCustomLinkLayout.insert(0, title + "\n\n");
         }
+
+
+        for(URLSpan span : urls2) {
+            makeLinkClickable(withCustomLinkLayout, span);
+        }
+        text.setMovementMethod(LinkMovementMethod.getInstance());
+
+        text.setText(withCustomLinkLayout);
+        Log.d(TAG, "setMarkerInfoText: " + withCustomLinkLayout);
     }
 
 
@@ -875,7 +847,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
         //Request locationupdates
-        LocationRequest mLocationRequest = requestLocationUpdates();
+        mLocationRequest = requestLocationUpdates();
 
         if (! userHasAnsweredLocationTurnOn){
             //Handle users without location enabled
@@ -926,6 +898,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         result.setResultCallback(new ResultCallback<LocationSettingsResult>() {
             @Override
             public void onResult(LocationSettingsResult result) {
+
                 final Status status = result.getStatus();
                 final LocationSettingsStates states = result.getLocationSettingsStates();
                 switch (status.getStatusCode()) {
@@ -960,7 +933,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                         break;
                 }
+
             }
+
 
         });
     }
@@ -1157,7 +1132,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         @Override
         protected void onPostExecute(Void aVoid) {
 
-          //  addPolylinesToMap();
+            //Adds the polylines to the map
             final Iterator<PolylineOptions> iterator = polylinesReadyToAdd.iterator();
             try {
 
@@ -1240,28 +1215,40 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             stringStyle = feature.getLineStringStyle();
 
+
+            String description = feature.getProperty("description");
             //Hvis det er en kyststi legg til description og navn
             if (feature.getGeometry().getType().equals("LineString")) {
-                descriptionList.add(feature.getProperty("description"));
+
+                descriptionList.add(description);
 
                 nameList.add(feature.getProperty("name"));
             }
 
 
             stringStyle.setClickable(true);
-            stringStyle.setColor(Color.BLUE);
+
+
+            //If this is a kyststi, set the correct color depending on the description
+            if (description != null) {
+                
+                if (description.contains("Sykkelvei") || description.contains("sykkelvei")) {
+                    stringStyle.setColor(Color.GREEN);
+                } else if ((description.contains("Ferge") || description.contains("ferge")) && !description.contains("fergeleie") ) {
+                    stringStyle.setColor(Color.RED);
+                } else {
+                    stringStyle.setColor(Color.BLUE);
+                }
+
+            }
+
+
 
 
             feature.setLineStringStyle(stringStyle);
         }
 
         addGeoJsonLayerToDataStructure();
-    }
-
-    private void addPolylinesToMap() {
-        for (PolylineOptions polylineOptions : polylinesReadyToAdd){
-            mMap.addPolyline(polylineOptions);
-        }
     }
 
 

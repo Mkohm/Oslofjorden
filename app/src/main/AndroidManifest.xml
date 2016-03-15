@@ -45,9 +45,9 @@
         <activity
             android:name=".WebviewActivity"
             android:label="Webview"
-            >
+            android:theme="@style/Theme.AppCompat.Light"
 
-        </activity>
+        />
 
     </application>
 

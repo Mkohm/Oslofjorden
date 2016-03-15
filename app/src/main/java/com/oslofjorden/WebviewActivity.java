@@ -14,12 +14,15 @@
 
 package com.oslofjorden;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.LinearLayout;
 
 /**
  * This Activity is used as a fallback when there is no browser installed that supports
@@ -28,18 +31,34 @@ import android.webkit.WebViewClient;
 public class WebviewActivity extends AppCompatActivity {
     public static final String EXTRA_URL = "extra.url";
 
+    private WebView webView;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_webview);
         String url = getIntent().getStringExtra(EXTRA_URL);
-        WebView webView = (WebView)findViewById(R.id.webview);
+
+        webView = new WebView(getApplicationContext());
+
+        LinearLayout linearLayout = (LinearLayout) findViewById(R.id.webview);
+
         webView.setWebViewClient(new WebViewClient());
         WebSettings webSettings = webView.getSettings();
         webSettings.setJavaScriptEnabled(true);
-        setTitle(url);
+        setTitle("Oslofjorden");
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         webView.loadUrl(url);
+
+
+        linearLayout.addView(webView);
+
+
+
+
+
+
+
     }
 
     @Override
@@ -51,5 +70,16 @@ public class WebviewActivity extends AppCompatActivity {
                 return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (webView != null) {
+            webView.removeAllViews();
+            webView.destroy();
+        }
+
+        webView = null;
     }
 }

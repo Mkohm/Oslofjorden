@@ -1,5 +1,8 @@
 package com.oslofjorden;
 
+import android.graphics.Color;
+import android.util.Log;
+
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -308,17 +311,36 @@ import java.util.Set;
 
         //Putter description og name inn i et array som så puttes inn i hashmappet
         String[] arrayElements = new String[2];
-        arrayElements[0] = MapsActivity.descriptionList.get(MapsActivity.indexInDescriptionList);
-        arrayElements[1] = MapsActivity.nameList.get(MapsActivity.indexInNameList);
+
+        String description = MapsActivity.descriptionList.get(MapsActivity.indexInDescriptionList);
+        String name = MapsActivity.nameList.get(MapsActivity.indexInNameList);
+
+        arrayElements[0] = description;
+        arrayElements[1] = name;
 
 
         MapsActivity.kyststiInfoMap.put(lineString.getCoordinates(), arrayElements);
         MapsActivity.indexInDescriptionList++;
         MapsActivity.indexInNameList++;
 
+
+        //This is one polyline, adds all the coordinates
         polylineOptions.addAll(lineString.getCoordinates());
 
 
+        //Adds the correct coloring according to the description
+        if (description != null) {
+            if (description.contains("Sykkelvei") || description.contains("sykkelvei")) {
+                polylineOptions.color(Color.GREEN);
+            } else if ((description.contains("Ferge") || description.contains("ferge")) && !description.contains("fergeleie")) {
+                polylineOptions.color(Color.RED);
+            } else {
+                polylineOptions.color(Color.BLUE);
+            }
+        }
+
+
+        //Adds the customized polyline to the list
         MapsActivity.polylinesReadyToAdd.add(polylineOptions);
         //return mMap.addPolyline(polylineOptions);
         return null;
