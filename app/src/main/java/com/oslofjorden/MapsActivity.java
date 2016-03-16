@@ -84,10 +84,16 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
-//TODO:remove log
 
-//sheet from material design
-//Get latest kyststi file
+//TODO: Get latest kyststi file
+//Set different markers on different types of items
+//Let user choose what type of info to see
+//Challenge in walking kyststier
+//Infobar material design
+//Menu - hamburgermenu
+
+//Database implementation and search
+
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.OnConnectionFailedListener, GoogleApiClient.ConnectionCallbacks, LocationListener, ResultCallback, CustomTabActivityHelper.ConnectionCallback {
     //For debugging
@@ -161,7 +167,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
         super.onCreate(savedInstanceState);
-        Log.d(TAG, "onCreate: ");
+
 
         //Hvis man hadde location fra start av skal den ikke spørre mer
         if (isLocationEnabled(getApplicationContext())){
@@ -310,31 +316,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onMapReady(GoogleMap googleMap) {
 
         mMap = googleMap;
-        //enable zoom buttons, and remove toolbar when clicking on markers
-        mMap.getUiSettings().setZoomControlsEnabled(false);
-        mMap.getUiSettings().setMapToolbarEnabled(false);
+        if (setGoogleMapUISettings()) return;
 
-        //enables location dot, and removes the standard google button
-        if (checkPermission()) return;
-        mMap.setMyLocationEnabled(true);
-        mMap.getUiSettings().setMyLocationButtonEnabled(false);
-        mMap.getUiSettings().setCompassEnabled(true);
 
         final FloatingActionButton onOffLocationButton = (FloatingActionButton) findViewById(R.id.onofflocationbutton);
+        setOnOffLocationButtonStartstate(onOffLocationButton);
 
-        //Sets the initial icon depending on current settings
-        if (isLocationEnabled(getApplicationContext())){
-            onOffLocationButton.setImageResource(R.drawable.location_on_64px);
-
-
-        } else {
-            onOffLocationButton.setImageResource(R.drawable.location_off_64px);
-        }
 
         onOffLocationButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.d(TAG, "onClick: Stutus switch:" + locationUpdatesSwitch);
 
                 if (locationUpdatesSwitch == true) {
                     onOffLocationButton.setImageResource(R.drawable.location_off_64px);
@@ -344,20 +335,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
                     if (!userAcceptLocation || !isLocationEnabled(getApplicationContext())){
-                        Log.d(TAG, "onClick: skal spørre deg om å skru på");
 
                         handleUsersWithoutLocationEnabled(mLocationRequest);
-
-
 
                     } else {
                         onOffLocationButton.setImageResource(R.drawable.location_on_64px);
                         Toast.makeText(getApplicationContext(), "Oppdatering av posisjon - på", Toast.LENGTH_SHORT).show();
                         locationUpdatesSwitch = true;
                     }
-
-
-
 
                 }
 
@@ -371,28 +356,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         });
 
-
-
-        SharedPreferences sharedPref = this.getPreferences(Context.MODE_PRIVATE);
-        boolean firstTimeUserLaunchesApp = sharedPref.getBoolean("firstTimeUserLaunchesApp", true);
-
-        if (firstTimeUserLaunchesApp){
-            //Saving that the user has opened the app before
-            SharedPreferences.Editor editor = sharedPref.edit();
-            editor.putBoolean("firstTimeUserLaunchesApp", false);
-            editor.commit();
-
-            //Show message to the user
-            InfoDialog infoDialog = new InfoDialog();
-            infoDialog.show(getSupportFragmentManager(), "test");
-
-        }
-
-
-
-
         //The first time the user launches the app, this message will be shown
-
+        showInfomessageToUserIfFirstTime();
 
         final TextView kyststiInfo = (TextView) findViewById(R.id.infobar);
         kyststiInfo.setVisibility(View.INVISIBLE);
@@ -409,17 +374,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 }
 
                 //Sets the color back to what it was after clicking somewhere else, this is only working if the last polyline clicked had a description
-                if (currentPolyline != null && currentPolylineDescription != null) {
-
-                    Log.d(TAG, "onPolylineClick: " + currentPolylineDescription);
-                    if (currentPolylineDescription.contains("Sykkelvei") || currentPolylineDescription.contains("sykkelvei")) {
-                        currentPolyline.setColor(Color.GREEN);
-                    } else if (currentPolylineDescription.contains("Ferge") || currentPolylineDescription.contains("ferge")) {
-                        currentPolyline.setColor(Color.RED);
-                    } else {
-                        currentPolyline.setColor(Color.BLUE);
-                    }
-                }
+                setKyststiColorsBack();
 
                 //If the polyline did not have a description, the blue color is used
 
@@ -488,6 +443,75 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
 
+    }
+
+    private void setOnOffLocationButtonStartstate(FloatingActionButton onOffLocationButton) {
+        //Sets the initial icon depending on current settings
+        if (isLocationEnabled(getApplicationContext())){
+            onOffLocationButton.setImageResource(R.drawable.location_on_64px);
+
+
+        } else {
+            onOffLocationButton.setImageResource(R.drawable.location_off_64px);
+        }
+    }
+
+    private boolean setGoogleMapUISettings() {
+        //enable zoom buttons, and remove toolbar when clicking on markers
+        mMap.getUiSettings().setZoomControlsEnabled(false);
+        mMap.getUiSettings().setMapToolbarEnabled(false);
+
+        //enables location dot, and removes the standard google button
+        if (checkPermission()) return true;
+        mMap.setMyLocationEnabled(true);
+        mMap.getUiSettings().setMyLocationButtonEnabled(false);
+        mMap.getUiSettings().setCompassEnabled(true);
+        return false;
+    }
+
+    private void showInfomessageToUserIfFirstTime() {
+        SharedPreferences sharedPref = this.getPreferences(Context.MODE_PRIVATE);
+        boolean firstTimeUserLaunchesApp = sharedPref.getBoolean("firstTimeUserLaunchesApp", true);
+
+        if (firstTimeUserLaunchesApp){
+            //Saving that the user has opened the app before
+            SharedPreferences.Editor editor = sharedPref.edit();
+            editor.putBoolean("firstTimeUserLaunchesApp", false);
+            editor.commit();
+
+            //Show message to the user
+            InfoDialog infoDialog = new InfoDialog();
+            infoDialog.show(getSupportFragmentManager(), "test");
+
+        }
+    }
+
+    private void setKyststiColorsBack() {
+        if (currentPolyline != null && currentPolylineDescription != null) {
+
+            if (isSykkelvei()) {
+                currentPolyline.setColor(Color.GREEN);
+            } else if (isFerge()) {
+                currentPolyline.setColor(Color.parseColor("#980009"));
+            } else if (isVanskeligKyststi()) {
+                currentPolyline.setColor(Color.RED);
+            }
+            else {
+                currentPolyline.setColor(Color.BLUE);
+            }
+        }
+    }
+
+    private boolean isVanskeligKyststi() {
+        return currentPolylineDescription.contains("Vanskelig") || currentPolylineDescription.contains("vanskelig");
+    }
+
+    private boolean isFerge() {
+        return currentPolylineDescription.contains("Ferge") || currentPolylineDescription.contains("ferge") && !currentPolylineDescription.contains("fergeleie");
+    }
+
+    private boolean isSykkelvei() {
+        return currentPolylineDescription.contains("Sykkelvei") || currentPolylineDescription.contains("sykkelvei");
     }
 
     private void animateInfobarUp(TextView infobar) {
@@ -720,7 +744,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
             for(URLSpan span : urls2) {
-                Log.d(TAG, "setTextViewHTML: span" + span.getURL());
                 makeLinkClickable(withCustomLinkLayout, span);
             }
             text.setMovementMethod(LinkMovementMethod.getInstance());
@@ -739,7 +762,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private void setMarkerInfoText(TextView text, String description, String title) {
         CharSequence sequence = Html.fromHtml(description);
         URLSpan[] urls = {new URLSpan(description)};
-        Log.d(TAG, "setTextViewHTML: URLL:" + urls[0].getURL());
 
         String descriptionWithoutLink = description.substring(0, description.indexOf("http"));
         SpannableStringBuilder withCustomLinkLayout = new SpannableStringBuilder("Tomt");
@@ -762,7 +784,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         text.setMovementMethod(LinkMovementMethod.getInstance());
 
         text.setText(withCustomLinkLayout);
-        Log.d(TAG, "setMarkerInfoText: " + withCustomLinkLayout);
     }
 
 
@@ -1101,7 +1122,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         @Override
         protected void onPreExecute() {
-            Log.d(TAG, "onPreExecute: ");
             TextView loading = (TextView) findViewById(R.id.infobar);
             loading.setVisibility(View.VISIBLE);
 
@@ -1233,20 +1253,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             stringStyle.setClickable(true);
 
 
-            //If this is a kyststi, set the correct color depending on the description
-            if (description != null) {
-                
-                if (description.contains("Sykkelvei") || description.contains("sykkelvei")) {
-                    stringStyle.setColor(Color.GREEN);
-                } else if ((description.contains("Ferge") || description.contains("ferge")) && !description.contains("fergeleie") ) {
-                    stringStyle.setColor(Color.RED);
-                } else {
-                    stringStyle.setColor(Color.BLUE);
-                }
-
-            }
-
-
 
 
             feature.setLineStringStyle(stringStyle);
@@ -1285,9 +1291,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
     }
-
-
-
 
 }
 

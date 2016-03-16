@@ -329,21 +329,39 @@ import java.util.Set;
 
 
         //Adds the correct coloring according to the description
-        if (description != null) {
-            if (description.contains("Sykkelvei") || description.contains("sykkelvei")) {
-                polylineOptions.color(Color.GREEN);
-            } else if ((description.contains("Ferge") || description.contains("ferge")) && !description.contains("fergeleie")) {
-                polylineOptions.color(Color.RED);
-            } else {
-                polylineOptions.color(Color.BLUE);
-            }
-        }
+        setKyststiColor(polylineOptions, description);
 
 
         //Adds the customized polyline to the list
         MapsActivity.polylinesReadyToAdd.add(polylineOptions);
         //return mMap.addPolyline(polylineOptions);
         return null;
+    }
+
+    private void setKyststiColor(PolylineOptions polylineOptions, String description) {
+        if (description != null) {
+            if (isSykkelvei(description)) {
+                polylineOptions.color(Color.GREEN);
+            } else if (isFerge(description)) {
+                polylineOptions.color(Color.parseColor("#980009"));
+            } else if (isVanskeligKyststi(description)) {
+                polylineOptions.color(Color.RED);
+            } else {
+                polylineOptions.color(Color.BLUE);
+            }
+        }
+    }
+
+    private boolean isSykkelvei(String description) {
+        return description.contains("Sykkelvei") || description.contains("sykkelvei");
+    }
+
+    private boolean isFerge(String description) {
+        return (description.contains("Ferge") || description.contains("ferge")) && !description.contains("fergeleie");
+    }
+
+    private boolean isVanskeligKyststi(String description) {
+        return description.contains("Vanskelig") || description.contains("vanskelig");
     }
 
     /**

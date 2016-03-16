@@ -13,7 +13,7 @@ public class InfoDialog extends DialogFragment {
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         // Use the Builder class for convenient dialog construction
         final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        builder.setMessage("Applikasjonen vil vise deg veien på kyststiene rundt Oslofjorden hvis du skrur på GPS.\n\n- Trykk på kyststier og markører for å få opp mer info.\n- Du kan skru av sporing med knappen øverst til høyre. \n- Mer funksjnalitet er på vei.\n\n- God tur!").setTitle("Oslofjorden").setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+        builder.setMessage("Applikasjonen vil vise deg veien på kyststiene rundt Oslofjorden hvis du skrur på GPS.\n\n- Trykk på kyststier og markører for å få opp mer info.\n- Du kan skru av sporing med knappen øverst til høyre. \n- Mer funksjonalitet er på vei.\n\nGod tur!").setTitle("Oslofjorden").setPositiveButton("Ok", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 //Nothing, it disappears
