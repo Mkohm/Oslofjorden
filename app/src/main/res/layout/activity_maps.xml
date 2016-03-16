@@ -2,8 +2,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MapsActivity"
-    >
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    tools:context=".MapsActivity">
 
     <fragment xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:tools="http://schemas.android.com/tools"
@@ -24,7 +24,7 @@
         android:gravity="center"
         android:id="@+id/relativeLayout">
 
-    <Button
+    <!--<Button
         android:layout_alignParentRight="true"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -33,7 +33,27 @@
         android:layout_alignParentStart="false"
         android:layout_alignParentEnd="false"
         android:alpha="0.7"
-        android:layout_alignParentLeft="false" />
+        android:layout_alignParentLeft="false" />-->
+
+        <android.support.design.widget.FloatingActionButton
+            android:id="@+id/onofflocationbutton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/location_off_64px"
+            app:elevation="4dp"
+            android:alpha="0.7"
+
+            android:layout_alignParentLeft="false"
+            android:layout_alignParentStart="false"
+            android:layout_alignParentEnd="false"
+            android:layout_alignParentRight="true"
+
+
+
+
+            android:layout_margin="4dp"
+            app:backgroundTint="@color/background_material_light"
+            android:adjustViewBounds="true" />
 
         <ViewAnimator
             android:layout_width="wrap_content"
@@ -44,6 +64,7 @@
             android:layout_alignParentStart="true"
             android:layout_marginLeft="81dp"
             android:layout_marginStart="81dp" />
+
 
 
     </RelativeLayout>
@@ -65,5 +86,6 @@
         android:layout_gravity="center_horizontal|bottom"
         android:paddingTop="5dp"
         android:shadowColor="#ffffff"
-        android:paddingBottom="5dp" />
+        android:paddingBottom="5dp"
+        android:clickable="true" />
 </FrameLayout>

@@ -14,7 +14,8 @@
         android:allowBackup="true"
         android:icon="@mipmap/icon"
         android:supportsRtl="true"
-        android:theme="@style/SplashTheme"
+        android:theme="@style/AppTheme"
+        android:largeHeap="true"
         >
 
         <!--
@@ -39,6 +40,14 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+
+
+        <activity
+            android:name=".WebviewActivity"
+            android:label="Webview"
+            android:theme="@style/Theme.AppCompat.Light"
+
+        />
 
     </application>
 

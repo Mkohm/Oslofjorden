@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.IntentSender;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.location.Location;
@@ -21,18 +22,27 @@ import android.os.StrictMode;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.customtabs.CustomTabsIntent;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.Fragment;
 import android.text.Html;
+import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
+import android.text.style.ClickableSpan;
+import android.text.style.ForegroundColorSpan;
+import android.text.style.URLSpan;
+import android.text.style.UnderlineSpan;
+import android.util.EventLogTags;
 import android.util.Log;
 import android.view.Display;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
-import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -74,15 +84,18 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
-//TODO:link bug, strict mode, remove log
+
+//TODO: Get latest kyststi file
+//Set different markers on different types of items
+//Let user choose what type of info to see
+//Challenge in walking kyststier
+//Infobar material design
+//Menu - hamburgermenu
+
+//Database implementation and search
 
 
-//Lage egen liste med kyststier i andre farger
-//TODO: splashscreen with picture while the other things is loading, promote myself, handle links better, change algorithm for the clusterer
-//TODO:satelite, sporing icon, toast that recommends location, farger kyststi, ask user and no problem, detecte ikke internett
-//TODO: strings and translate to english
-
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.OnConnectionFailedListener, GoogleApiClient.ConnectionCallbacks, LocationListener, ResultCallback {
+public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.OnConnectionFailedListener, GoogleApiClient.ConnectionCallbacks, LocationListener, ResultCallback, CustomTabActivityHelper.ConnectionCallback {
     //For debugging
     private static String TAG = "TAG";
 
@@ -90,12 +103,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private static GoogleMap mMap;
     GoogleApiClient mGoogleApiClient;
 
+
     float currentZoom;
     LatLng currentPosition;
     CameraPosition currentCameraPosition;
     LatLng currentMapClickPosition;
 
-    Cluster clickedCluster;
+    boolean infoAddedToMap = false;
+
     MyMarkerOptions clickedClusterItem;
     public ClusterManager<MyMarkerOptions> mClusterManager;
 
@@ -114,11 +129,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     //is locationupdates enabled or not
     boolean locationUpdatesSwitch = true;
 
-    //current link to link to
-    String link = "EMPTY";
+
 
     public static HashMap<List<LatLng>, String[]> kyststiInfoMap = new HashMap<List<LatLng>, String[]>();
-    public static String currentDescription = "Tom";
     public static ArrayList<String> descriptionList = new ArrayList<String>();
     public static int indexInDescriptionList = 0;
     public static ArrayList<String> nameList = new ArrayList<String>();
@@ -129,7 +142,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
     private Polyline currentPolyline;
-
+    private String currentPolylineDescription;
     //Variables that the callback onconnectionfailed needs
 
     // Request code to use when launching the resolution activity
@@ -140,7 +153,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private boolean mResolvingError = false;
 
     private static final String STATE_RESOLVING_ERROR = "resolving_error";
-    //private static final String TAG = "TAG";
+
+    private final int PERMISSIONS_OK = 0;
+
+
+    private CustomTabActivityHelper customTabActivityHelper;
+
 
 
     @Override
@@ -150,10 +168,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         super.onCreate(savedInstanceState);
 
+
         //Hvis man hadde location fra start av skal den ikke spørre mer
         if (isLocationEnabled(getApplicationContext())){
             userAcceptLocation = true;
         }
+
+
+        //Set up custom tabs
+        customTabActivityHelper = new CustomTabActivityHelper();
+        customTabActivityHelper.setConnectionCallback(this);
 
 
 
@@ -174,6 +198,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mResolvingError = savedInstanceState != null
                 && savedInstanceState.getBoolean(STATE_RESOLVING_ERROR, false);
 
+
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        customTabActivityHelper.setConnectionCallback(null);
 
     }
 
@@ -207,6 +238,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
         super.onStart();
+
+        customTabActivityHelper.bindCustomTabsService(this);
+
 
 
     }
@@ -244,6 +278,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
         super.onStop();
+
+        customTabActivityHelper.unbindCustomTabsService(this);
+
     }
 
     @Override
@@ -275,50 +312,37 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
 
-    public boolean intersects(LatLngBounds bounds, LatLng southwest, LatLng northeast) {
-        final boolean latIntersects =
-                (bounds.northeast.latitude >= southwest.latitude) && (bounds.southwest.latitude <= northeast.latitude);
-        final boolean lngIntersects =
-                (bounds.northeast.longitude >= southwest.longitude) && (bounds.southwest.longitude <= northeast.longitude);
-
-        return latIntersects && lngIntersects;
-    }
-
-
     @Override
     public void onMapReady(GoogleMap googleMap) {
 
         mMap = googleMap;
-        //enable zoom buttons, and remove toolbar when clicking on markers
-        mMap.getUiSettings().setZoomControlsEnabled(false);
-        mMap.getUiSettings().setMapToolbarEnabled(false);
+        if (setGoogleMapUISettings()) return;
 
-        //enables location dot, and removes the standard google button
-        if (checkPermission()) return;
-        mMap.setMyLocationEnabled(true);
-        mMap.getUiSettings().setMyLocationButtonEnabled(false);
-        mMap.getUiSettings().setCompassEnabled(true);
 
-        final Button onOffLocationButton = (Button) findViewById(R.id.onofflocationbutton);
-        onOffLocationButton.setAlpha(0.7f);
+        final FloatingActionButton onOffLocationButton = (FloatingActionButton) findViewById(R.id.onofflocationbutton);
+        setOnOffLocationButtonStartstate(onOffLocationButton);
+
+
         onOffLocationButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 
                 if (locationUpdatesSwitch == true) {
-                    onOffLocationButton.setText("Sporing av");
+                    onOffLocationButton.setImageResource(R.drawable.location_off_64px);
+                    Toast.makeText(getApplicationContext(), "Oppdatering av posisjon - av", Toast.LENGTH_SHORT).show();
                     locationUpdatesSwitch = false;
                 } else if (locationUpdatesSwitch == false) {
 
 
-                    if (!userAcceptLocation && !isLocationEnabled(getApplicationContext())){
+                    if (!userAcceptLocation || !isLocationEnabled(getApplicationContext())){
+
                         handleUsersWithoutLocationEnabled(mLocationRequest);
 
                     } else {
-                        onOffLocationButton.setText("Sporing på");
+                        onOffLocationButton.setImageResource(R.drawable.location_on_64px);
+                        Toast.makeText(getApplicationContext(), "Oppdatering av posisjon - på", Toast.LENGTH_SHORT).show();
                         locationUpdatesSwitch = true;
                     }
-
 
                 }
 
@@ -332,28 +356,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         });
 
-
-
-        SharedPreferences sharedPref = this.getPreferences(Context.MODE_PRIVATE);
-        boolean firstTimeUserLaunchesApp = sharedPref.getBoolean("firstTimeUserLaunchesApp", true);
-
-        if (firstTimeUserLaunchesApp){
-            //Saving that the user has opened the app before
-            SharedPreferences.Editor editor = sharedPref.edit();
-            editor.putBoolean("firstTimeUserLaunchesApp", false);
-            editor.commit();
-
-            //Show message to the user
-            InfoDialog infoDialog = new InfoDialog();
-            infoDialog.show(getSupportFragmentManager(), "test");
-
-        }
-
-
-
-
         //The first time the user launches the app, this message will be shown
-
+        showInfomessageToUserIfFirstTime();
 
         final TextView kyststiInfo = (TextView) findViewById(R.id.infobar);
         kyststiInfo.setVisibility(View.INVISIBLE);
@@ -363,11 +367,20 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @Override
             public void onPolylineClick(Polyline polyline) {
 
-                if (currentPolyline != null) {
+
+                //This is setting the polyline to blue color if the last polyline did not have a description
+                if (currentPolylineDescription == null && currentPolyline != null){
                     currentPolyline.setColor(Color.BLUE);
                 }
 
+                //Sets the color back to what it was after clicking somewhere else, this is only working if the last polyline clicked had a description
+                setKyststiColorsBack();
+
+                //If the polyline did not have a description, the blue color is used
+
+
                 currentPolyline = polyline;
+                currentPolylineDescription = kyststiInfoMap.get(polyline.getPoints())[0];
 
 
                 setKyststiInfoFromDescriptionAndName(polyline, kyststiInfo);
@@ -394,6 +407,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @Override
             public void onMapClick(final LatLng latLng) {
 
+                Log.i(TAG, "onMapClick: Du klikket på kartet.");
 
                 currentMapClickPosition = latLng;
 
@@ -414,37 +428,90 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         });
 
-        //The event when you click on the info-window
-        mMap.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
-            @Override
-            public void onInfoWindowClick(Marker marker) {
 
-                //Go to the current link, if the link is empty, do nothing
-                if (!link.equals("EMPTY")) {
-
-                    Intent i = new Intent(Intent.ACTION_VIEW);
-
-                    if (link.matches("http[s]{0,1}:.{0,}")) {
-                        i.setData(Uri.parse(link));
-                        startActivity(i);
-                    }
-
-                }
-
+        try {
+            if (! infoAddedToMap){
+                AddInfoToMap addInfoToMap = new AddInfoToMap();
+                addInfoToMap.execute();
 
             }
-        });
+            infoAddedToMap = true;
+
+        } catch (Exception e){
+            e.printStackTrace();
+        }
 
 
 
-        AddInfoToMap addInfoToMap = new AddInfoToMap();
-        addInfoToMap.execute();
+    }
+
+    private void setOnOffLocationButtonStartstate(FloatingActionButton onOffLocationButton) {
+        //Sets the initial icon depending on current settings
+        if (isLocationEnabled(getApplicationContext())){
+            onOffLocationButton.setImageResource(R.drawable.location_on_64px);
 
 
+        } else {
+            onOffLocationButton.setImageResource(R.drawable.location_off_64px);
+        }
+    }
 
+    private boolean setGoogleMapUISettings() {
+        //enable zoom buttons, and remove toolbar when clicking on markers
+        mMap.getUiSettings().setZoomControlsEnabled(false);
+        mMap.getUiSettings().setMapToolbarEnabled(false);
 
+        //enables location dot, and removes the standard google button
+        if (checkPermission()) return true;
+        mMap.setMyLocationEnabled(true);
+        mMap.getUiSettings().setMyLocationButtonEnabled(false);
+        mMap.getUiSettings().setCompassEnabled(true);
+        return false;
+    }
 
+    private void showInfomessageToUserIfFirstTime() {
+        SharedPreferences sharedPref = this.getPreferences(Context.MODE_PRIVATE);
+        boolean firstTimeUserLaunchesApp = sharedPref.getBoolean("firstTimeUserLaunchesApp", true);
 
+        if (firstTimeUserLaunchesApp){
+            //Saving that the user has opened the app before
+            SharedPreferences.Editor editor = sharedPref.edit();
+            editor.putBoolean("firstTimeUserLaunchesApp", false);
+            editor.commit();
+
+            //Show message to the user
+            InfoDialog infoDialog = new InfoDialog();
+            infoDialog.show(getSupportFragmentManager(), "test");
+
+        }
+    }
+
+    private void setKyststiColorsBack() {
+        if (currentPolyline != null && currentPolylineDescription != null) {
+
+            if (isSykkelvei()) {
+                currentPolyline.setColor(Color.GREEN);
+            } else if (isFerge()) {
+                currentPolyline.setColor(Color.parseColor("#980009"));
+            } else if (isVanskeligKyststi()) {
+                currentPolyline.setColor(Color.RED);
+            }
+            else {
+                currentPolyline.setColor(Color.BLUE);
+            }
+        }
+    }
+
+    private boolean isVanskeligKyststi() {
+        return currentPolylineDescription.contains("Vanskelig") || currentPolylineDescription.contains("vanskelig");
+    }
+
+    private boolean isFerge() {
+        return currentPolylineDescription.contains("Ferge") || currentPolylineDescription.contains("ferge") && !currentPolylineDescription.contains("fergeleie");
+    }
+
+    private boolean isSykkelvei() {
+        return currentPolylineDescription.contains("Sykkelvei") || currentPolylineDescription.contains("sykkelvei");
     }
 
     private void animateInfobarUp(TextView infobar) {
@@ -474,16 +541,53 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private boolean checkPermission() {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
+            String[] permissions = {Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION};
+            ActivityCompat.requestPermissions(this, permissions, 1);
             //    ActivityCompat#requestPermissions
             // here to request the missing permissions, and then overriding
             //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
             //                                          int[] grantResults)
+            
             // to handle the case where the user grants the permission. See the documentation
             // for ActivityCompat#requestPermissions for more details.
+
             return true;
+
+
         }
+        //TODO: return true?
         return false;
     }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+
+
+
+        switch (requestCode) {
+            case PERMISSIONS_OK: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                    // permission was granted, yay!
+                    Log.i(TAG, "onRequestPermissionsResult: Fikk tilgang kan nå skru på location");
+                    //Skru på location
+
+
+                } else {
+                    Log.i(TAG, "onRequestPermissionsResult: Fikk ikke tilgang til location");
+                    // permission denied, boo! Disable the
+                    // functionality that depends on this permission.
+                }
+                return;
+            }
+
+            // other 'case' lines to check for other
+            // permissions this app might request
+        }
+    }
+
 
     public static void addGeoJsonLayerToDataStructure() {
         jsonLayer.addLayerToMap();
@@ -492,35 +596,38 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private void setMarkerDescription(String title, String description, TextView txtMarkerDescription) {
         txtMarkerDescription.setMovementMethod(LinkMovementMethod.getInstance());
 
-        String markerTitle = "<p>" + title + "</p>";
+       String type = "Marker";
+       String markerTitle =title;
 
         //Hvis den ikke er tom og er en url så skal link vises
         if (description != null) {
             String markerDescription = "";
             if (description.matches("http[s]{0,1}:.{0,}")) {
 
-                markerDescription = "<a href=\"" + description + "\"> <u> Klikk her for mer info </u></a>";
-
-                txtMarkerDescription.setText(Html.fromHtml(markerTitle + markerDescription));
+                setTextViewHTML(txtMarkerDescription, description, type, title);
 
                 //Det er ikke en link, men kanskje noe annet interessant
             } else {
-                markerDescription = "<p>" + description + "</p>";
-                txtMarkerDescription.setText(Html.fromHtml(markerTitle + markerDescription));
+                markerDescription = description;
+                txtMarkerDescription.setText(markerTitle + "\n\n" + markerDescription);
             }
         } else {
-            txtMarkerDescription.setText(Html.fromHtml(markerTitle));
+            txtMarkerDescription.setText(markerTitle);
         }
+
+
+
     }
 
     private void setKyststiInfoFromDescriptionAndName(Polyline polyline, TextView kyststiInfo) {
         String description;
-        String name;
+        String title;
+        String type = "Polyline";
 
         try {
-            name = kyststiInfoMap.get(polyline.getPoints())[1];
+            title = kyststiInfoMap.get(polyline.getPoints())[1];
         } catch (Exception e) {
-            name = null;
+            title = null;
 
         }
 
@@ -532,46 +639,151 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
         //Fant ingenting, tekst settes til her var det ingenting.
-        if (description == null && name == null) {
+        if (description == null && title == null) {
             kyststiInfo.setText("Her var det ingenting, gitt!");
-        } else if (description == null && name != null) {
+        } else if (description == null && title != null) {
             //Setter navnet
-            kyststiInfo.setText(name);
-        } else if (description != null && name == null) {
-            setKystiDescription(kyststiInfo, description);
+            kyststiInfo.setText(title);
+        } else if (description != null && title == null) {
 
 
-        } else if (description != null && name != null) {
-            setKystiDescription(kyststiInfo, description);
+
+            setTextViewHTML(kyststiInfo, description, type, title);
+
+
+        } else if (description != null && title != null) {
+            setTextViewHTML(kyststiInfo, description, type, title);
         }
 
 
     }
 
-    private void setKystiDescription(TextView kyststiInfo, String description) {
-        //Hvis description inneholder link settes denne som description
-        if (description.contains("<a href=")) {
-
-            String kyststiTitle = description.substring(0, description.indexOf("<a"));
-            kyststiTitle = "<p>" + kyststiTitle + "</p> ";
-
-            String kyststiLink = description.substring(description.indexOf("<a href=") + 9, description.indexOf(">"));
-            kyststiLink = "<a href=\"" + kyststiLink + "\"> <u> Klikk her for mer info</u></a>";
 
 
-            kyststiInfo.setText(Html.fromHtml(kyststiTitle + kyststiLink));
-            kyststiInfo.setMovementMethod(LinkMovementMethod.getInstance());
+    protected void makeLinkClickable(SpannableStringBuilder strBuilder, final URLSpan span) {
+        int start = strBuilder.getSpanStart(span);
+        int end = strBuilder.getSpanEnd(span);
+        int flags = strBuilder.getSpanFlags(span);
 
-            //Det er ingen link, da settes det som er der
-        } else {
-            kyststiInfo.setText(description);
+
+        //May launch this link
+        Log.i(TAG, "makeLinkClickable: Gjør link klar for å åpnes.");
+        final Uri uri  = Uri.parse(span.getURL());
+        customTabActivityHelper.mayLaunchUrl(uri, null, null);
+
+        ClickableSpan clickable = new ClickableSpan() {
+            public void onClick(View view) {
+                // Do something with span.getURL() to handle the link click...
+
+
+                CustomTabsIntent.Builder intentBuilder = new CustomTabsIntent.Builder();
+                intentBuilder.setToolbarColor(getResources().getColor(R.color.colorPrimaryDark)).setShowTitle(true);
+
+
+                intentBuilder.setCloseButtonIcon(BitmapFactory.decodeResource(getResources(), R.drawable.ic_arrow_back));
+                intentBuilder.setStartAnimations(getApplicationContext(), R.anim.slide_in_right, R.anim.slide_out_left);
+                intentBuilder.setExitAnimations(MapsActivity.this, android.R.anim.slide_in_left, android.R.anim.slide_out_right);
+
+
+
+                //CustomTabsIntent customTabsIntent = new CustomTabsIntent.Builder(customTabActivityHelper.getSession()).build();
+                CustomTabActivityHelper.openCustomTab(MapsActivity.this, intentBuilder.build(), uri, new WebviewFallback());
+            }
+        };
+
+
+        strBuilder.setSpan(clickable, start, end, flags);
+        strBuilder.removeSpan(span);
+    }
+
+    protected void setTextViewHTML(TextView text, String description, String type, String title) {
+
+
+        if (type.equals("Marker")){
+            setMarkerInfoText(text, description, title);
+        }
+
+        if (type.equals("Polyline")) {
+            setPolylineInfoText(text, description);
+        }
+
+
+    }
+
+    private void setPolylineInfoText(TextView text, String description) {
+        CharSequence sequence = Html.fromHtml(description);
+        SpannableStringBuilder strBuilder = new SpannableStringBuilder(sequence);
+        URLSpan[] urls = strBuilder.getSpans(0, sequence.length(), URLSpan.class);
+
+        String descriptionWithoutLink;
+        try {
+
+
+            descriptionWithoutLink = description.substring(0, description.indexOf("<a href"));
+            SpannableStringBuilder withCustomLinkLayout = new SpannableStringBuilder("Tomt");
+            URLSpan[] urls2 = null;
+
+
+
+            //If there is a link in the description
+            if (urls.length != 0){
+                //Create the desired format of textview
+                String link = "<a href=\"" + urls[0].getURL() + "\"><u>Klikk her for mer info</u></a>";
+                CharSequence formattedText = Html.fromHtml(link);
+                withCustomLinkLayout = new SpannableStringBuilder(formattedText);
+                urls2 = withCustomLinkLayout.getSpans(0, formattedText.length(), URLSpan.class);
+                withCustomLinkLayout.insert(0, descriptionWithoutLink);
+
+                //If the link does not contain www return
+                if (! urls[0].getURL().contains("www")){
+                    text.setText(description);
+                    return;
+                }
+
+            }
+
+
+            for(URLSpan span : urls2) {
+                makeLinkClickable(withCustomLinkLayout, span);
+            }
+            text.setMovementMethod(LinkMovementMethod.getInstance());
+
+            text.setText(withCustomLinkLayout);
+
+
+        } catch (Exception e){
+            e.printStackTrace();
+            //Det var ingen link her
+           // descriptionWithoutLink = "Her var det desverre ingen link";
+            text.setText(description);
         }
     }
 
-    private void printdescriptions(HashMap<List<LatLng>, String> kyststiinfomap) {
+    private void setMarkerInfoText(TextView text, String description, String title) {
+        CharSequence sequence = Html.fromHtml(description);
+        URLSpan[] urls = {new URLSpan(description)};
 
-        for (String desc : kyststiinfomap.values()) {
+        String descriptionWithoutLink = description.substring(0, description.indexOf("http"));
+        SpannableStringBuilder withCustomLinkLayout = new SpannableStringBuilder("Tomt");
+        URLSpan[] urls2 = null;
+
+        //If there is a link in the description
+        if (urls.length != 0){
+            //Create the desired format of textview
+            String link = "<a href=\"" + urls[0].getURL() + "\"><u>Klikk her for mer info</u></a>";
+            CharSequence formattedText = Html.fromHtml(link);
+            withCustomLinkLayout = new SpannableStringBuilder(formattedText);
+            urls2 = withCustomLinkLayout.getSpans(0, formattedText.length(), URLSpan.class);
+            withCustomLinkLayout.insert(0, title + "\n\n");
         }
+
+
+        for(URLSpan span : urls2) {
+            makeLinkClickable(withCustomLinkLayout, span);
+        }
+        text.setMovementMethod(LinkMovementMethod.getInstance());
+
+        text.setText(withCustomLinkLayout);
     }
 
 
@@ -588,16 +800,20 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         }
 
-        final Button sporingButton = (Button) findViewById(R.id.onofflocationbutton);
+        final FloatingActionButton onOffLocationButton = (FloatingActionButton) findViewById(R.id.onofflocationbutton);
 
         if (resultCode == 0){
 
             //Sporing button should be off
-            sporingButton.setText("SPORING AV");
+            Toast.makeText(getApplicationContext(), "Oppdatering av posisjon - av", Toast.LENGTH_SHORT).show();
+            onOffLocationButton.setImageResource(R.drawable.location_off_64px);
+
             locationUpdatesSwitch = false;
             userAcceptLocation = false;
         } else {
-            sporingButton.setText("SPORING PÅ");
+            Toast.makeText(getApplicationContext(), "Oppdatering av posisjon - på", Toast.LENGTH_SHORT).show();
+            onOffLocationButton.setImageResource(R.drawable.location_on_64px);
+
             locationUpdatesSwitch = true;
             userAcceptLocation = true;
         }
@@ -656,7 +872,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
         //Request locationupdates
-        LocationRequest mLocationRequest = requestLocationUpdates();
+        mLocationRequest = requestLocationUpdates();
 
         if (! userHasAnsweredLocationTurnOn){
             //Handle users without location enabled
@@ -678,6 +894,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             // here to request the missing permissions, and then overriding
             //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
             //                                          int[] grantResults)
+            String[] permissions = {Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION};
+            ActivityCompat.requestPermissions(this, permissions, 1);
             // to handle the case where the user grants the permission. See the documentation
             // for ActivityCompat#requestPermissions for more details.
 
@@ -705,6 +923,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         result.setResultCallback(new ResultCallback<LocationSettingsResult>() {
             @Override
             public void onResult(LocationSettingsResult result) {
+
                 final Status status = result.getStatus();
                 final LocationSettingsStates states = result.getLocationSettingsStates();
                 switch (status.getStatusCode()) {
@@ -739,7 +958,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                         break;
                 }
+
             }
+
 
         });
     }
@@ -856,11 +1077,22 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
         CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, mMap.getCameraPosition().zoom);
         mMap.animateCamera(cameraUpdate);
+        Log.i(TAG, "OnLocationChanged: Location oppdatert");
 
     }
 
     @Override
     public void onResult(@NonNull Result result) {
+
+    }
+
+    @Override
+    public void onCustomTabsConnected() {
+
+    }
+
+    @Override
+    public void onCustomTabsDisconnected() {
 
     }
 
@@ -924,7 +1156,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         @Override
         protected void onPostExecute(Void aVoid) {
 
-          //  addPolylinesToMap();
+            //Adds the polylines to the map
             final Iterator<PolylineOptions> iterator = polylinesReadyToAdd.iterator();
             try {
 
@@ -961,6 +1193,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             setOnClusterItemClickListener(markerInfo);
 
 
+            Log.i(TAG, "onPostExecute: Kartinformasjon lastet inn!");
         }
     }
 
@@ -1006,28 +1239,26 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             stringStyle = feature.getLineStringStyle();
 
+
+            String description = feature.getProperty("description");
             //Hvis det er en kyststi legg til description og navn
             if (feature.getGeometry().getType().equals("LineString")) {
-                descriptionList.add(feature.getProperty("description"));
+
+                descriptionList.add(description);
 
                 nameList.add(feature.getProperty("name"));
             }
 
 
             stringStyle.setClickable(true);
-            stringStyle.setColor(Color.BLUE);
+
+
 
 
             feature.setLineStringStyle(stringStyle);
         }
 
         addGeoJsonLayerToDataStructure();
-    }
-
-    private void addPolylinesToMap() {
-        for (PolylineOptions polylineOptions : polylinesReadyToAdd){
-            mMap.addPolyline(polylineOptions);
-        }
     }
 
 
@@ -1060,9 +1291,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
     }
-
-
-
 
 }
 
