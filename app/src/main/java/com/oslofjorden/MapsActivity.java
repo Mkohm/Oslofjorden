@@ -84,13 +84,10 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
-//TODO:link bug, strict mode, remove log
+//TODO:remove log
 
-//TODO: promote myself, handle links better
 //sheet from material design
-//Renskrive fil eller lage validering
-//Fikse linker (plassbruk på infobox) og hellesøya teltplass (name) + (description)
-//Test webview activity
+//Get latest kyststi file
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.OnConnectionFailedListener, GoogleApiClient.ConnectionCallbacks, LocationListener, ResultCallback, CustomTabActivityHelper.ConnectionCallback {
     //For debugging
@@ -406,11 +403,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             public void onPolylineClick(Polyline polyline) {
 
 
+                //This is setting the polyline to blue color if the last polyline did not have a description
+                if (currentPolylineDescription == null && currentPolyline != null){
+                    currentPolyline.setColor(Color.BLUE);
+                }
 
-                //Sets the color back to what it was after clicking somewhere else
-                if (currentPolyline != null) {
+                //Sets the color back to what it was after clicking somewhere else, this is only working if the last polyline clicked had a description
+                if (currentPolyline != null && currentPolylineDescription != null) {
 
-
+                    Log.d(TAG, "onPolylineClick: " + currentPolylineDescription);
                     if (currentPolylineDescription.contains("Sykkelvei") || currentPolylineDescription.contains("sykkelvei")) {
                         currentPolyline.setColor(Color.GREEN);
                     } else if (currentPolylineDescription.contains("Ferge") || currentPolylineDescription.contains("ferge")) {
@@ -419,6 +420,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         currentPolyline.setColor(Color.BLUE);
                     }
                 }
+
+                //If the polyline did not have a description, the blue color is used
+
 
                 currentPolyline = polyline;
                 currentPolylineDescription = kyststiInfoMap.get(polyline.getPoints())[0];
