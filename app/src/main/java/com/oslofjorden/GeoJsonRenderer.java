@@ -350,6 +350,10 @@ import java.util.Set;
                 polylineOptions.color(Color.BLUE);
             }
         }
+
+        if (description == null){
+            polylineOptions.color(Color.BLUE);
+        }
     }
 
     private boolean isSykkelvei(String description) {

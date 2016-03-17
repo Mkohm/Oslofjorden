@@ -84,8 +84,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
-
-//TODO: Get latest kyststi file
+//TODO: helgeroaferfgene link meld inn - fikset i fil
 //Set different markers on different types of items
 //Let user choose what type of info to see
 //Challenge in walking kyststier
@@ -1170,6 +1169,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         }
                     }
                 }, 100);
+
+
             } catch (Exception e){
                 e.printStackTrace();
                 Toast.makeText(getApplicationContext(), "Dette gikk dårlig, kyststier ble ikke lastet inn.", Toast.LENGTH_SHORT).show();
@@ -1181,6 +1182,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 e.printStackTrace();
                 Toast.makeText(getApplicationContext(), "Dette gikk dårlig, markers ble ikke lastet inn.", Toast.LENGTH_SHORT).show();
             }
+
 
 
 
