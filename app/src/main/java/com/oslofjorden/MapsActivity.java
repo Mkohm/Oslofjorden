@@ -98,6 +98,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     //For debugging
     private static String TAG = "TAG";
 
+    AddInfoToMap addInfoToMap;
+
 
     private static GoogleMap mMap;
     GoogleApiClient mGoogleApiClient;
@@ -109,6 +111,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     LatLng currentMapClickPosition;
 
     boolean infoAddedToMap = false;
+    static boolean addedToDataStructure = false;
 
     MyMarkerOptions clickedClusterItem;
     public ClusterManager<MyMarkerOptions> mClusterManager;
@@ -157,7 +160,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
     private CustomTabActivityHelper customTabActivityHelper;
-
+    private boolean backGroundTaskRunning = false;
 
 
     @Override
@@ -198,6 +201,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 && savedInstanceState.getBoolean(STATE_RESOLVING_ERROR, false);
 
 
+        Log.d(TAG, "onCreate: infoaddedtomap: " + infoAddedToMap);
+
+        if (savedInstanceState != null) {
+            addedToDataStructure = savedInstanceState.getBoolean("addedToDataStructure");
+
+        }
+
+        addInfoToMap = new AddInfoToMap();
+        Log.d(TAG, "onCreate: liste: " + polylinesReadyToAdd.size() + " " + markersReadyToAdd.size());
+
+
     }
 
     @Override
@@ -221,6 +235,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putBoolean(STATE_RESOLVING_ERROR, mResolvingError);
+        outState.putBoolean("addedToDataStructure", addedToDataStructure);
 
 
     }
@@ -263,10 +278,40 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
 
 
+
+        try {
+            if (! infoAddedToMap){
+                Log.d(TAG, "onMapReady: starter igjen");
+                mMap.clear();
+                addInfoToMap = new AddInfoToMap();
+                addInfoToMap.execute();
+                backGroundTaskRunning = true;
+
+            }
+
+
+        } catch (Exception e){
+            e.printStackTrace();
+            Log.d(TAG, "onMapReady: Her gikk noe galt under innlastingen.");
+        }
+
+
+
     }
+
 
     @Override
     protected void onStop() {
+
+        Log.d(TAG, "onStop: ");
+
+        if (backGroundTaskRunning) {
+            addInfoToMap.cancel(true);
+
+        }
+
+
+
         try{
             stopLocationUpdates();
             mGoogleApiClient.disconnect();
@@ -283,6 +328,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     @Override
+    public void onBackPressed() {
+
+        super.onBackPressed();
+        this.finish();
+    }
+
+    @Override
     protected void onPause() {
 
         try {
@@ -294,6 +346,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             stopLocationUpdates();
         } catch (Exception e) {
             e.printStackTrace();
+            Log.i(TAG, "onPause: Noe gikk galt under pause");
         }
 
 
@@ -315,6 +368,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onMapReady(GoogleMap googleMap) {
 
         mMap = googleMap;
+       // mMap.clear();
         if (setGoogleMapUISettings()) return;
 
 
@@ -430,14 +484,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         try {
             if (! infoAddedToMap){
-                AddInfoToMap addInfoToMap = new AddInfoToMap();
+                Log.d(TAG, "onMapReady: starter igjen");
                 addInfoToMap.execute();
+                backGroundTaskRunning = true;
 
             }
-            infoAddedToMap = true;
+
 
         } catch (Exception e){
             e.printStackTrace();
+            Log.d(TAG, "onMapReady: Her gikk noe galt under innlastingen.");
         }
 
 
@@ -983,6 +1039,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     private void setUpClusterer() {
+        Log.d(TAG, "setUpClusterer: legger til markers");
         // Declare a variable for the cluster manager.
 
 
@@ -1012,6 +1069,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private void addItems() {
         for (MarkerOptions marker : markersReadyToAdd) {
+
+            if (addInfoToMap.isCancelled()){
+                return;
+            }
+
             mClusterManager.addItem(new MyMarkerOptions(marker));
         }
     }
@@ -1121,6 +1183,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         @Override
         protected void onPreExecute() {
+            if (addInfoToMap.isCancelled()){
+                return;
+            }
+
+
             TextView loading = (TextView) findViewById(R.id.infobar);
             loading.setVisibility(View.VISIBLE);
 
@@ -1133,7 +1200,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
             try {
-                getDataFromFileAndPutInDatastructure();
+                if (! addedToDataStructure) {
+
+
+                    getDataFromFileAndPutInDatastructure();
+                }
 
 
             } catch (IOException e) {
@@ -1145,6 +1216,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             return null;
         }
+
+
 
         @Override
         protected void onProgressUpdate(Integer... values) {
@@ -1160,12 +1233,39 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             try {
 
                 final Handler handler = new Handler();
+                //mMap.clear();
                 handler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        if (iterator.hasNext()){
+
+
+
+                        if (iterator.hasNext() && !infoAddedToMap){
+                            if (addInfoToMap.isCancelled()){
+                                Log.d(TAG, "run: stopper task");
+                                infoAddedToMap = false;
+                                backGroundTaskRunning = false;
+                                return;
+                            }
+
                             mMap.addPolyline(iterator.next());
                             handler.postDelayed(this, 10);
+
+
+
+                            Log.d(TAG, "run: kyststi");
+                        } else {
+                            Log.d(TAG, "run : alle kyststier er lastet inn");
+                            infoAddedToMap = true;
+
+                            backGroundTaskRunning = false;
+
+
+
+                            //Denne starter litt tidlig
+                            TextView loading = (TextView) findViewById(R.id.infobar);
+                            animateInfobarDown(loading);
+
                         }
                     }
                 }, 100);
@@ -1185,17 +1285,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
 
-
-            TextView loading = (TextView) findViewById(R.id.infobar);
-            animateInfobarDown(loading);
-
-
-
             final TextView markerInfo = (TextView) findViewById(R.id.infobar);
             setOnClusterItemClickListener(markerInfo);
 
-
-            Log.i(TAG, "onPostExecute: Kartinformasjon lastet inn!");
         }
     }
 
@@ -1227,6 +1319,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         jsonLayer = new GeoJsonLayer2(mMap, R.raw.alle_kyststier, MyApplication.getAppContext());
 
         for (GeoJsonFeature2 feature : jsonLayer.getFeatures()) {
+            if (addInfoToMap.isCancelled()){
+                return;
+            }
+
+
 
             GeoJsonPointStyle2 pointStyle = new GeoJsonPointStyle2();
             GeoJsonLineStringStyle2 stringStyle;
@@ -1261,6 +1358,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
 
         addGeoJsonLayerToDataStructure();
+
+        addedToDataStructure = true;
     }
 
 

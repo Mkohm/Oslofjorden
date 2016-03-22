@@ -112,7 +112,6 @@ public class CustomTabActivityHelper implements ServiceConnectionCallback {
     public void onServiceConnected(CustomTabsClient client) {
         mClient = client;
         mClient.warmup(0L);
-        Log.d("TAG", "onServiceConnected: varmer opp ");
         if (mConnectionCallback != null) mConnectionCallback.onCustomTabsConnected();
     }
 
