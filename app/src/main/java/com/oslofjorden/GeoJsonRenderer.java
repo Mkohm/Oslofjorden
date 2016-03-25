@@ -272,6 +272,10 @@ import java.util.Set;
      * @return Marker object created from the given GeoJsonPoint
      */
     private Marker addPointToMap(GeoJsonPointStyle2 pointStyle, GeoJsonPoint2 point) {
+        //If data is already added
+        if (MapsActivity.addedToDataStructure) {
+            return null;
+        }
         MarkerOptions markerOptions = pointStyle.toMarkerOptions();
         markerOptions.position(point.getCoordinates());
 
@@ -303,8 +307,11 @@ import java.util.Set;
      * @param lineString      contains coordinates for the Polyline
      * @return Polyline object created from given GeoJsonLineString
      */
-    private Polyline addLineStringToMap(GeoJsonLineStringStyle2 lineStringStyle,
-                                        GeoJsonLineString2 lineString) {
+    private Polyline addLineStringToMap(GeoJsonLineStringStyle2 lineStringStyle, GeoJsonLineString2 lineString) {
+        //If data is already added
+        if (MapsActivity.addedToDataStructure) {
+            return null;
+        }
         PolylineOptions polylineOptions = lineStringStyle.toPolylineOptions();
         // Add coordinates
 

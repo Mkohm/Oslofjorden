@@ -84,7 +84,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
-//TODO: helgeroaferfgene link meld inn - fikset i fil
+//TODO: helgeroaferfgene link meld inn - fikset i fil, fix animation of infobar, back faast after removes kyststier
 //Set different markers on different types of items
 //Let user choose what type of info to see
 //Challenge in walking kyststier
@@ -98,6 +98,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     //For debugging
     private static String TAG = "TAG";
 
+    AddInfoToMap addInfoToMap;
+
 
     private static GoogleMap mMap;
     GoogleApiClient mGoogleApiClient;
@@ -109,6 +111,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     LatLng currentMapClickPosition;
 
     boolean infoAddedToMap = false;
+    static boolean addedToDataStructure = false;
 
     MyMarkerOptions clickedClusterItem;
     public ClusterManager<MyMarkerOptions> mClusterManager;
@@ -157,7 +160,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
     private CustomTabActivityHelper customTabActivityHelper;
-
+    private boolean backGroundTaskRunning = false;
 
 
     @Override
@@ -198,6 +201,23 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 && savedInstanceState.getBoolean(STATE_RESOLVING_ERROR, false);
 
 
+        Log.d(TAG, "onCreate: infoaddedtomap: " + infoAddedToMap);
+
+        if (savedInstanceState != null) {
+            addedToDataStructure = savedInstanceState.getBoolean("addedToDataStructure");
+
+        }
+
+        addInfoToMap = new AddInfoToMap();
+        Log.d(TAG, "onCreate: liste: " + polylinesReadyToAdd.size() + " " + markersReadyToAdd.size());
+
+
+
+        TextView loading = (TextView) findViewById(R.id.infobar);
+        loading.setVisibility(View.INVISIBLE);
+
+
+
     }
 
     @Override
@@ -221,6 +241,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putBoolean(STATE_RESOLVING_ERROR, mResolvingError);
+        outState.putBoolean("addedToDataStructure", addedToDataStructure);
 
 
     }
@@ -263,10 +284,40 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
 
 
+
+        try {
+            if (! infoAddedToMap){
+                Log.d(TAG, "onMapReady: starter igjen");
+
+                AddInfoToMap addInfoToMap2 = new AddInfoToMap();
+                addInfoToMap2.execute();
+                backGroundTaskRunning = true;
+
+            }
+
+
+        } catch (Exception e){
+            e.printStackTrace();
+            Log.d(TAG, "onMapReady: Her gikk noe galt under innlastingen.");
+        }
+
+
+
     }
+
 
     @Override
     protected void onStop() {
+
+        Log.d(TAG, "onStop: ");
+
+        if (backGroundTaskRunning) {
+            addInfoToMap.cancel(true);
+
+        }
+
+
+
         try{
             stopLocationUpdates();
             mGoogleApiClient.disconnect();
@@ -283,6 +334,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     @Override
+    public void onBackPressed() {
+
+        super.onBackPressed();
+        this.finish();
+    }
+
+    @Override
     protected void onPause() {
 
         try {
@@ -294,6 +352,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             stopLocationUpdates();
         } catch (Exception e) {
             e.printStackTrace();
+            Log.i(TAG, "onPause: Noe gikk galt under pause");
         }
 
 
@@ -315,6 +374,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onMapReady(GoogleMap googleMap) {
 
         mMap = googleMap;
+       // mMap.clear();
         if (setGoogleMapUISettings()) return;
 
 
@@ -389,10 +449,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 int maxY = getDeviceMaxY();
 
                 //Hvis det allerede er et infovindu oppe skal det ikke animeres
-                if (!infobarUp) {
+
                     animateInfobarUp(kyststiInfo);
-                    infobarUp = true;
-                }
+
 
 
                 currentPolyline.setColor(Color.BLACK);
@@ -415,12 +474,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
                 //Hvis kyststiinfo er oppe, lukk den
-                if (infobarUp) {
 
                     animateInfobarDown(kyststiInfo);
 
-                    infobarUp = false;
-                }
+
 
 
 
@@ -430,14 +487,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         try {
             if (! infoAddedToMap){
-                AddInfoToMap addInfoToMap = new AddInfoToMap();
+                Log.d(TAG, "onMapReady: starter igjen");
                 addInfoToMap.execute();
+                backGroundTaskRunning = true;
 
             }
-            infoAddedToMap = true;
+
 
         } catch (Exception e){
             e.printStackTrace();
+            Log.d(TAG, "onMapReady: Her gikk noe galt under innlastingen.");
         }
 
 
@@ -514,20 +573,31 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     private void animateInfobarUp(TextView infobar) {
+        if (infobarUp) {
+            return;
+        }
+        infobar.setVisibility(View.VISIBLE);
         int maxY = getDeviceMaxY();
         Animation animation = new TranslateAnimation(0, 0, maxY - infobar.getY(), 0);
         animation.setDuration(500);
 
         infobar.startAnimation(animation);
+        infobarUp = true;
     }
 
     private void animateInfobarDown(TextView infobar) {
-        int maxY = getDeviceMaxY();
-        Animation animation = new TranslateAnimation(0, 0, 0, maxY);
-        animation.setDuration(500);
-        infobar.startAnimation(animation);
+        if (infobarUp){
+            int maxY = getDeviceMaxY();
+            Animation animation = new TranslateAnimation(0, 0, 0, maxY);
+            animation.setDuration(500);
+            infobar.startAnimation(animation);
 
-        infobar.setVisibility(View.INVISIBLE);
+            infobar.setVisibility(View.INVISIBLE);
+            infobarUp = false;
+        } else {
+            return;
+        }
+
     }
 
     private int getDeviceMaxY() {
@@ -983,6 +1053,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     private void setUpClusterer() {
+        Log.d(TAG, "setUpClusterer: legger til markers");
         // Declare a variable for the cluster manager.
 
 
@@ -1012,6 +1083,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private void addItems() {
         for (MarkerOptions marker : markersReadyToAdd) {
+
+            if (addInfoToMap.isCancelled()){
+                return;
+            }
+
             mClusterManager.addItem(new MyMarkerOptions(marker));
         }
     }
@@ -1121,10 +1197,20 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         @Override
         protected void onPreExecute() {
-            TextView loading = (TextView) findViewById(R.id.infobar);
-            loading.setVisibility(View.VISIBLE);
+            if (addInfoToMap.isCancelled()){
+                return;
+            }
 
-            loading.setText("Oslofjorden laster inn kyststier.. De vil poppe opp på kartet ditt snart :)");
+                TextView loading = (TextView) findViewById(R.id.infobar);
+                loading.setVisibility(View.VISIBLE);
+
+                loading.setText("Oslofjorden laster inn kyststier.. De vil poppe opp på kartet ditt snart :)");
+                animateInfobarUp(loading);
+                Log.d(TAG, "onPreExecute: animerer opp");
+
+
+
+
 
         }
 
@@ -1133,7 +1219,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
             try {
-                getDataFromFileAndPutInDatastructure();
+                if (! addedToDataStructure) {
+
+
+                    getDataFromFileAndPutInDatastructure();
+                    Log.i(TAG, "doInBackground: Lastet inn data til datastrukturen");
+                }
 
 
             } catch (IOException e) {
@@ -1146,11 +1237,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             return null;
         }
 
-        @Override
-        protected void onProgressUpdate(Integer... values) {
-
-
-        }
 
         @Override
         protected void onPostExecute(Void aVoid) {
@@ -1163,9 +1249,35 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 handler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        if (iterator.hasNext()){
+
+
+
+                        if (iterator.hasNext() && !infoAddedToMap){
+                            if (addInfoToMap.isCancelled()){
+                                Log.d(TAG, "run: stopper task");
+                                infoAddedToMap = false;
+                                backGroundTaskRunning = false;
+                                return;
+                            }
+
                             mMap.addPolyline(iterator.next());
                             handler.postDelayed(this, 10);
+
+
+
+                            Log.d(TAG, "run: kyststi");
+                        } else {
+                            Log.d(TAG, "run : alle kyststier er lastet inn");
+                            infoAddedToMap = true;
+
+                            backGroundTaskRunning = false;
+
+                                Log.d(TAG, "run: animerer ned");
+                                TextView loading = (TextView) findViewById(R.id.infobar);
+                                animateInfobarDown(loading);
+
+
+
                         }
                     }
                 }, 100);
@@ -1185,17 +1297,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
 
-
-            TextView loading = (TextView) findViewById(R.id.infobar);
-            animateInfobarDown(loading);
-
-
-
             final TextView markerInfo = (TextView) findViewById(R.id.infobar);
             setOnClusterItemClickListener(markerInfo);
 
-
-            Log.i(TAG, "onPostExecute: Kartinformasjon lastet inn!");
         }
     }
 
@@ -1204,10 +1308,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @Override
             public boolean onClusterItemClick(MyMarkerOptions item) {
                 markerInfo.setVisibility(View.VISIBLE);
-                if (! infobarUp){
+
                     animateInfobarUp(markerInfo);
-                    infobarUp = true;
-                }
+
 
     
 
@@ -1227,6 +1330,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         jsonLayer = new GeoJsonLayer2(mMap, R.raw.alle_kyststier, MyApplication.getAppContext());
 
         for (GeoJsonFeature2 feature : jsonLayer.getFeatures()) {
+            if (addInfoToMap.isCancelled()){
+                return;
+            }
+
+
 
             GeoJsonPointStyle2 pointStyle = new GeoJsonPointStyle2();
             GeoJsonLineStringStyle2 stringStyle;
@@ -1261,6 +1369,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
 
         addGeoJsonLayerToDataStructure();
+
+        addedToDataStructure = true;
     }
 
 
