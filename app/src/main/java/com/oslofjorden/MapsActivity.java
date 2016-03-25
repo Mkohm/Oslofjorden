@@ -84,7 +84,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
-//TODO: helgeroaferfgene link meld inn - fikset i fil
+//TODO: helgeroaferfgene link meld inn - fikset i fil, fix animation of infobar, back faast after removes kyststier
 //Set different markers on different types of items
 //Let user choose what type of info to see
 //Challenge in walking kyststier
@@ -1187,11 +1187,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 return;
             }
 
+            if (! infobarUp) {
 
-            TextView loading = (TextView) findViewById(R.id.infobar);
-            loading.setVisibility(View.VISIBLE);
+                TextView loading = (TextView) findViewById(R.id.infobar);
+                loading.setVisibility(View.VISIBLE);
 
-            loading.setText("Oslofjorden laster inn kyststier.. De vil poppe opp på kartet ditt snart :)");
+                loading.setText("Oslofjorden laster inn kyststier.. De vil poppe opp på kartet ditt snart :)");
+                animateInfobarUp(loading);
+            }
+
+
 
         }
 
@@ -1261,10 +1266,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                             backGroundTaskRunning = false;
 
 
+                            if (infobarUp) {
+                                TextView loading = (TextView) findViewById(R.id.infobar);
+                                animateInfobarDown(loading);
+                            }
 
-                            //Denne starter litt tidlig
-                            TextView loading = (TextView) findViewById(R.id.infobar);
-                            animateInfobarDown(loading);
 
                         }
                     }
