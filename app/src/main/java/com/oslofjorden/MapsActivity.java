@@ -212,6 +212,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         Log.d(TAG, "onCreate: liste: " + polylinesReadyToAdd.size() + " " + markersReadyToAdd.size());
 
 
+
+        TextView loading = (TextView) findViewById(R.id.infobar);
+        loading.setVisibility(View.INVISIBLE);
+
+
+
     }
 
     @Override
@@ -282,9 +288,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         try {
             if (! infoAddedToMap){
                 Log.d(TAG, "onMapReady: starter igjen");
-                mMap.clear();
-                addInfoToMap = new AddInfoToMap();
-                addInfoToMap.execute();
+
+                AddInfoToMap addInfoToMap2 = new AddInfoToMap();
+                addInfoToMap2.execute();
                 backGroundTaskRunning = true;
 
             }
@@ -443,10 +449,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 int maxY = getDeviceMaxY();
 
                 //Hvis det allerede er et infovindu oppe skal det ikke animeres
-                if (!infobarUp) {
+
                     animateInfobarUp(kyststiInfo);
-                    infobarUp = true;
-                }
+
 
 
                 currentPolyline.setColor(Color.BLACK);
@@ -469,12 +474,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
                 //Hvis kyststiinfo er oppe, lukk den
-                if (infobarUp) {
 
                     animateInfobarDown(kyststiInfo);
 
-                    infobarUp = false;
-                }
+
 
 
 
@@ -570,20 +573,31 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     private void animateInfobarUp(TextView infobar) {
+        if (infobarUp) {
+            return;
+        }
+        infobar.setVisibility(View.VISIBLE);
         int maxY = getDeviceMaxY();
         Animation animation = new TranslateAnimation(0, 0, maxY - infobar.getY(), 0);
         animation.setDuration(500);
 
         infobar.startAnimation(animation);
+        infobarUp = true;
     }
 
     private void animateInfobarDown(TextView infobar) {
-        int maxY = getDeviceMaxY();
-        Animation animation = new TranslateAnimation(0, 0, 0, maxY);
-        animation.setDuration(500);
-        infobar.startAnimation(animation);
+        if (infobarUp){
+            int maxY = getDeviceMaxY();
+            Animation animation = new TranslateAnimation(0, 0, 0, maxY);
+            animation.setDuration(500);
+            infobar.startAnimation(animation);
 
-        infobar.setVisibility(View.INVISIBLE);
+            infobar.setVisibility(View.INVISIBLE);
+            infobarUp = false;
+        } else {
+            return;
+        }
+
     }
 
     private int getDeviceMaxY() {
@@ -1187,14 +1201,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 return;
             }
 
-            if (! infobarUp) {
-
                 TextView loading = (TextView) findViewById(R.id.infobar);
                 loading.setVisibility(View.VISIBLE);
 
                 loading.setText("Oslofjorden laster inn kyststier.. De vil poppe opp på kartet ditt snart :)");
                 animateInfobarUp(loading);
-            }
+                Log.d(TAG, "onPreExecute: animerer opp");
+
+
 
 
 
@@ -1209,6 +1223,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
                     getDataFromFileAndPutInDatastructure();
+                    Log.i(TAG, "doInBackground: Lastet inn data til datastrukturen");
                 }
 
 
@@ -1223,13 +1238,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
 
 
-
-        @Override
-        protected void onProgressUpdate(Integer... values) {
-
-
-        }
-
         @Override
         protected void onPostExecute(Void aVoid) {
 
@@ -1238,7 +1246,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             try {
 
                 final Handler handler = new Handler();
-                //mMap.clear();
                 handler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
@@ -1265,11 +1272,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                             backGroundTaskRunning = false;
 
-
-                            if (infobarUp) {
+                                Log.d(TAG, "run: animerer ned");
                                 TextView loading = (TextView) findViewById(R.id.infobar);
                                 animateInfobarDown(loading);
-                            }
+
 
 
                         }
@@ -1302,10 +1308,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @Override
             public boolean onClusterItemClick(MyMarkerOptions item) {
                 markerInfo.setVisibility(View.VISIBLE);
-                if (! infobarUp){
+
                     animateInfobarUp(markerInfo);
-                    infobarUp = true;
-                }
+
 
     
 
