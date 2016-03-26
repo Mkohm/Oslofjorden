@@ -77,6 +77,7 @@ import com.google.maps.android.clustering.ClusterItem;
 import com.google.maps.android.clustering.ClusterManager;
 
 import org.json.JSONException;
+import org.w3c.dom.Text;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -213,10 +214,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
 
-        TextView loading = (TextView) findViewById(R.id.infobar);
-        loading.setVisibility(View.INVISIBLE);
-
-
 
     }
 
@@ -289,8 +286,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             if (! infoAddedToMap){
                 Log.d(TAG, "onMapReady: starter igjen");
 
-                AddInfoToMap addInfoToMap2 = new AddInfoToMap();
-                addInfoToMap2.execute();
+                mMap.clear();
+
+                addInfoToMap = new AddInfoToMap();
+                addInfoToMap.execute();
+
+
                 backGroundTaskRunning = true;
 
             }
@@ -299,6 +300,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         } catch (Exception e){
             e.printStackTrace();
             Log.d(TAG, "onMapReady: Her gikk noe galt under innlastingen.");
+            animateInfobarUp();
+            Log.d(TAG, "onResume: lel");
         }
 
 
@@ -419,7 +422,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         showInfomessageToUserIfFirstTime();
 
         final TextView kyststiInfo = (TextView) findViewById(R.id.infobar);
-        kyststiInfo.setVisibility(View.INVISIBLE);
 
 
         mMap.setOnPolylineClickListener(new GoogleMap.OnPolylineClickListener() {
@@ -448,9 +450,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                 int maxY = getDeviceMaxY();
 
-                //Hvis det allerede er et infovindu oppe skal det ikke animeres
 
-                    animateInfobarUp(kyststiInfo);
+                animateInfobarUp();
 
 
 
@@ -469,13 +470,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                 currentMapClickPosition = latLng;
 
-                kyststiInfo.setVisibility(View.INVISIBLE);
                 int maxY = getDeviceMaxY();
 
 
                 //Hvis kyststiinfo er oppe, lukk den
 
-                    animateInfobarDown(kyststiInfo);
+                    animateInfobarDown();
 
 
 
@@ -572,7 +572,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         return currentPolylineDescription.contains("Sykkelvei") || currentPolylineDescription.contains("sykkelvei");
     }
 
-    private void animateInfobarUp(TextView infobar) {
+    private void animateInfobarUp() {
+        TextView infobar = (TextView) findViewById(R.id.infobar);
+
+
         if (infobarUp) {
             return;
         }
@@ -585,7 +588,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         infobarUp = true;
     }
 
-    private void animateInfobarDown(TextView infobar) {
+    private void animateInfobarDown() {
+        TextView infobar = (TextView) findViewById(R.id.infobar);
+
         if (infobarUp){
             int maxY = getDeviceMaxY();
             Animation animation = new TranslateAnimation(0, 0, 0, maxY);
@@ -1045,9 +1050,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             lastLocation = new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude());
         } else {
             //Oslo sentrum
-            lastLocation = new LatLng(59.908588, 10.741165);
+            lastLocation = new LatLng(59.903765, 10.699610);
         }
-        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(lastLocation, 17);
+        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(lastLocation, 9);
         mMap.moveCamera(cameraUpdate);
 
     }
@@ -1205,7 +1210,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 loading.setVisibility(View.VISIBLE);
 
                 loading.setText("Oslofjorden laster inn kyststier.. De vil poppe opp på kartet ditt snart :)");
-                animateInfobarUp(loading);
+                animateInfobarUp();
                 Log.d(TAG, "onPreExecute: animerer opp");
 
 
@@ -1251,7 +1256,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     public void run() {
 
 
-
                         if (iterator.hasNext() && !infoAddedToMap){
                             if (addInfoToMap.isCancelled()){
                                 Log.d(TAG, "run: stopper task");
@@ -1260,8 +1264,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                 return;
                             }
 
+
+
                             mMap.addPolyline(iterator.next());
-                            handler.postDelayed(this, 10);
+
+
+                            handler.postDelayed(this, 1);
 
 
 
@@ -1273,8 +1281,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                             backGroundTaskRunning = false;
 
                                 Log.d(TAG, "run: animerer ned");
-                                TextView loading = (TextView) findViewById(R.id.infobar);
-                                animateInfobarDown(loading);
+                                animateInfobarDown();
 
 
 
@@ -1309,7 +1316,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             public boolean onClusterItemClick(MyMarkerOptions item) {
                 markerInfo.setVisibility(View.VISIBLE);
 
-                    animateInfobarUp(markerInfo);
+                    animateInfobarUp();
 
 
     
@@ -1342,6 +1349,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             //Gets the name property from the json file
             pointStyle.setTitle(feature.getProperty("name"));
             feature.setPointStyle(pointStyle);
+
+
 
 
             //Gets the description property from the json file
