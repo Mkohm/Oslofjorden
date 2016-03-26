@@ -1052,7 +1052,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             //Oslo sentrum
             lastLocation = new LatLng(59.903765, 10.699610);
         }
-        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(lastLocation, 9);
+        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(lastLocation, 13);
         mMap.moveCamera(cameraUpdate);
 
     }
@@ -1341,8 +1341,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 return;
             }
 
-
-
             GeoJsonPointStyle2 pointStyle = new GeoJsonPointStyle2();
             GeoJsonLineStringStyle2 stringStyle;
 
@@ -1350,14 +1348,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             pointStyle.setTitle(feature.getProperty("name"));
             feature.setPointStyle(pointStyle);
 
-
-
-
             //Gets the description property from the json file
             pointStyle.setSnippet(feature.getProperty("description"));
 
             stringStyle = feature.getLineStringStyle();
-
 
             String description = feature.getProperty("description");
             //Hvis det er en kyststi legg til description og navn
