@@ -18,31 +18,24 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.StrictMode;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.customtabs.CustomTabsIntent;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
-import android.support.v4.app.Fragment;
 import android.text.Html;
 import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
-import android.text.style.ForegroundColorSpan;
 import android.text.style.URLSpan;
-import android.text.style.UnderlineSpan;
-import android.util.EventLogTags;
 import android.util.Log;
 import android.view.Display;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
-import android.widget.CheckBox;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -67,17 +60,15 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.LatLngBounds;
-import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
-import com.google.maps.android.clustering.Cluster;
 import com.google.maps.android.clustering.ClusterItem;
 import com.google.maps.android.clustering.ClusterManager;
+import com.google.maps.android.geojson.GeoJsonFeature;
+import com.google.maps.android.geojson.GeoJsonPointStyle;
 
 import org.json.JSONException;
-import org.w3c.dom.Text;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -117,7 +108,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     MyMarkerOptions clickedClusterItem;
     public ClusterManager<MyMarkerOptions> mClusterManager;
 
-    public static GeoJsonLayer2 jsonLayer;
+
+    //Different map layers
+    public static GeoJsonLayer2 kyststiLayer;
+    private GeoJsonLayer2 beachLayer;
+
+
 
     private boolean infobarUp = false;
 
@@ -162,6 +158,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private CustomTabActivityHelper customTabActivityHelper;
     private boolean backGroundTaskRunning = false;
+
 
 
     @Override
@@ -664,7 +661,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
     public static void addGeoJsonLayerToDataStructure() {
-        jsonLayer.addLayerToMap();
+        kyststiLayer.addLayerToMap();
     }
 
     private void setMarkerDescription(String title, String description, TextView txtMarkerDescription) {
@@ -1273,7 +1270,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
 
-                            Log.d(TAG, "run: kyststi");
                         } else {
                             Log.d(TAG, "run : alle kyststier er lastet inn");
                             infoAddedToMap = true;
@@ -1296,7 +1292,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
 
             try {
-                setUpClusterer();
+             //   setUpClusterer();
             } catch (Exception e) {
                 e.printStackTrace();
                 Toast.makeText(getApplicationContext(), "Dette gikk dårlig, markers ble ikke lastet inn.", Toast.LENGTH_SHORT).show();
@@ -1333,28 +1329,28 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         });
     }
 
-    private void getDataFromFileAndPutInDatastructure() throws IOException, JSONException {
-        jsonLayer = new GeoJsonLayer2(mMap, R.raw.alle_kyststier, MyApplication.getAppContext());
 
-        for (GeoJsonFeature2 feature : jsonLayer.getFeatures()) {
+    private void getDataFromFileAndPutInDatastructure() throws IOException, JSONException {
+        //Is only loading the paths from the file
+
+        kyststiLayer = new GeoJsonLayer2(mMap, R.raw.alle_kyststier, MyApplication.getAppContext());
+
+        for (GeoJsonFeature2 feature : kyststiLayer.getFeatures()) {
             if (addInfoToMap.isCancelled()){
                 return;
             }
 
+            //GeoJsonPointStyle2 pointStyle = new GeoJsonPointStyle2();
 
 
-            GeoJsonPointStyle2 pointStyle = new GeoJsonPointStyle2();
             GeoJsonLineStringStyle2 stringStyle;
 
             //Gets the name property from the json file
-            pointStyle.setTitle(feature.getProperty("name"));
-            feature.setPointStyle(pointStyle);
-
-
-
+            //pointStyle.setTitle(feature.getProperty("name"));
+            //feature.setPointStyle(pointStyle);
 
             //Gets the description property from the json file
-            pointStyle.setSnippet(feature.getProperty("description"));
+            //pointStyle.setSnippet(feature.getProperty("description"));
 
             stringStyle = feature.getLineStringStyle();
 
@@ -1372,14 +1368,61 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             stringStyle.setClickable(true);
 
 
-
-
             feature.setLineStringStyle(stringStyle);
         }
+
+
+        beachLayer = new GeoJsonLayer2(mMap, R.raw.interesting_points, MyApplication.getAppContext());
+        for (GeoJsonFeature2 feature : beachLayer.getFeatures()) {
+            GeoJsonPointStyle2 pointStyle = new GeoJsonPointStyle2();
+
+            pointStyle.setTitle(feature.getProperty("name"));
+
+
+
+            //Filter out the description and the different types and then set the description
+
+
+
+            pointStyle.setSnippet(feature.getProperty("link1_href"));
+
+
+
+
+
+            pointStyle.set
+
+            Log.d(TAG, "getDataFromFileAndPutInDatastructure: " + feature.getProperty("gpxx_WaypointExtension"));
+
+            feature.setPointStyle(pointStyle);
+        }
+
+
+
+
+
+
 
         addGeoJsonLayerToDataStructure();
 
         addedToDataStructure = true;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     }
 
 
