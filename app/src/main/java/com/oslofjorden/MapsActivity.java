@@ -46,6 +46,7 @@ import com.google.android.gms.common.api.PendingResult;
 import com.google.android.gms.common.api.Result;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
+import com.google.android.gms.common.server.converter.StringToIntConverter;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
@@ -60,21 +61,25 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.maps.android.clustering.ClusterItem;
 import com.google.maps.android.clustering.ClusterManager;
-import com.google.maps.android.geojson.GeoJsonFeature;
-import com.google.maps.android.geojson.GeoJsonPointStyle;
 
 import org.json.JSONException;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Scanner;
 
 //TODO: helgeroaferfgene link meld inn - fikset i fil, fix animation of infobar, back faast after removes kyststier
 //Set different markers on different types of items
@@ -111,7 +116,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     //Different map layers
     public static GeoJsonLayer2 kyststiLayer;
-    private GeoJsonLayer2 beachLayer;
+    private GeoJsonLayer2 markerLayer;
 
 
 
@@ -136,6 +141,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public static ArrayList<String> nameList = new ArrayList<String>();
     public static int indexInNameList = 0;
 
+    private static ArrayList<MarkerOptions> beachMarkers = new ArrayList<MarkerOptions>();
+
+
+
+
+
     public static List<MarkerOptions> markersReadyToAdd = new ArrayList<MarkerOptions>();
     public static List<PolylineOptions> polylinesReadyToAdd = new ArrayList<PolylineOptions>();
 
@@ -158,7 +169,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private CustomTabActivityHelper customTabActivityHelper;
     private boolean backGroundTaskRunning = false;
-
 
 
     @Override
@@ -1084,13 +1094,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
     private void addItems() {
-        for (MarkerOptions marker : markersReadyToAdd) {
+        for (MarkerOptions marker : beachMarkers) {
 
             if (addInfoToMap.isCancelled()){
                 return;
             }
 
             mClusterManager.addItem(new MyMarkerOptions(marker));
+            Log.d(TAG, "addItems: beach" + beachMarkers.size());
         }
     }
 
@@ -1292,7 +1303,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
 
             try {
-             //   setUpClusterer();
+                setUpClusterer();
             } catch (Exception e) {
                 e.printStackTrace();
                 Toast.makeText(getApplicationContext(), "Dette gikk dårlig, markers ble ikke lastet inn.", Toast.LENGTH_SHORT).show();
@@ -1312,10 +1323,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             public boolean onClusterItemClick(MyMarkerOptions item) {
                 markerInfo.setVisibility(View.VISIBLE);
 
-                    animateInfobarUp();
+                animateInfobarUp();
 
-
-    
 
                 clickedClusterItem = item;
 
@@ -1331,9 +1340,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
     private void getDataFromFileAndPutInDatastructure() throws IOException, JSONException {
+        //Create a layer with markers for each of the markertypes
+
         //Is only loading the paths from the file
 
-        kyststiLayer = new GeoJsonLayer2(mMap, R.raw.alle_kyststier, MyApplication.getAppContext());
+        kyststiLayer = new GeoJsonLayer2(mMap, R.raw.alle_kyststier_without_markers, MyApplication.getAppContext());
 
         for (GeoJsonFeature2 feature : kyststiLayer.getFeatures()) {
             if (addInfoToMap.isCancelled()){
@@ -1341,26 +1352,26 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
 
             //GeoJsonPointStyle2 pointStyle = new GeoJsonPointStyle2();
-
-
             GeoJsonLineStringStyle2 stringStyle;
 
             //Gets the name property from the json file
             //pointStyle.setTitle(feature.getProperty("name"));
+            //pointStyle.setSnippet(feature.getProperty("description"));
+
+
             //feature.setPointStyle(pointStyle);
 
             //Gets the description property from the json file
-            //pointStyle.setSnippet(feature.getProperty("description"));
 
             stringStyle = feature.getLineStringStyle();
 
 
             String description = feature.getProperty("description");
+
             //Hvis det er en kyststi legg til description og navn
             if (feature.getGeometry().getType().equals("LineString")) {
 
                 descriptionList.add(description);
-
                 nameList.add(feature.getProperty("name"));
             }
 
@@ -1372,8 +1383,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
 
 
-        beachLayer = new GeoJsonLayer2(mMap, R.raw.interesting_points, MyApplication.getAppContext());
-        for (GeoJsonFeature2 feature : beachLayer.getFeatures()) {
+        /*markerLayer = new GeoJsonLayer2(mMap, R.raw.interesting_points, MyApplication.getAppContext());
+        for (GeoJsonFeature2 feature : markerLayer.getFeatures()) {
             GeoJsonPointStyle2 pointStyle = new GeoJsonPointStyle2();
 
             pointStyle.setTitle(feature.getProperty("name"));
@@ -1382,26 +1393,26 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             //Filter out the description and the different types and then set the description
 
+            String description = feature.getProperty("link1_href");
+
+            if (feature.getProperty("gpxx_WaypointExtension").contains("Beach")) {
+
+                markerDescriptionList.add(description);
+                markerNameList.add(feature.getProperty("name"));
+
+            }
 
 
-            pointStyle.setSnippet(feature.getProperty("link1_href"));
+
+            pointStyle.setSnippet();
 
 
 
-
-
-            pointStyle.set
-
-            Log.d(TAG, "getDataFromFileAndPutInDatastructure: " + feature.getProperty("gpxx_WaypointExtension"));
+            Log.d(TAG, "getDataFromFileAndPutInDatastructure: " + feature.getProperty("name"));
 
             feature.setPointStyle(pointStyle);
         }
-
-
-
-
-
-
+*/
 
         addGeoJsonLayerToDataStructure();
 
@@ -1409,20 +1420,48 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
 
+        InputStream inputStream = getResources().openRawResource(R.raw.interesting_points);
+        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+
+        while (true) {
+
+            String line = reader.readLine();
+            if (line == null) {
+                break;
+            }
+            if (! line.contains("gpxx_WaypointExtension")) {
+                continue;
+            }
+
+            MarkerOptions options = new MarkerOptions();
+            setMarkerPosition(line, options);
+            options.title("tet");
+            options.snippet("hello");
+
+
+            if (line.contains("Beach")){
+                beachMarkers.add(options);
+            }
 
 
 
 
+        }
 
 
+    }
+
+    private void setMarkerPosition(String line, MarkerOptions options) {
+        int indexOfStartCoordinate = line.indexOf("\"coordinates\": [ ") + 17;
+        int indexOfEndCoordinate = line.indexOf(" ] } }");
+        String coordinates = line.substring(indexOfStartCoordinate, indexOfEndCoordinate);
+
+        double longitude = Double.valueOf(coordinates.substring(0, coordinates.indexOf(",")));
+        double latitude = Double.valueOf(coordinates.substring(coordinates.indexOf(",")+1));
+        Log.d(TAG, "getDataFromFileAndPutInDatastructure: " + latitude + " " + longitude);
 
 
-
-
-
-
-
-
+        options.position(new LatLng(latitude, longitude));
     }
 
 

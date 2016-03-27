@@ -279,6 +279,8 @@ import java.util.Set;
         MarkerOptions markerOptions = pointStyle.toMarkerOptions();
         markerOptions.position(point.getCoordinates());
 
+
+        //Adds all the markers to the list
         MapsActivity.markersReadyToAdd.add(markerOptions);
         //return mMap.addMarker(markerOptions);
         return null;
