@@ -10,6 +10,7 @@
         <item android:id="@+id/kyststier"
             android:title="Kyststier"
             app:showAsAction="always"
+            android:checked="true"
             >
 
         </item>
@@ -35,46 +36,88 @@
 
         </item>
 
-        <item android:id="@+id/action_se_layers"
-            android:title="Badeplasser"
+        <item android:id="@+id/fiskeplasser"
+            android:title="Fiskeplasser"
             app:showAsAction="never"
             >
 
         </item>
 
-        <item android:id="@+id/oeu"
-            android:title="Båtramper"
+        <item android:id="@+id/butikk"
+            android:title="Butikk"
             app:showAsAction="never"
 
             >
 
         </item>
 
-        <item android:id="@+id/oeuoeuoeu"
-            android:title="WC"
+        <item android:id="@+id/spisested"
+            android:title="Spisesteder"
             app:showAsAction="never"
             >
 
         </item>
 
-        <item android:id="@+id/oeuoeu"
-            android:title="Badeplasser"
+        <item android:id="@+id/fyr"
+            android:title="Fyr"
             app:showAsAction="never"
             >
 
         </item>
 
-        <item android:id="@+id/ooo"
-            android:title="Båtramper"
+        <item android:id="@+id/bunkers"
+            android:title="Bunkers"
             app:showAsAction="never"
             >
 
         </item>
 
-        <item android:id="@+id/aoeu"
-            android:title="WC"
+        <item android:id="@+id/marina"
+            android:title="Marinaer"
             app:showAsAction="never"
                 >
+
+        </item>
+        <item android:id="@+id/gjestehavn"
+            android:title="Gjestehavner"
+            app:showAsAction="never"
+            >
+
+        </item>
+        <item android:id="@+id/parkeringTrans"
+            android:title="Parkering/Transport"
+            app:showAsAction="never"
+            >
+
+        </item>
+        <item android:id="@+id/poi"
+            android:title="Point of interest"
+            app:showAsAction="never"
+            >
+
+        </item>
+        <item android:id="@+id/campingplass"
+            android:title="Campingplasser"
+            app:showAsAction="never"
+            >
+
+        </item>
+        <item android:id="@+id/baatbutikk"
+            android:title="Båtbutikker"
+            app:showAsAction="never"
+            >
+
+        </item>
+        <item android:id="@+id/uthavn"
+            android:title="Uthavner"
+            app:showAsAction="never"
+            >
+
+        </item>
+        <item android:id="@+id/kranTruck"
+            android:title="Kran/Truck"
+            app:showAsAction="never"
+            >
 
         </item>
 

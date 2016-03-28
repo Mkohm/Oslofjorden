@@ -22,10 +22,8 @@ import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.customtabs.CustomTabsIntent;
-import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
-import android.support.v4.app.FragmentActivity;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.Toolbar;
@@ -37,12 +35,10 @@ import android.text.style.ClickableSpan;
 import android.text.style.URLSpan;
 import android.util.Log;
 import android.view.Display;
-import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
-import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -54,7 +50,6 @@ import com.google.android.gms.common.api.PendingResult;
 import com.google.android.gms.common.api.Result;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
-import com.google.android.gms.common.server.converter.StringToIntConverter;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
@@ -69,18 +64,18 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.maps.android.clustering.ClusterItem;
 import com.google.maps.android.clustering.ClusterManager;
+import com.google.maps.android.clustering.algo.GridBasedAlgorithm;
+import com.google.maps.android.clustering.algo.PreCachingAlgorithmDecorator;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -88,8 +83,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.Scanner;
 
 //TODO: helgeroaferfgene link meld inn - fikset i fil, fix animation of infobar, back faast after removes kyststier
 //Set different markers on different types of items
@@ -97,7 +90,9 @@ import java.util.Scanner;
 //Challenge in walking kyststier
 //Infobar material design
 //Menu - hamburgermenu
-
+//Rapporter feil/tur/hvasomhelst
+//instillinger oppdateringshastighet ++
+//I nærheten
 //Database implementation and search
 
 
@@ -151,7 +146,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public static ArrayList<String> nameList = new ArrayList<String>();
     public static int indexInNameList = 0;
 
-    private static ArrayList<MarkerOptions> beachMarkers = new ArrayList<MarkerOptions>();
 
 
 
@@ -177,26 +171,29 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private final int PERMISSIONS_OK = 0;
 
 
+
+    private static ArrayList<MyMarkerOptions> beachMarkers = new ArrayList<>();
     private CustomTabActivityHelper customTabActivityHelper;
     private boolean backGroundTaskRunning = false;
-    private ArrayList<MarkerOptions> rampeMarkers = new ArrayList<>();
-    private ArrayList<MarkerOptions> fiskeplassMarkers = new ArrayList<>();
-    private ArrayList<MarkerOptions> kranTruckMarkers = new ArrayList<>();
-    private ArrayList<MarkerOptions> bunkersMarkers = new ArrayList<>();
-    private ArrayList<MarkerOptions> butikkMarkers = new ArrayList<>();
-    private ArrayList<MarkerOptions> spisestedMarkers = new ArrayList<>();
-    private ArrayList<MarkerOptions> uthavnMarkers = new ArrayList<>();
-    private ArrayList<MarkerOptions> fyrMarkers = new ArrayList<>();
-    private ArrayList<MarkerOptions> baatbutikkMarkers = new ArrayList<>();
-    private ArrayList<MarkerOptions> marinaMarkers = new ArrayList<>();
-    private ArrayList<MarkerOptions> gjestehavnMarkers = new ArrayList<>();
-    private ArrayList<MarkerOptions> parkeringTranspMarkers = new ArrayList<>();
-    private ArrayList<MarkerOptions> WCMarkers = new ArrayList<>();
-    private ArrayList<MarkerOptions> pointOfInterestMarkers = new ArrayList<>();
-    private ArrayList<MarkerOptions> campingplassMarkers = new ArrayList<>();
+    private ArrayList<MyMarkerOptions> rampeMarkers = new ArrayList<>();
+    private ArrayList<MyMarkerOptions> fiskeplassMarkers = new ArrayList<>();
+    private ArrayList<MyMarkerOptions> kranTruckMarkers = new ArrayList<>();
+    private ArrayList<MyMarkerOptions> bunkersMarkers = new ArrayList<>();
+    private ArrayList<MyMarkerOptions> butikkMarkers = new ArrayList<>();
+    private ArrayList<MyMarkerOptions> spisestedMarkers = new ArrayList<>();
+    private ArrayList<MyMarkerOptions> uthavnMarkers = new ArrayList<>();
+    private ArrayList<MyMarkerOptions> fyrMarkers = new ArrayList<>();
+    private ArrayList<MyMarkerOptions> baatbutikkMarkers = new ArrayList<>();
+    private ArrayList<MyMarkerOptions> marinaMarkers = new ArrayList<>();
+    private ArrayList<MyMarkerOptions> gjestehavnMarkers = new ArrayList<>();
+    private ArrayList<MyMarkerOptions> parkeringTranspMarkers = new ArrayList<>();
+    private ArrayList<MyMarkerOptions> WCMarkers = new ArrayList<>();
+    private ArrayList<MyMarkerOptions> pointOfInterestMarkers = new ArrayList<>();
+    private ArrayList<MyMarkerOptions> campingplassMarkers = new ArrayList<>();
 
     private ArrayList<Polyline> polylinesOnMap = new ArrayList<>();
-    private ArrayList<MarkerOptions> markersOnMap = new ArrayList<>();
+    private ArrayList<MyMarkerOptions> markersOnMap = new ArrayList<>();
+    private boolean setUpClustererIfMarkers = true;
 
 
     @Override
@@ -244,6 +241,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         setUpToolbar();
 
+
+        //TODO: Set up default markers and paths, sharedprefs overrides this
+
         final ImageButton layerButton = (ImageButton) findViewById(R.id.layers);
         final PopupMenu popup = new PopupMenu(MapsActivity.this, layerButton);
         popup.getMenuInflater().inflate(R.menu.toolbar_menu, popup.getMenu());
@@ -252,136 +252,272 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         layerButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                popup.show();
+
 
                 popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
                     @Override
                     public boolean onMenuItemClick(MenuItem item) {
 
-                        switch (item.getItemId()){
-                            case R.id.kyststier:
-                                //Kyststier er checked og den klikkes på - fjern alle kyststier
-                                if (item.isChecked()){
-                                    removePolylines();
-
-                                    //Den var ikke checked og den klikkes på - last inn alle kyststier
-                                } else {
-                                    addPolylines();
-                                }
-
-                                item.setChecked(!item.isChecked());
-                                break;
-
-                            case R.id.badeplasser:
-                                if (item.isChecked()){
-                                    //Gå igjennom alle som er på kartet og fjern de med badeplasser
-                                    for (int i = 0; i < beachMarkers.size(); i++) {
-
-                                        if (mClusterManager.getMarkerCollection().getMarkers().contains(beachMarkers.get(i))) {
-                                            mClusterManager.removeItem();
-                                        }
+                        //TODO: Set checkbox to last settings with sharedpref
 
 
-                                        if (markersReadyToAdd.contains(beachMarkers.get(i))){
-                                            markersReadyToAdd.remove(beachMarkers.get(i));
-                                        }
-                                    }
-
-                                } else {
-                                    for (int i = 0; i < beachMarkers.size(); i++){
-                                        //If the readyto add list contains the element, do not add it
-                                        if (markersReadyToAdd.contains(beachMarkers.get(i))){
-                                            continue;
-                                        } else {
-                                            markersReadyToAdd.add(beachMarkers.get(i));
-                                        }
-                                    }
-
-
-                                }
-
-
-
-                                item.setChecked(!item.isChecked());
-                                break;
-                            case R.id.baatramper:
-                                item.setChecked(!item.isChecked());
-                                break;
-                            case R.id.wc:
-                                item.setChecked(!item.isChecked());
-
-
-                        }
-
-
-                        try {
-                            setUpClusterer();
-                            Log.d(TAG, "onMenuItemClick: setupcluster");
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                            Toast.makeText(getApplicationContext(), "Dette gikk dårlig, markers ble ikke lastet inn.", Toast.LENGTH_SHORT).show();
-                        }
-
-
-
-
+                        handleClicksOnCheckBoxes(item);
 
                         return true;
+
                     }
 
-                    private void addPolylines() {
-                        //Adds the polylines to the map
-                        final Iterator<PolylineOptions> iterator = polylinesReadyToAdd.iterator();
-                        try {
-
-                            final Handler handler = new Handler();
-                            handler.postDelayed(new Runnable() {
-                                @Override
-                                public void run() {
-
-
-                                    if (iterator.hasNext()){
-                                        if (addInfoToMap.isCancelled()){
-                                            Log.d(TAG, "run: stopper task");
-                                            infoAddedToMap = false;
-                                            backGroundTaskRunning = false;
-                                            return;
-                                        }
-
-
-                                        polylinesOnMap.add(mMap.addPolyline(iterator.next()));
-
-                                        handler.postDelayed(this, 1);
-
-
-
-                                    } else {
-                                        Log.d(TAG, "run : alle kyststier er lastet inn");
-
-                                        Log.d(TAG, "run: animerer ned");
-                                        animateInfobarDown();
-
-
-                                    }
-                                }
-                            }, 100);
-
-
-                        } catch (Exception e){
-                            e.printStackTrace();
-                            Toast.makeText(getApplicationContext(), "Dette gikk dårlig, kyststier ble ikke lastet inn.", Toast.LENGTH_SHORT).show();
-                        }
-                    }
                 });
 
 
-                popup.show();//showing popup menu
+
             }
         });
 
+    }
+
+    private void handleClicksOnCheckBoxes(MenuItem item) {
+        switch (item.getItemId()){
+            case R.id.kyststier:
+                //Kyststier er checked og den klikkes på - fjern alle kyststier
+                if (item.isChecked()){
+                    removePolylines();
+
+                    //Den var ikke checked og den klikkes på - last inn alle kyststier
+                } else {
+                    addPolylines();
+                }
+
+                item.setChecked(!item.isChecked());
+                break;
+
+            case R.id.badeplasser:
+                if (item.isChecked()){
+
+                    //Remove the markers from the map
+                    removeMarkersFromMap(beachMarkers);
+
+
+                } else {
+
+                    //Add markers to the map
+                    addMarkersToMap(beachMarkers);
+
+
+                }
+
+                item.setChecked(!item.isChecked());
+                break;
+            case R.id.baatramper:
+                if (item.isChecked()){
+                    removeMarkersFromMap(rampeMarkers);
+                } else {
+                    addMarkersToMap(rampeMarkers);
+                }
+
+                item.setChecked(!item.isChecked());
+                break;
+            case R.id.wc:
+                if (item.isChecked()){
+                    removeMarkersFromMap(WCMarkers);
+                } else {
+                    addMarkersToMap(WCMarkers);
+                }
+
+                item.setChecked(!item.isChecked());
+                break;
+            case R.id.fiskeplasser:
+                if (item.isChecked()){
+                    removeMarkersFromMap(fiskeplassMarkers);
+                } else {
+                    addMarkersToMap(fiskeplassMarkers);
+                }
+
+                item.setChecked(!item.isChecked());
+                break;
+            case R.id.uthavn:
+                if (item.isChecked()){
+                    removeMarkersFromMap(uthavnMarkers);
+                } else {
+                    addMarkersToMap(uthavnMarkers);
+                }
+
+                item.setChecked(!item.isChecked());
+                break;
+            case R.id.fyr:
+                if (item.isChecked()){
+                    removeMarkersFromMap(fyrMarkers);
+                } else {
+                    addMarkersToMap(fyrMarkers);
+                }
+
+                item.setChecked(!item.isChecked());
+                break;
+            case R.id.butikk:
+                if (item.isChecked()){
+                    removeMarkersFromMap(butikkMarkers);
+                } else {
+                    addMarkersToMap(butikkMarkers);
+                }
+
+                item.setChecked(!item.isChecked());
+                break;
+            case R.id.gjestehavn:
+                if (item.isChecked()){
+                    removeMarkersFromMap(gjestehavnMarkers);
+                } else {
+                    addMarkersToMap(gjestehavnMarkers);
+                }
+
+                item.setChecked(!item.isChecked());
+                break;
+            case R.id.spisested:
+                if (item.isChecked()){
+                    removeMarkersFromMap(spisestedMarkers);
+                } else {
+                    addMarkersToMap(spisestedMarkers);
+                }
+
+                item.setChecked(!item.isChecked());
+                break;
+            case R.id.kranTruck:
+                if (item.isChecked()){
+                    removeMarkersFromMap(kranTruckMarkers);
+                } else {
+                    addMarkersToMap(kranTruckMarkers);
+                }
+
+                item.setChecked(!item.isChecked());
+                break;
+            case R.id.bunkers:
+                if (item.isChecked()){
+                    removeMarkersFromMap(bunkersMarkers);
+                } else {
+                    addMarkersToMap(bunkersMarkers);
+                }
+
+                item.setChecked(!item.isChecked());
+                break;
+            case R.id.baatbutikk:
+                if (item.isChecked()){
+                    removeMarkersFromMap(baatbutikkMarkers);
+                } else {
+                    addMarkersToMap(baatbutikkMarkers);
+                }
+
+                item.setChecked(!item.isChecked());
+                break;
+            case R.id.marina:
+                if (item.isChecked()){
+                    removeMarkersFromMap(marinaMarkers);
+                } else {
+                    addMarkersToMap(marinaMarkers);
+                }
+
+                item.setChecked(!item.isChecked());
+                break;
+            case R.id.parkeringTrans:
+                if (item.isChecked()){
+                    removeMarkersFromMap(parkeringTranspMarkers);
+                } else {
+                    addMarkersToMap(parkeringTranspMarkers);
+                }
+
+                item.setChecked(!item.isChecked());
+                break;
+            case R.id.poi:
+                if (item.isChecked()){
+                    removeMarkersFromMap(pointOfInterestMarkers);
+                } else {
+                    addMarkersToMap(pointOfInterestMarkers);
+                }
+
+                item.setChecked(!item.isChecked());
+                break;
+            case R.id.campingplass:
+                if (item.isChecked()){
+                    removeMarkersFromMap(campingplassMarkers);
+                } else {
+                    addMarkersToMap(campingplassMarkers);
+                }
+
+                item.setChecked(!item.isChecked());
+                break;
+
+        }
+        //Show them by moving the map a bit
+        CameraUpdate c = CameraUpdateFactory.zoomBy(0.001f);
+        mMap.animateCamera(c);
+
+    }
+
+    private void removeMarkersFromMap(ArrayList<MyMarkerOptions> categoryArrayList) {
+        //Remove the markers from the map
+        for (int i = 0; i < categoryArrayList.size(); i++){
+            if (markersOnMap.contains(categoryArrayList.get(i))) {
+
+                mClusterManager.removeItem(categoryArrayList.get(i));
+            }
+        }
+    }
+
+    private void addMarkersToMap(ArrayList<MyMarkerOptions> categoryArrayList) {
+        //Add markers to the map
+        for (int i = 0; i < categoryArrayList.size(); i++){
+            //If the readyto add list contains the element, do not add it
+            if (markersReadyToAdd.contains(categoryArrayList.get(i))){
+                continue;
+            } else {
+                mClusterManager.addItem(categoryArrayList.get(i));
+                markersOnMap.add(categoryArrayList.get(i));
+
+            }
+        }
+    }
+
+    private void addPolylines() {
+        //Adds the polylines to the map
+        final Iterator<PolylineOptions> iterator = polylinesReadyToAdd.iterator();
+        try {
+
+            final Handler handler = new Handler();
+            handler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+
+
+                    if (iterator.hasNext()){
+                        if (addInfoToMap.isCancelled()){
+                            Log.d(TAG, "run: stopper task");
+                            infoAddedToMap = false;
+                            backGroundTaskRunning = false;
+                            return;
+                        }
+
+
+                        polylinesOnMap.add(mMap.addPolyline(iterator.next()));
+
+                        handler.postDelayed(this, 1);
 
 
 
+                    } else {
+                        Log.d(TAG, "run : alle kyststier er lastet inn");
 
+                        Log.d(TAG, "run: animerer ned");
+                        animateInfobarDown();
+
+
+                    }
+                }
+            }, 100);
+
+
+        } catch (Exception e){
+            e.printStackTrace();
+            Toast.makeText(getApplicationContext(), "Dette gikk dårlig, kyststier ble ikke lastet inn.", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void removePolylines() {
@@ -467,17 +603,23 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 
 
+
+
+
+
+
         try {
             if (! infoAddedToMap){
-                Log.d(TAG, "onMapReady: starter igjen");
 
-                mMap.clear();
-
-                addInfoToMap = new AddInfoToMap();
-                addInfoToMap.execute();
-
-
-                backGroundTaskRunning = true;
+                if (addInfoToMap.getStatus() == AsyncTask.Status.FINISHED) {
+                    addInfoToMap = new AddInfoToMap();
+                    if (mMap != null) {
+                        mMap.clear();
+                        Log.d(TAG, "onResume: fjerner alt på kart");
+                    }
+                    addInfoToMap.execute();
+                    backGroundTaskRunning = true;
+                }
 
             }
 
@@ -667,6 +809,21 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             }
         });
+
+
+        //add one marker to the map
+
+        try {
+            setUpClusterer();
+            Log.d(TAG, "onMenuItemClick: setupcluster");
+        } catch (Exception e) {
+            e.printStackTrace();
+            Toast.makeText(getApplicationContext(), "Dette gikk dårlig, markers ble ikke lastet inn.", Toast.LENGTH_SHORT).show();
+        }
+
+        final TextView markerInfo = (TextView) findViewById(R.id.infobar);
+        setOnClusterItemClickListener(markerInfo);
+
 
 
         try {
@@ -1266,6 +1423,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 
         mClusterManager = new ClusterManager<MyMarkerOptions>(this, getMap());
+        mClusterManager.setAlgorithm(new PreCachingAlgorithmDecorator<MyMarkerOptions>(new GridBasedAlgorithm<MyMarkerOptions>()));
         mMap.setInfoWindowAdapter(mClusterManager.getMarkerManager());
 
         // Point the map's listeners at the listeners implemented by the cluster
@@ -1273,7 +1431,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         getMap().setOnCameraChangeListener(mClusterManager);
         getMap().setOnMarkerClickListener(mClusterManager);
 
-        mMap.setOnMarkerClickListener(mClusterManager);
+
+
 
 
         // Add cluster items (markers) to the cluster manager.
@@ -1287,6 +1446,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         //Find out which items to add
         //Create a list of added markers
 
+        mClusterManager.addItem(new MyMarkerOptions(new MarkerOptions().position(new LatLng(0, 0))));
+
+
         Log.d(TAG, "addItems: " + markersReadyToAdd.size());
         for (MarkerOptions marker : markersReadyToAdd) {
 
@@ -1296,7 +1458,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             mClusterManager.addItem(new MyMarkerOptions(marker));
 
-            markersOnMap.add(marker);
+
+            markersOnMap.add(new MyMarkerOptions(marker));
 
         }
     }
@@ -1413,9 +1576,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 TextView loading = (TextView) findViewById(R.id.infobar);
                 loading.setVisibility(View.VISIBLE);
 
-                loading.setText("Oslofjorden laster inn kyststier.. De vil poppe opp på kartet ditt snart :)");
+                loading.setText("Oslofjorden laster inn data.. Du kan velge hva du vil vise med knappen oppe til høyre :)");
                 animateInfobarUp();
-                Log.d(TAG, "onPreExecute: animerer opp");
 
 
 
@@ -1429,10 +1591,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             try {
                 if (! addedToDataStructure) {
-
-
                     getDataFromFileAndPutInDatastructure();
                     Log.i(TAG, "doInBackground: Lastet inn data til datastrukturen");
+                    addedToDataStructure = true;
+
                 }
 
 
@@ -1446,16 +1608,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             return null;
         }
 
-
         @Override
         protected void onPostExecute(Void aVoid) {
-
-
-
-            final TextView markerInfo = (TextView) findViewById(R.id.infobar);
-            setOnClusterItemClickListener(markerInfo);
-
-
+            animateInfobarDown();
         }
 
         private void addPolylinesToMap() {
@@ -1673,52 +1828,52 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private void putMarkerInLists(String line, MarkerOptions options) {
         if (line.contains("Rampe")){
-            rampeMarkers.add(options);
+            rampeMarkers.add(new MyMarkerOptions(options));
         }
         if (line.contains("Badeplass")){
-            beachMarkers.add(options);
+            beachMarkers.add(new MyMarkerOptions(options));
         }
         if (line.contains("Kran/Truck")){
-            kranTruckMarkers.add(options);
+            kranTruckMarkers.add(new MyMarkerOptions(options));
         }
         if (line.contains("Bunkers")){
-            bunkersMarkers.add(options);
+            bunkersMarkers.add(new MyMarkerOptions(options));
         }
         if (line.contains("Butikk")){
-            butikkMarkers.add(options);
+            butikkMarkers.add(new MyMarkerOptions(options));
         }
         if (line.contains("Spisested")){
-            spisestedMarkers.add(options);
+            spisestedMarkers.add(new MyMarkerOptions(options));
         }
         if (line.contains("Uthavn")){
-            uthavnMarkers.add(options);
+            uthavnMarkers.add(new MyMarkerOptions(options));
         }
         if (line.contains("Fyr")){
-            fyrMarkers.add(options);
+            fyrMarkers.add(new MyMarkerOptions(options));
         }
         if (line.contains("Båtbutikk")){
-            baatbutikkMarkers.add(options);
+            baatbutikkMarkers.add(new MyMarkerOptions(options));
         }
         if (line.contains("Marina")){
-            marinaMarkers.add(options);
+            marinaMarkers.add(new MyMarkerOptions(options));
         }
         if (line.contains("Gjestehavn")){
-            gjestehavnMarkers.add(options);
+            gjestehavnMarkers.add(new MyMarkerOptions(options));
         }
         if (line.contains("Parkering transp")){
-            parkeringTranspMarkers.add(options);
+            parkeringTranspMarkers.add(new MyMarkerOptions(options));
         }
         if (line.contains("WC")){
-            WCMarkers.add(options);
+            WCMarkers.add(new MyMarkerOptions(options));
         }
         if (line.contains("Point of interes")){
-            pointOfInterestMarkers.add(options);
+            pointOfInterestMarkers.add(new MyMarkerOptions(options));
         }
         if (line.contains("Campingplass")){
-            campingplassMarkers.add(options);
+            campingplassMarkers.add(new MyMarkerOptions(options));
         }
         if (line.contains("Fiskeplass")){
-            fiskeplassMarkers.add(options);
+            fiskeplassMarkers.add(new MyMarkerOptions(options));
         }
     }
 
@@ -1775,6 +1930,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             this.position = myMarkerOptions.getPosition();
 
         }
+
+
 
         @Override
         public LatLng getPosition() {
