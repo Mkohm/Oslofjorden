@@ -20,11 +20,15 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.customtabs.CustomTabsIntent;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.PopupMenu;
+import android.support.v7.widget.Toolbar;
 import android.text.Html;
 import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
@@ -33,9 +37,13 @@ import android.text.style.ClickableSpan;
 import android.text.style.URLSpan;
 import android.util.Log;
 import android.view.Display;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
+import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -69,6 +77,7 @@ import com.google.maps.android.clustering.ClusterItem;
 import com.google.maps.android.clustering.ClusterManager;
 
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -79,6 +88,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 
 //TODO: helgeroaferfgene link meld inn - fikset i fil, fix animation of infobar, back faast after removes kyststier
@@ -91,7 +101,7 @@ import java.util.Scanner;
 //Database implementation and search
 
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.OnConnectionFailedListener, GoogleApiClient.ConnectionCallbacks, LocationListener, ResultCallback, CustomTabActivityHelper.ConnectionCallback {
+public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleApiClient.OnConnectionFailedListener, GoogleApiClient.ConnectionCallbacks, LocationListener, ResultCallback, CustomTabActivityHelper.ConnectionCallback {
     //For debugging
     private static String TAG = "TAG";
 
@@ -169,6 +179,21 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private CustomTabActivityHelper customTabActivityHelper;
     private boolean backGroundTaskRunning = false;
+    private ArrayList<MarkerOptions> rampeMarkers = new ArrayList<>();
+    private ArrayList<MarkerOptions> fiskeplassMarkers = new ArrayList<>();
+    private ArrayList<MarkerOptions> kranTruckMarkers = new ArrayList<>();
+    private ArrayList<MarkerOptions> bunkersMarkers = new ArrayList<>();
+    private ArrayList<MarkerOptions> butikkMarkers = new ArrayList<>();
+    private ArrayList<MarkerOptions> spisestedMarkers = new ArrayList<>();
+    private ArrayList<MarkerOptions> uthavnMarkers = new ArrayList<>();
+    private ArrayList<MarkerOptions> fyrMarkers = new ArrayList<>();
+    private ArrayList<MarkerOptions> baatbutikkMarkers = new ArrayList<>();
+    private ArrayList<MarkerOptions> marinaMarkers = new ArrayList<>();
+    private ArrayList<MarkerOptions> gjestehavnMarkers = new ArrayList<>();
+    private ArrayList<MarkerOptions> parkeringTranspMarkers = new ArrayList<>();
+    private ArrayList<MarkerOptions> WCMarkers = new ArrayList<>();
+    private ArrayList<MarkerOptions> pointOfInterestMarkers = new ArrayList<>();
+    private ArrayList<MarkerOptions> campingplassMarkers = new ArrayList<>();
 
 
     @Override
@@ -186,8 +211,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
         //Set up custom tabs
-        customTabActivityHelper = new CustomTabActivityHelper();
-        customTabActivityHelper.setConnectionCallback(this);
+        setUpCustomTabs();
 
 
 
@@ -219,13 +243,65 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         addInfoToMap = new AddInfoToMap();
         Log.d(TAG, "onCreate: liste: " + polylinesReadyToAdd.size() + " " + markersReadyToAdd.size());
 
+        setUpToolbar();
+
+        final ImageButton button1 = (ImageButton) findViewById(R.id.layers);
+        button1.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                //Creating the instance of PopupMenu
+                PopupMenu popup = new PopupMenu(MapsActivity.this, button1);
+                //Inflating the Popup using xml file
+                popup.getMenuInflater().inflate(R.menu.toolbar_menu, popup.getMenu());
+
+                //registering popup with OnMenuItemClickListener
+                popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                    @Override
+                    public boolean onMenuItemClick(MenuItem item) {
+                        Toast.makeText(MapsActivity.this,"You Clicked : " + item.getTitle(),Toast.LENGTH_SHORT).show();
+                        return true;
+                    }
+                });
+
+                popup.show();//showing popup menu
+
+            }
+        });
 
 
 
     }
+    /*@Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.toolbar_menu, menu);
+        return true;
+    }*/
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.layers:
+                // User chose the "Settings" item, show the app settings UI...
+                return true;
+
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void setUpCustomTabs() {
+        customTabActivityHelper = new CustomTabActivityHelper();
+        customTabActivityHelper.setConnectionCallback(this);
+    }
+
+    private void setUpToolbar() {
+        Toolbar myToolbar = (Toolbar) findViewById(R.id.my_toolbar);
+        setSupportActionBar(myToolbar);
+    }
 
     @Override
     protected void onDestroy() {
+        infoAddedToMap = false;
         super.onDestroy();
         customTabActivityHelper.setConnectionCallback(null);
 
@@ -388,7 +464,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         if (setGoogleMapUISettings()) return;
 
 
-        final FloatingActionButton onOffLocationButton = (FloatingActionButton) findViewById(R.id.onofflocationbutton);
+        final ImageButton onOffLocationButton = (ImageButton) findViewById(R.id.onofflocationbutton);
         setOnOffLocationButtonStartstate(onOffLocationButton);
 
 
@@ -397,7 +473,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             public void onClick(View v) {
 
                 if (locationUpdatesSwitch == true) {
-                    onOffLocationButton.setImageResource(R.drawable.location_off_64px);
+                    onOffLocationButton.setImageResource(R.drawable.ic_location_off);
                     Toast.makeText(getApplicationContext(), "Oppdatering av posisjon - av", Toast.LENGTH_SHORT).show();
                     locationUpdatesSwitch = false;
                 } else if (locationUpdatesSwitch == false) {
@@ -408,7 +484,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         handleUsersWithoutLocationEnabled(mLocationRequest);
 
                     } else {
-                        onOffLocationButton.setImageResource(R.drawable.location_on_64px);
+                        onOffLocationButton.setImageResource(R.drawable.ic_location_on);
                         Toast.makeText(getApplicationContext(), "Oppdatering av posisjon - på", Toast.LENGTH_SHORT).show();
                         locationUpdatesSwitch = true;
                     }
@@ -510,14 +586,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     }
 
-    private void setOnOffLocationButtonStartstate(FloatingActionButton onOffLocationButton) {
+    private void setOnOffLocationButtonStartstate(ImageButton onOffLocationButton) {
         //Sets the initial icon depending on current settings
         if (isLocationEnabled(getApplicationContext())){
-            onOffLocationButton.setImageResource(R.drawable.location_on_64px);
+            onOffLocationButton.setImageResource(R.drawable.ic_location_on);
 
 
         } else {
-            onOffLocationButton.setImageResource(R.drawable.location_off_64px);
+            onOffLocationButton.setImageResource(R.drawable.ic_location_off);
         }
     }
 
@@ -677,13 +753,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private void setMarkerDescription(String title, String description, TextView txtMarkerDescription) {
         txtMarkerDescription.setMovementMethod(LinkMovementMethod.getInstance());
 
+        Log.d(TAG, "setMarkerDescription: " + description);
        String type = "Marker";
        String markerTitle =title;
 
         //Hvis den ikke er tom og er en url så skal link vises
         if (description != null) {
             String markerDescription = "";
-            if (description.matches("http[s]{0,1}:.{0,}")) {
+            if (description.matches(".{0,}http[s]{0,1}:.{0,}")) {
 
                 setTextViewHTML(txtMarkerDescription, description, type, title);
 
@@ -746,10 +823,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         int end = strBuilder.getSpanEnd(span);
         int flags = strBuilder.getSpanFlags(span);
 
+        String uriWithDesc = extractUrlFromDescription(span);
 
         //May launch this link
-        Log.i(TAG, "makeLinkClickable: Gjør link klar for å åpnes.");
-        final Uri uri  = Uri.parse(span.getURL());
+        Log.i(TAG, "makeLinkClickable: Gjør link klar for å åpnes." + span.getURL());
+        final Uri uri  = Uri.parse(uriWithDesc + "?app=1");
         customTabActivityHelper.mayLaunchUrl(uri, null, null);
 
         ClickableSpan clickable = new ClickableSpan() {
@@ -775,6 +853,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         strBuilder.setSpan(clickable, start, end, flags);
         strBuilder.removeSpan(span);
+    }
+
+    @NonNull
+    private String extractUrlFromDescription(URLSpan span) {
+        String uriWithDesc = span.getURL();
+        uriWithDesc = uriWithDesc.substring(span.getURL().indexOf("http"),span.getURL().length());
+        return uriWithDesc;
     }
 
     protected void setTextViewHTML(TextView text, String description, String type, String title) {
@@ -843,8 +928,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private void setMarkerInfoText(TextView text, String description, String title) {
         CharSequence sequence = Html.fromHtml(description);
         URLSpan[] urls = {new URLSpan(description)};
+        Log.d(TAG, "setMarkerInfoText: " + description);
 
-        String descriptionWithoutLink = description.substring(0, description.indexOf("http"));
+
+        //The first part of the description "her finner du: ... .. "
+        String typesOfMarker = description.substring(0, description.indexOf("http"));
         SpannableStringBuilder withCustomLinkLayout = new SpannableStringBuilder("Tomt");
         URLSpan[] urls2 = null;
 
@@ -855,7 +943,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             CharSequence formattedText = Html.fromHtml(link);
             withCustomLinkLayout = new SpannableStringBuilder(formattedText);
             urls2 = withCustomLinkLayout.getSpans(0, formattedText.length(), URLSpan.class);
-            withCustomLinkLayout.insert(0, title + "\n\n");
+            withCustomLinkLayout.insert(0, title + " " + typesOfMarker + "\n\n");
         }
 
 
@@ -865,6 +953,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         text.setMovementMethod(LinkMovementMethod.getInstance());
 
         text.setText(withCustomLinkLayout);
+        Log.d(TAG, "setMarkerInfoText: ");
     }
 
 
@@ -881,19 +970,19 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         }
 
-        final FloatingActionButton onOffLocationButton = (FloatingActionButton) findViewById(R.id.onofflocationbutton);
+        final ImageButton onOffLocationButton = (ImageButton) findViewById(R.id.onofflocationbutton);
 
         if (resultCode == 0){
 
             //Sporing button should be off
             Toast.makeText(getApplicationContext(), "Oppdatering av posisjon - av", Toast.LENGTH_SHORT).show();
-            onOffLocationButton.setImageResource(R.drawable.location_off_64px);
+            onOffLocationButton.setImageResource(R.drawable.ic_location_off);
 
             locationUpdatesSwitch = false;
             userAcceptLocation = false;
         } else {
             Toast.makeText(getApplicationContext(), "Oppdatering av posisjon - på", Toast.LENGTH_SHORT).show();
-            onOffLocationButton.setImageResource(R.drawable.location_on_64px);
+            onOffLocationButton.setImageResource(R.drawable.ic_location_on);
 
             locationUpdatesSwitch = true;
             userAcceptLocation = true;
@@ -1094,14 +1183,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
     private void addItems() {
-        for (MarkerOptions marker : beachMarkers) {
+        //Find out which items to add
+        //Create a list of added markers
+
+
+        for (MarkerOptions marker : WCMarkers) {
 
             if (addInfoToMap.isCancelled()){
                 return;
             }
 
             mClusterManager.addItem(new MyMarkerOptions(marker));
-            Log.d(TAG, "addItems: beach" + beachMarkers.size());
         }
     }
 
@@ -1291,7 +1383,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                 animateInfobarDown();
 
 
-
                         }
                     }
                 }, 100);
@@ -1419,7 +1510,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         addedToDataStructure = true;
 
 
-
+        //Read all the markers from file and put in different arraylists for different types of markers
         InputStream inputStream = getResources().openRawResource(R.raw.interesting_points);
         BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
 
@@ -1433,15 +1524,33 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 continue;
             }
 
-            MarkerOptions options = new MarkerOptions();
-            setMarkerPosition(line, options);
-            options.title("tet");
-            options.snippet("hello");
+            JSONObject obj = createJsonObject(line);
+            String properties = obj.getString("properties");
 
 
-            if (line.contains("Beach")){
-                beachMarkers.add(options);
+            JSONObject obj2 = new JSONObject(properties);
+
+            String name = obj2.getString("name");
+            String markerTypes = obj2.getString("gpxx_WaypointExtension");
+            String link = obj2.getString("link1_href");
+
+            //Contains the different types of the marker, index 0 is irrelevant, start from index 1
+            String[] markerTypesArray = markerTypes.split("          ");
+
+            for (int i = 0; i < markerTypesArray.length; i++) {
+                //Gets only the part with the relevant information
+                markerTypesArray[i] = markerTypesArray[i].substring(markerTypesArray[i].indexOf(">")+1, markerTypesArray[i].indexOf("</"));
             }
+
+
+            //Create the description
+            StringBuilder desc = createDescriptionFromLinkAndMarkerTypes(link, markerTypesArray);
+
+
+            MarkerOptions options = setMarkerOptions(line, name, desc);
+
+
+            putMarkerInLists(line, options);
 
 
 
@@ -1451,6 +1560,97 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     }
 
+    @Nullable
+    private JSONObject createJsonObject(String line) throws JSONException {
+        JSONObject obj = null;
+        //For all the lines ending with ","
+        if (line.matches(".{0,},")) {
+             obj = new JSONObject(line.substring(0, line.length()-1));
+          //The line does not end with ","
+        } else if (line.matches(".{0,}[^,]")) {
+            obj = new JSONObject(line);
+        }
+        return obj;
+    }
+
+    private void putMarkerInLists(String line, MarkerOptions options) {
+        if (line.contains("Rampe")){
+            rampeMarkers.add(options);
+        }
+        if (line.contains("Badeplass")){
+            beachMarkers.add(options);
+        }
+        if (line.contains("Kran/Truck")){
+            kranTruckMarkers.add(options);
+        }
+        if (line.contains("Bunkers")){
+            bunkersMarkers.add(options);
+        }
+        if (line.contains("Butikk")){
+            butikkMarkers.add(options);
+        }
+        if (line.contains("Spisested")){
+            spisestedMarkers.add(options);
+        }
+        if (line.contains("Uthavn")){
+            uthavnMarkers.add(options);
+        }
+        if (line.contains("Fyr")){
+            fyrMarkers.add(options);
+        }
+        if (line.contains("Båtbutikk")){
+            baatbutikkMarkers.add(options);
+        }
+        if (line.contains("Marina")){
+            marinaMarkers.add(options);
+        }
+        if (line.contains("Gjestehavn")){
+            gjestehavnMarkers.add(options);
+        }
+        if (line.contains("Parkering transp")){
+            parkeringTranspMarkers.add(options);
+        }
+        if (line.contains("WC")){
+            WCMarkers.add(options);
+        }
+        if (line.contains("Point of interes")){
+            pointOfInterestMarkers.add(options);
+        }
+        if (line.contains("Campingplass")){
+            campingplassMarkers.add(options);
+        }
+        if (line.contains("Fiskeplass")){
+            fiskeplassMarkers.add(options);
+        }
+    }
+
+    @NonNull
+    private MarkerOptions setMarkerOptions(String line, String name, StringBuilder desc) {
+        MarkerOptions options = new MarkerOptions();
+        setMarkerPosition(line, options);
+        options.title(name);
+        options.snippet(""+ desc);
+        return options;
+    }
+
+    @NonNull
+    private StringBuilder createDescriptionFromLinkAndMarkerTypes(String link, String[] markerTypesArray) {
+        StringBuilder desc = new StringBuilder();
+        desc.append("- ");
+        for (int i = 1; i < markerTypesArray.length; i++){
+            if (i == markerTypesArray.length-1){
+                desc.append(markerTypesArray[i]);
+                break;
+            }
+
+            desc.append(markerTypesArray[i] + ", ");
+        }
+        if (link != null && !link.equals("null")) {
+            desc.append("" + link);
+        }
+        return desc;
+    }
+
     private void setMarkerPosition(String line, MarkerOptions options) {
         int indexOfStartCoordinate = line.indexOf("\"coordinates\": [ ") + 17;
         int indexOfEndCoordinate = line.indexOf(" ] } }");
@@ -1458,7 +1658,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         double longitude = Double.valueOf(coordinates.substring(0, coordinates.indexOf(",")));
         double latitude = Double.valueOf(coordinates.substring(coordinates.indexOf(",")+1));
-        Log.d(TAG, "getDataFromFileAndPutInDatastructure: " + latitude + " " + longitude);
 
 
         options.position(new LatLng(latitude, longitude));
