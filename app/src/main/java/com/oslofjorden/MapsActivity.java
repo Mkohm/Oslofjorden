@@ -286,13 +286,18 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             if (! infoAddedToMap){
                 Log.d(TAG, "onMapReady: starter igjen");
 
-                mMap.clear();
-
-                addInfoToMap = new AddInfoToMap();
-                addInfoToMap.execute();
 
 
-                backGroundTaskRunning = true;
+                if (addInfoToMap.getStatus() == AsyncTask.Status.FINISHED) {
+                    addInfoToMap = new AddInfoToMap();
+                    if (mMap != null) {
+                        mMap.clear();
+                        Log.d(TAG, "onResume: fjerner alt på kart");
+                    }
+                    addInfoToMap.execute();
+                    backGroundTaskRunning = true;
+                }
+
 
             }
 
@@ -1273,7 +1278,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
 
-                            Log.d(TAG, "run: kyststi");
+                          //  Log.d(TAG, "run: kyststi");
                         } else {
                             Log.d(TAG, "run : alle kyststier er lastet inn");
                             infoAddedToMap = true;
