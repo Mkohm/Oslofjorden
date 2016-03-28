@@ -195,6 +195,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private ArrayList<MarkerOptions> pointOfInterestMarkers = new ArrayList<>();
     private ArrayList<MarkerOptions> campingplassMarkers = new ArrayList<>();
 
+    private ArrayList<Polyline> polylinesOnMap = new ArrayList<>();
+    private ArrayList<MarkerOptions> markersOnMap = new ArrayList<>();
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -208,7 +211,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         if (isLocationEnabled(getApplicationContext())){
             userAcceptLocation = true;
         }
-
 
         //Set up custom tabs
         setUpCustomTabs();
@@ -233,61 +235,161 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 && savedInstanceState.getBoolean(STATE_RESOLVING_ERROR, false);
 
 
-        Log.d(TAG, "onCreate: infoaddedtomap: " + infoAddedToMap);
-
         if (savedInstanceState != null) {
             addedToDataStructure = savedInstanceState.getBoolean("addedToDataStructure");
 
         }
 
         addInfoToMap = new AddInfoToMap();
-        Log.d(TAG, "onCreate: liste: " + polylinesReadyToAdd.size() + " " + markersReadyToAdd.size());
 
         setUpToolbar();
 
-        final ImageButton button1 = (ImageButton) findViewById(R.id.layers);
-        button1.setOnClickListener(new View.OnClickListener() {
+        final ImageButton layerButton = (ImageButton) findViewById(R.id.layers);
+        final PopupMenu popup = new PopupMenu(MapsActivity.this, layerButton);
+        popup.getMenuInflater().inflate(R.menu.toolbar_menu, popup.getMenu());
+
+
+        layerButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //Creating the instance of PopupMenu
-                PopupMenu popup = new PopupMenu(MapsActivity.this, button1);
-                //Inflating the Popup using xml file
-                popup.getMenuInflater().inflate(R.menu.toolbar_menu, popup.getMenu());
 
-                //registering popup with OnMenuItemClickListener
                 popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
                     @Override
                     public boolean onMenuItemClick(MenuItem item) {
-                        Toast.makeText(MapsActivity.this,"You Clicked : " + item.getTitle(),Toast.LENGTH_SHORT).show();
+
+                        switch (item.getItemId()){
+                            case R.id.kyststier:
+                                //Kyststier er checked og den klikkes på - fjern alle kyststier
+                                if (item.isChecked()){
+                                    removePolylines();
+
+                                    //Den var ikke checked og den klikkes på - last inn alle kyststier
+                                } else {
+                                    addPolylines();
+                                }
+
+                                item.setChecked(!item.isChecked());
+                                break;
+
+                            case R.id.badeplasser:
+                                if (item.isChecked()){
+                                    //Gå igjennom alle som er på kartet og fjern de med badeplasser
+                                    for (int i = 0; i < beachMarkers.size(); i++) {
+
+                                        if (mClusterManager.getMarkerCollection().getMarkers().contains(beachMarkers.get(i))) {
+                                            mClusterManager.removeItem();
+                                        }
+
+
+                                        if (markersReadyToAdd.contains(beachMarkers.get(i))){
+                                            markersReadyToAdd.remove(beachMarkers.get(i));
+                                        }
+                                    }
+
+                                } else {
+                                    for (int i = 0; i < beachMarkers.size(); i++){
+                                        //If the readyto add list contains the element, do not add it
+                                        if (markersReadyToAdd.contains(beachMarkers.get(i))){
+                                            continue;
+                                        } else {
+                                            markersReadyToAdd.add(beachMarkers.get(i));
+                                        }
+                                    }
+
+
+                                }
+
+
+
+                                item.setChecked(!item.isChecked());
+                                break;
+                            case R.id.baatramper:
+                                item.setChecked(!item.isChecked());
+                                break;
+                            case R.id.wc:
+                                item.setChecked(!item.isChecked());
+
+
+                        }
+
+
+                        try {
+                            setUpClusterer();
+                            Log.d(TAG, "onMenuItemClick: setupcluster");
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            Toast.makeText(getApplicationContext(), "Dette gikk dårlig, markers ble ikke lastet inn.", Toast.LENGTH_SHORT).show();
+                        }
+
+
+
+
+
                         return true;
+                    }
+
+                    private void addPolylines() {
+                        //Adds the polylines to the map
+                        final Iterator<PolylineOptions> iterator = polylinesReadyToAdd.iterator();
+                        try {
+
+                            final Handler handler = new Handler();
+                            handler.postDelayed(new Runnable() {
+                                @Override
+                                public void run() {
+
+
+                                    if (iterator.hasNext()){
+                                        if (addInfoToMap.isCancelled()){
+                                            Log.d(TAG, "run: stopper task");
+                                            infoAddedToMap = false;
+                                            backGroundTaskRunning = false;
+                                            return;
+                                        }
+
+
+                                        polylinesOnMap.add(mMap.addPolyline(iterator.next()));
+
+                                        handler.postDelayed(this, 1);
+
+
+
+                                    } else {
+                                        Log.d(TAG, "run : alle kyststier er lastet inn");
+
+                                        Log.d(TAG, "run: animerer ned");
+                                        animateInfobarDown();
+
+
+                                    }
+                                }
+                            }, 100);
+
+
+                        } catch (Exception e){
+                            e.printStackTrace();
+                            Toast.makeText(getApplicationContext(), "Dette gikk dårlig, kyststier ble ikke lastet inn.", Toast.LENGTH_SHORT).show();
+                        }
                     }
                 });
 
-                popup.show();//showing popup menu
 
+                popup.show();//showing popup menu
             }
         });
 
 
 
+
+
     }
-    /*@Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.toolbar_menu, menu);
-        return true;
-    }*/
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.layers:
-                // User chose the "Settings" item, show the app settings UI...
-                return true;
-
+    private void removePolylines() {
+        for (Polyline poly : polylinesOnMap){
+            poly.remove();
         }
-        return super.onOptionsItemSelected(item);
     }
+
 
     private void setUpCustomTabs() {
         customTabActivityHelper = new CustomTabActivityHelper();
@@ -1185,14 +1287,17 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         //Find out which items to add
         //Create a list of added markers
 
-
-        for (MarkerOptions marker : WCMarkers) {
+        Log.d(TAG, "addItems: " + markersReadyToAdd.size());
+        for (MarkerOptions marker : markersReadyToAdd) {
 
             if (addInfoToMap.isCancelled()){
                 return;
             }
 
             mClusterManager.addItem(new MyMarkerOptions(marker));
+
+            markersOnMap.add(marker);
+
         }
     }
 
@@ -1345,6 +1450,15 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         @Override
         protected void onPostExecute(Void aVoid) {
 
+
+
+            final TextView markerInfo = (TextView) findViewById(R.id.infobar);
+            setOnClusterItemClickListener(markerInfo);
+
+
+        }
+
+        private void addPolylinesToMap() {
             //Adds the polylines to the map
             final Iterator<PolylineOptions> iterator = polylinesReadyToAdd.iterator();
             try {
@@ -1364,9 +1478,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                             }
 
 
-
-                            mMap.addPolyline(iterator.next());
-
+                            polylinesOnMap.add(mMap.addPolyline(iterator.next()));
 
                             handler.postDelayed(this, 1);
 
@@ -1391,19 +1503,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 e.printStackTrace();
                 Toast.makeText(getApplicationContext(), "Dette gikk dårlig, kyststier ble ikke lastet inn.", Toast.LENGTH_SHORT).show();
             }
-
-            try {
-                setUpClusterer();
-            } catch (Exception e) {
-                e.printStackTrace();
-                Toast.makeText(getApplicationContext(), "Dette gikk dårlig, markers ble ikke lastet inn.", Toast.LENGTH_SHORT).show();
-            }
-
-
-
-            final TextView markerInfo = (TextView) findViewById(R.id.infobar);
-            setOnClusterItemClickListener(markerInfo);
-
         }
     }
 

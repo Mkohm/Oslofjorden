@@ -1,81 +1,89 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    >
 
     <!-- Settings, should always be in the overflow -->
 
+    <group
+        android:checkableBehavior="all"
+        >
+        <item android:id="@+id/kyststier"
+            android:title="Kyststier"
+            app:showAsAction="always"
+            >
 
-    <item android:id="@+id/aooeu"
-        android:title="Båtramper"
+        </item>
 
-        android:checkable="true">
+        <item android:id="@+id/badeplasser"
+            android:title="Badeplasser"
+            app:showAsAction="always"
+          >
 
-    </item>
+        </item>
 
-    <item android:id="@+id/a"
-        android:title="WC"
-        app:showAsAction="never">
+        <item android:id="@+id/baatramper"
+            android:title="Båtramper"
+            app:showAsAction="always"
+            >
 
-    </item>
+        </item>
 
-    <item android:id="@+id/nthn"
-        android:title="Badeplasser"
-        app:showAsAction="never"
-        android:checkable="true">
+        <item android:id="@+id/wc"
+            android:title="WC"
+            app:showAsAction="never"
+            >
 
-    </item>
+        </item>
 
-    <item android:id="@+id/aopu"
-        android:title="Båtramper"
-        app:showAsAction="never"
-        android:checkable="true">
+        <item android:id="@+id/action_se_layers"
+            android:title="Badeplasser"
+            app:showAsAction="never"
+            >
 
-    </item>
+        </item>
 
-    <item android:id="@+id/aou"
-        android:title="WC"
-        app:showAsAction="never">
+        <item android:id="@+id/oeu"
+            android:title="Båtramper"
+            app:showAsAction="never"
 
-    </item>
+            >
 
-    <item android:id="@+id/action_se_layers"
-        android:title="Badeplasser"
-        app:showAsAction="never"
-        android:checkable="true">
+        </item>
 
-    </item>
+        <item android:id="@+id/oeuoeuoeu"
+            android:title="WC"
+            app:showAsAction="never"
+            >
 
-    <item android:id="@+id/oeu"
-        android:title="Båtramper"
-        app:showAsAction="never"
-        android:checkable="true">
+        </item>
 
-    </item>
+        <item android:id="@+id/oeuoeu"
+            android:title="Badeplasser"
+            app:showAsAction="never"
+            >
 
-    <item android:id="@+id/oeuoeuoeu"
-        android:title="WC"
-        app:showAsAction="never">
+        </item>
 
-    </item>
+        <item android:id="@+id/ooo"
+            android:title="Båtramper"
+            app:showAsAction="never"
+            >
 
-    <item android:id="@+id/oeuoeu"
-        android:title="Badeplasser"
-        app:showAsAction="never"
-        android:checkable="true">
+        </item>
 
-    </item>
+        <item android:id="@+id/aoeu"
+            android:title="WC"
+            app:showAsAction="never"
+                >
 
-    <item android:id="@+id/ooo"
-        android:title="Båtramper"
-        app:showAsAction="never"
-        android:checkable="true">
+        </item>
 
-    </item>
 
-    <item android:id="@+id/aoeu"
-        android:title="WC"
-        app:showAsAction="never">
 
-    </item>
+    </group>
+
+
+
 
 
 
