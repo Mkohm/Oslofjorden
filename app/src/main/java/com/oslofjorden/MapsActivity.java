@@ -382,7 +382,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         } catch (Exception e){
             e.printStackTrace();
-            Log.d(TAG, "onMapReady: Her gikk noe galt under innlastingen.");
             animateInfobarUp();
             Log.d(TAG, "onResume: lel");
         }
