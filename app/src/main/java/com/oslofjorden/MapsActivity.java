@@ -34,7 +34,9 @@ import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
 import android.text.style.URLSpan;
 import android.util.Log;
+import android.view.ContextMenu;
 import android.view.Display;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.animation.Animation;
@@ -96,9 +98,9 @@ import java.util.List;
 //Database implementation and search
 
 
-public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleApiClient.OnConnectionFailedListener, GoogleApiClient.ConnectionCallbacks, LocationListener, ResultCallback, CustomTabActivityHelper.ConnectionCallback {
+public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleApiClient.OnConnectionFailedListener, GoogleApiClient.ConnectionCallbacks, LocationListener, ResultCallback, CustomTabActivityHelper.ConnectionCallback, NoticeDialogListener {
     //For debugging
-    private static String TAG = "TAG";
+    public static String TAG = "TAG";
 
     AddInfoToMap addInfoToMap;
 
@@ -172,9 +174,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 
 
-    private static ArrayList<MyMarkerOptions> beachMarkers = new ArrayList<>();
     private CustomTabActivityHelper customTabActivityHelper;
     private boolean backGroundTaskRunning = false;
+
+    private static ArrayList<MyMarkerOptions> beachMarkers = new ArrayList<>();
     private ArrayList<MyMarkerOptions> rampeMarkers = new ArrayList<>();
     private ArrayList<MyMarkerOptions> fiskeplassMarkers = new ArrayList<>();
     private ArrayList<MyMarkerOptions> kranTruckMarkers = new ArrayList<>();
@@ -190,18 +193,21 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private ArrayList<MyMarkerOptions> WCMarkers = new ArrayList<>();
     private ArrayList<MyMarkerOptions> pointOfInterestMarkers = new ArrayList<>();
     private ArrayList<MyMarkerOptions> campingplassMarkers = new ArrayList<>();
+    private ArrayList<ArrayList<MyMarkerOptions>> arrayListOfArrayLists = new ArrayList<>();
 
-    private ArrayList<Polyline> polylinesOnMap = new ArrayList<>();
+
+    private static ArrayList<Polyline> polylinesOnMap = new ArrayList<>();
     private ArrayList<MyMarkerOptions> markersOnMap = new ArrayList<>();
     private boolean setUpClustererIfMarkers = true;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-
-
-
         super.onCreate(savedInstanceState);
+
+        //Add arraylists to arraylist of arraylists //the first element is empty and never used
+        addArrayListsToArraylistOfArrayLists();
+
 
 
         //Hvis man hadde location fra start av skal den ikke spørre mer
@@ -245,47 +251,79 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         //TODO: Set up default markers and paths, sharedprefs overrides this
 
         final ImageButton layerButton = (ImageButton) findViewById(R.id.layers);
-        final PopupMenu popup = new PopupMenu(MapsActivity.this, layerButton);
-        popup.getMenuInflater().inflate(R.menu.toolbar_menu, popup.getMenu());
-
-
 
         layerButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                popup.show();
-
-                popup.setOnDismissListener(new PopupMenu.OnDismissListener() {
-                    @Override
-                    public void onDismiss(PopupMenu menu) {
-
-                    }
-                });
 
 
-                popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-                    @Override
-                    public boolean onMenuItemClick(MenuItem item) {
+                //Show message to the user
+                ChooseMapInfoDialog mapInfoDialog = new ChooseMapInfoDialog();
+                mapInfoDialog.show(getSupportFragmentManager(), "test");
+                Log.d(TAG, "onClick: ferri");
 
-                        //TODO: Set checkbox to last settings with sharedpref
-
-
-                        handleClicksOnCheckBoxes(item, popup);
-
-                        return true;
-
-                    }
-
-                });
-
-                popup.show();
 
             }
         });
 
     }
 
-    private void handleClicksOnCheckBoxes(MenuItem item, PopupMenu popup) {
+    private void addArrayListsToArraylistOfArrayLists() {
+        arrayListOfArrayLists.add(beachMarkers);
+        arrayListOfArrayLists.add(rampeMarkers);
+        arrayListOfArrayLists.add(butikkMarkers);
+        arrayListOfArrayLists.add(spisestedMarkers);
+        arrayListOfArrayLists.add(fyrMarkers);
+        arrayListOfArrayLists.add(bunkersMarkers);
+        arrayListOfArrayLists.add(marinaMarkers);
+        arrayListOfArrayLists.add(gjestehavnMarkers);
+        arrayListOfArrayLists.add(parkeringTranspMarkers);
+        arrayListOfArrayLists.add(pointOfInterestMarkers);
+        arrayListOfArrayLists.add(uthavnMarkers);
+        arrayListOfArrayLists.add(kranTruckMarkers);
+        arrayListOfArrayLists.add(baatbutikkMarkers);
+        arrayListOfArrayLists.add(campingplassMarkers);
+        arrayListOfArrayLists.add(WCMarkers);
+        arrayListOfArrayLists.add(fiskeplassMarkers);
+    }
+
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View v,
+                                    ContextMenu.ContextMenuInfo menuInfo) {
+        super.onCreateContextMenu(menu, v, menuInfo);
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.toolbar_menu, menu);
+    }
+
+    private void loadCheckedItems(boolean[] checkedList) {
+        for (int i = 0; i < checkedList.length; i++){
+            
+
+            //Load items if the checkbox was checked
+            if (checkedList[i] == true){
+
+                //Kyststier behandles spesielt
+                if (i == 0){
+                    addPolylines();
+                } else {
+                    addMarkersToMap(arrayListOfArrayLists.get(i-1));
+                }
+
+            //Remove items    
+            } else {
+                
+                //Kyststier behandles spesielt
+                if (i == 0){
+                    removePolylines();
+                } else {
+                    removeMarkersFromMap(arrayListOfArrayLists.get(i-1));
+                }
+                
+            }
+        }
+        
+     /*
+        
         switch (item.getItemId()){
             case R.id.kyststier:
                 //Kyststier er checked og den klikkes på - fjern alle kyststier
@@ -452,16 +490,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                 item.setChecked(!item.isChecked());
                 break;
-            case R.id.fisk:
-                item.setChecked(!item.isChecked());
-                popup.getMenu().findItem().
-                break;
-            case R.id.lam:
-                item.setChecked(!item.isChecked());
-                popup.show();
-                break;
 
-        }
+
+        }*/
         //Show them by moving the map a bit
         CameraUpdate c = CameraUpdateFactory.zoomBy(0.001f);
         mMap.animateCamera(c);
@@ -536,7 +567,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
-    private void removePolylines() {
+    private static void removePolylines() {
         for (Polyline poly : polylinesOnMap){
             poly.remove();
         }
@@ -1557,6 +1588,21 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public void onCustomTabsDisconnected() {
 
+    }
+
+    @Override
+    public void onDialogPositiveClick(DialogFragment dialog, boolean[] checkedItems) {
+        Log.d(TAG, "onDialogPositiveClick: laster inn markerte items");
+
+        loadCheckedItems(checkedItems);
+
+
+
+    }
+
+    @Override
+    public void onDialogNegativeClick(DialogFragment dialog) {
+        Log.d(TAG, "onDialogNegativeClick: gjør ingenting");
     }
 
 

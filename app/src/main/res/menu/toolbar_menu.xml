@@ -10,7 +10,7 @@
         <item android:id="@+id/kyststier"
             android:title="Kyststier"
             app:showAsAction="always"
-            android:checked="true"
+            android:checkable="true"
             >
 
         </item>
@@ -21,54 +21,11 @@
           >
 
 
-            <menu>
-                <group>
-                    <item
-                        android:id="@+id/fisk"
-                        android:title="same"
-                        app:showAsAction="always"
-                        android:checkable="true">
-
-                    </item>
-
-                    <item
-                        android:id="@+id/lam"
-                        android:title="niga"
-                        app:showAsAction="always"
-                        android:checkable="true">
-
-
-
-                    </item>
-
-
-
-                </group>
-
-
-
-            </menu>
-
-
         </item>
 
         <item android:id="@+id/baatramper"
             android:title="Båtramper"
             app:showAsAction="always"
-            >
-
-        </item>
-
-        <item android:id="@+id/wc"
-            android:title="WC"
-            app:showAsAction="never"
-            >
-
-        </item>
-
-        <item android:id="@+id/fiskeplasser"
-            android:title="Fiskeplasser"
-            app:showAsAction="never"
             >
 
         </item>
@@ -126,28 +83,56 @@
             >
 
         </item>
-        <item android:id="@+id/campingplass"
-            android:title="Campingplasser"
-            app:showAsAction="never"
-            >
 
-        </item>
-        <item android:id="@+id/baatbutikk"
-            android:title="Båtbutikker"
-            app:showAsAction="never"
-            >
 
-        </item>
         <item android:id="@+id/uthavn"
             android:title="Uthavner"
             app:showAsAction="never"
             >
 
         </item>
-        <item android:id="@+id/kranTruck"
-            android:title="Kran/Truck"
-            app:showAsAction="never"
-            >
+
+
+        <item android:id="@+id/mer"
+            android:title="Mer.."
+            android:checkable="false">
+
+            <menu>
+                <group
+                    android:checkableBehavior="all">
+                    <item android:id="@+id/kranTruck"
+                        android:title="Kran/Truck"
+                        app:showAsAction="never"
+                        >
+
+                    </item>
+                    <item android:id="@+id/baatbutikk"
+                        android:title="Båtbutikker"
+                        app:showAsAction="never"
+                        >
+
+                    </item>
+                    <item android:id="@+id/campingplass"
+                        android:title="Campingplasser"
+                        app:showAsAction="never"
+                        >
+
+                    </item>
+                    <item android:id="@+id/wc"
+                        android:title="WC"
+                        app:showAsAction="never"
+                        >
+
+                    </item>
+
+                    <item android:id="@+id/fiskeplasser"
+                        android:title="Fiskeplasser"
+                        app:showAsAction="never"
+                        >
+
+                    </item>
+                </group>
+            </menu>
 
         </item>
 
