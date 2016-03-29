@@ -99,7 +99,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     //For debugging
     private static String TAG = "TAG";
 
-    AddInfoToMap addInfoToMap;
 
 
     private static GoogleMap mMap;
@@ -111,17 +110,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     CameraPosition currentCameraPosition;
     LatLng currentMapClickPosition;
 
-    boolean infoAddedToMap = false;
-    static boolean addedToDataStructure = false;
+    boolean infoAddedToMap;
+    static boolean addedToDataStructure;
 
     MyMarkerOptions clickedClusterItem;
     public ClusterManager<MyMarkerOptions> mClusterManager;
 
     public static GeoJsonLayer2 jsonLayer;
 
-    private boolean infobarUp = false;
+    private boolean infobarUp;
 
-    //If the last location was found, this variable is true, the app then swithches to use lastcameraposition to position the camera onPause/onResume
+    //If the last location was found, this variable is true, the app then swithches to use lastcameraposition to position the camera
     private boolean foundLastLocation = false;
 
 
@@ -161,15 +160,21 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
     private CustomTabActivityHelper customTabActivityHelper;
-    private boolean backGroundTaskRunning = false;
+    private boolean backGroundTaskRunning;
+    private AddInfoToMap addInfoToMap;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-
-
-
         super.onCreate(savedInstanceState);
+
+        addedToDataStructure = false;
+        infoAddedToMap = false;
+        infobarUp = false;
+        backGroundTaskRunning = false;
+
+
+
 
 
         //Hvis man hadde location fra start av skal den ikke spørre mer
@@ -203,18 +208,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
         Log.d(TAG, "onCreate: infoaddedtomap: " + infoAddedToMap);
-
+/*
         if (savedInstanceState != null) {
             addedToDataStructure = savedInstanceState.getBoolean("addedToDataStructure");
 
-        }
-
-        addInfoToMap = new AddInfoToMap();
-        Log.d(TAG, "onCreate: liste: " + polylinesReadyToAdd.size() + " " + markersReadyToAdd.size());
-
-
-
-
+        }*/
     }
 
     @Override
@@ -238,7 +236,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putBoolean(STATE_RESOLVING_ERROR, mResolvingError);
-        outState.putBoolean("addedToDataStructure", addedToDataStructure);
+        //outState.putBoolean("addedToDataStructure", addedToDataStructure);
 
 
     }
@@ -262,56 +260,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     }
 
-    @Override
-    protected void onResume() {
 
-        super.onResume();
-
-
-        if (mGoogleApiClient.isConnected() && !mRequestingLocationUpdates) {
-            if (locationUpdatesSwitch == true) {
-                startLocationUpdates();
-            }
-
-        }
-
-        if (currentCameraPosition != null) {
-            mMap.moveCamera(CameraUpdateFactory.newCameraPosition(currentCameraPosition));
-
-        }
-
-
-
-        try {
-            if (! infoAddedToMap){
-                Log.d(TAG, "onMapReady: starter igjen");
-
-
-
-                if (addInfoToMap.getStatus() == AsyncTask.Status.FINISHED) {
-                    addInfoToMap = new AddInfoToMap();
-                    if (mMap != null) {
-                        mMap.clear();
-                        Log.d(TAG, "onResume: fjerner alt på kart");
-                    }
-                    addInfoToMap.execute();
-                    backGroundTaskRunning = true;
-                }
-
-
-            }
-
-
-        } catch (Exception e){
-            e.printStackTrace();
-            Log.d(TAG, "onMapReady: Her gikk noe galt under innlastingen.");
-            animateInfobarUp();
-            Log.d(TAG, "onResume: lel");
-        }
-
-
-
-    }
 
 
     @Override
@@ -488,21 +437,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             }
         });
-
-
-        try {
-            if (! infoAddedToMap){
-                Log.d(TAG, "onMapReady: starter igjen");
-                addInfoToMap.execute();
-                backGroundTaskRunning = true;
-
-            }
-
-
-        } catch (Exception e){
-            e.printStackTrace();
-            Log.d(TAG, "onMapReady: Her gikk noe galt under innlastingen.");
-        }
 
 
 
@@ -1162,7 +1096,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
         CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, mMap.getCameraPosition().zoom);
         mMap.animateCamera(cameraUpdate);
-        Log.i(TAG, "OnLocationChanged: Location oppdatert");
+        //Log.i(TAG, "OnLocationChanged: Location oppdatert");
 
     }
 
@@ -1202,6 +1136,77 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     }
 
+    @Override
+    protected void onResume() {
+
+        super.onResume();
+
+
+        if (mGoogleApiClient.isConnected() && !mRequestingLocationUpdates) {
+            if (locationUpdatesSwitch == true) {
+                startLocationUpdates();
+            }
+
+        }
+
+        if (currentCameraPosition != null) {
+            mMap.moveCamera(CameraUpdateFactory.newCameraPosition(currentCameraPosition));
+
+        }
+
+
+
+        try {
+            if (!infoAddedToMap) {
+                Log.d(TAG, "onResume: Try to run bakgrunnsprosess");
+
+                addInfoToMap = new AddInfoToMap();
+
+                Log.d(TAG, "onresume: Info var ikke lagt til");
+
+
+                Log.d(TAG, "onResume: status er " + addInfoToMap.getStatus());
+
+                if (mMap != null) {
+                    mMap.clear();
+                    Log.d(TAG, "onResume: Fjerner alt på kartet som eventuelt var der");
+                } else {
+                    Log.d(TAG, "onResume: Klarte ikke fjerne noe på kartet siden det ikke var noe der. ");
+                }
+
+
+                if (addInfoToMap.getStatus() == AsyncTask.Status.FINISHED) {
+                    Log.d(TAG, "onResume: må lage en ny tråd, siden status var FINISHED");
+                    addInfoToMap = new AddInfoToMap();
+                    addInfoToMap.execute();
+
+                } else if (addInfoToMap.getStatus() == AsyncTask.Status.PENDING) {
+                    Log.d(TAG, "onResume: må kjøre, siden status var PENDING");
+                    addInfoToMap.execute();
+
+
+                } else if (addInfoToMap.getStatus() == AsyncTask.Status.RUNNING) {
+                    Log.d(TAG, "onResume: Denne bakgrunnsprosess kjører allerede, gjør ingenting.");
+                }
+
+                backGroundTaskRunning = true;
+
+
+            } else {
+                Log.d(TAG, "onResume: Info var lastet inn");
+            }
+
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            Log.d(TAG, "onMapReady: Her gikk noe galt under innlastingen.");
+            new RuntimeException("skjedde en feil med innlasting");
+        }
+
+
+
+    }
+
 
     class AddInfoToMap extends AsyncTask<Void, Integer, Void> {
 
@@ -1215,12 +1220,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 loading.setVisibility(View.VISIBLE);
 
                 loading.setText("Oslofjorden laster inn kyststier.. De vil poppe opp på kartet ditt snart :)");
+
+                //Denne må ha executet
                 animateInfobarUp();
                 Log.d(TAG, "onPreExecute: animerer opp");
-
-
-
-
 
         }
 
@@ -1239,8 +1242,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             } catch (IOException e) {
                 e.printStackTrace();
+                new RuntimeException("datainnlasting skjedde en feil");
             } catch (JSONException e) {
                 e.printStackTrace();
+                new RuntimeException("datainnlasntingsfeil");
             }
 
 
