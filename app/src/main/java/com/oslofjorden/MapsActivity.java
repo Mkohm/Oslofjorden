@@ -679,6 +679,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     }
 
+    @NonNull
+    private String extractUrlFromDescription(URLSpan span) {
+        String uriWithDesc = span.getURL();
+        uriWithDesc = uriWithDesc.substring(span.getURL().indexOf("http"),span.getURL().length());
+        return uriWithDesc;
+    }
+
 
 
     protected void makeLinkClickable(SpannableStringBuilder strBuilder, final URLSpan span) {
@@ -686,11 +693,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         int end = strBuilder.getSpanEnd(span);
         int flags = strBuilder.getSpanFlags(span);
 
+        String uriWithDesc = extractUrlFromDescription(span);
 
         //May launch this link
         Log.i(TAG, "makeLinkClickable: Gjør link klar for å åpnes.");
-        final Uri uri  = Uri.parse(span.getURL());
+        final Uri uri  = Uri.parse(uriWithDesc + "?app=1");
         customTabActivityHelper.mayLaunchUrl(uri, null, null);
+
 
         ClickableSpan clickable = new ClickableSpan() {
             public void onClick(View view) {
