@@ -195,6 +195,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private ArrayList<MyMarkerOptions> campingplassMarkers = new ArrayList<>();
     private ArrayList<ArrayList<MyMarkerOptions>> arrayListOfArrayLists = new ArrayList<>();
 
+    private boolean[] checkedItems;
+
 
     private static ArrayList<Polyline> polylinesOnMap = new ArrayList<>();
     private ArrayList<MyMarkerOptions> markersOnMap = new ArrayList<>();
@@ -257,10 +259,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             public void onClick(View v) {
 
 
-                //Show message to the user
+                //Show the choose map info dialog
                 ChooseMapInfoDialog mapInfoDialog = new ChooseMapInfoDialog();
                 mapInfoDialog.show(getSupportFragmentManager(), "test");
-                Log.d(TAG, "onClick: ferri");
 
 
             }
@@ -321,178 +322,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 
             }
         }
-        
-     /*
-        
-        switch (item.getItemId()){
-            case R.id.kyststier:
-                //Kyststier er checked og den klikkes på - fjern alle kyststier
-                if (item.isChecked()){
-                    removePolylines();
 
-                    //Den var ikke checked og den klikkes på - last inn alle kyststier
-                } else {
-                    addPolylines();
-                }
-
-                item.setChecked(!item.isChecked());
-                break;
-
-            case R.id.badeplasser:
-                if (item.isChecked()){
-
-                    //Remove the markers from the map
-                    removeMarkersFromMap(beachMarkers);
-
-
-                } else {
-
-                    //Add markers to the map
-                    addMarkersToMap(beachMarkers);
-
-
-                }
-
-                item.setChecked(!item.isChecked());
-                break;
-            case R.id.baatramper:
-                if (item.isChecked()){
-                    removeMarkersFromMap(rampeMarkers);
-                } else {
-                    addMarkersToMap(rampeMarkers);
-                }
-
-                item.setChecked(!item.isChecked());
-                break;
-            case R.id.wc:
-                if (item.isChecked()){
-                    removeMarkersFromMap(WCMarkers);
-                } else {
-                    addMarkersToMap(WCMarkers);
-                }
-
-                item.setChecked(!item.isChecked());
-                break;
-            case R.id.fiskeplasser:
-                if (item.isChecked()){
-                    removeMarkersFromMap(fiskeplassMarkers);
-                } else {
-                    addMarkersToMap(fiskeplassMarkers);
-                }
-
-                item.setChecked(!item.isChecked());
-                break;
-            case R.id.uthavn:
-                if (item.isChecked()){
-                    removeMarkersFromMap(uthavnMarkers);
-                } else {
-                    addMarkersToMap(uthavnMarkers);
-                }
-
-                item.setChecked(!item.isChecked());
-                break;
-            case R.id.fyr:
-                if (item.isChecked()){
-                    removeMarkersFromMap(fyrMarkers);
-                } else {
-                    addMarkersToMap(fyrMarkers);
-                }
-
-                item.setChecked(!item.isChecked());
-                break;
-            case R.id.butikk:
-                if (item.isChecked()){
-                    removeMarkersFromMap(butikkMarkers);
-                } else {
-                    addMarkersToMap(butikkMarkers);
-                }
-
-                item.setChecked(!item.isChecked());
-                break;
-            case R.id.gjestehavn:
-                if (item.isChecked()){
-                    removeMarkersFromMap(gjestehavnMarkers);
-                } else {
-                    addMarkersToMap(gjestehavnMarkers);
-                }
-
-                item.setChecked(!item.isChecked());
-                break;
-            case R.id.spisested:
-                if (item.isChecked()){
-                    removeMarkersFromMap(spisestedMarkers);
-                } else {
-                    addMarkersToMap(spisestedMarkers);
-                }
-
-                item.setChecked(!item.isChecked());
-                break;
-            case R.id.kranTruck:
-                if (item.isChecked()){
-                    removeMarkersFromMap(kranTruckMarkers);
-                } else {
-                    addMarkersToMap(kranTruckMarkers);
-                }
-
-                item.setChecked(!item.isChecked());
-                break;
-            case R.id.bunkers:
-                if (item.isChecked()){
-                    removeMarkersFromMap(bunkersMarkers);
-                } else {
-                    addMarkersToMap(bunkersMarkers);
-                }
-
-                item.setChecked(!item.isChecked());
-                break;
-            case R.id.baatbutikk:
-                if (item.isChecked()){
-                    removeMarkersFromMap(baatbutikkMarkers);
-                } else {
-                    addMarkersToMap(baatbutikkMarkers);
-                }
-
-                item.setChecked(!item.isChecked());
-                break;
-            case R.id.marina:
-                if (item.isChecked()){
-                    removeMarkersFromMap(marinaMarkers);
-                } else {
-                    addMarkersToMap(marinaMarkers);
-                }
-
-                item.setChecked(!item.isChecked());
-                break;
-            case R.id.parkeringTrans:
-                if (item.isChecked()){
-                    removeMarkersFromMap(parkeringTranspMarkers);
-                } else {
-                    addMarkersToMap(parkeringTranspMarkers);
-                }
-
-                item.setChecked(!item.isChecked());
-                break;
-            case R.id.poi:
-                if (item.isChecked()){
-                    removeMarkersFromMap(pointOfInterestMarkers);
-                } else {
-                    addMarkersToMap(pointOfInterestMarkers);
-                }
-
-                item.setChecked(!item.isChecked());
-                break;
-            case R.id.campingplass:
-                if (item.isChecked()){
-                    removeMarkersFromMap(campingplassMarkers);
-                } else {
-                    addMarkersToMap(campingplassMarkers);
-                }
-
-                item.setChecked(!item.isChecked());
-                break;
-
-
-        }*/
         //Show them by moving the map a bit
         CameraUpdate c = CameraUpdateFactory.zoomBy(0.001f);
         mMap.animateCamera(c);
@@ -858,18 +688,20 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         });
 
 
-        //add one marker to the map
-
         try {
             setUpClusterer();
             Log.d(TAG, "onMenuItemClick: setupcluster");
         } catch (Exception e) {
             e.printStackTrace();
-            Toast.makeText(getApplicationContext(), "Dette gikk dårlig, markers ble ikke lastet inn.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getApplicationContext(), "Dette gikk dårlig, clusterer ble ikke satt opp.", Toast.LENGTH_SHORT).show();
         }
 
         final TextView markerInfo = (TextView) findViewById(R.id.infobar);
         setOnClusterItemClickListener(markerInfo);
+
+
+        //Add last time loading
+        loadCheckedItems();
 
 
 
@@ -1593,6 +1425,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public void onDialogPositiveClick(DialogFragment dialog, boolean[] checkedItems) {
         Log.d(TAG, "onDialogPositiveClick: laster inn markerte items");
+
+        this.checkedItems = checkedItems;
 
         loadCheckedItems(checkedItems);
 
