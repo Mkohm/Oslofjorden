@@ -94,6 +94,8 @@ import java.util.List;
 
 //Database implementation and search
 
+//fjerne
+
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.OnConnectionFailedListener, GoogleApiClient.ConnectionCallbacks, LocationListener, ResultCallback, CustomTabActivityHelper.ConnectionCallback {
     //For debugging
