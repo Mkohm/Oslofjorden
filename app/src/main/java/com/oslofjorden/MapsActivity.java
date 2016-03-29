@@ -347,6 +347,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     onOffLocationButton.setImageResource(R.drawable.location_off_64px);
                     Toast.makeText(getApplicationContext(), "Oppdatering av posisjon - av", Toast.LENGTH_SHORT).show();
                     locationUpdatesSwitch = false;
+
+
+
+                    //Debugtoast
+                    Toast.makeText(getApplicationContext(), "addedtodatastructure: " + addedToDataStructure + " infoaddedtomap: " + infoAddedToMap + " backgroundtaskrunning: " + backGroundTaskRunning, Toast.LENGTH_LONG).show();
+
+
+
                 } else if (locationUpdatesSwitch == false) {
 
 
