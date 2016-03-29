@@ -249,10 +249,18 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         popup.getMenuInflater().inflate(R.menu.toolbar_menu, popup.getMenu());
 
 
+
         layerButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 popup.show();
+
+                popup.setOnDismissListener(new PopupMenu.OnDismissListener() {
+                    @Override
+                    public void onDismiss(PopupMenu menu) {
+
+                    }
+                });
 
 
                 popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
@@ -262,7 +270,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                         //TODO: Set checkbox to last settings with sharedpref
 
 
-                        handleClicksOnCheckBoxes(item);
+                        handleClicksOnCheckBoxes(item, popup);
 
                         return true;
 
@@ -277,7 +285,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     }
 
-    private void handleClicksOnCheckBoxes(MenuItem item) {
+    private void handleClicksOnCheckBoxes(MenuItem item, PopupMenu popup) {
         switch (item.getItemId()){
             case R.id.kyststier:
                 //Kyststier er checked og den klikkes på - fjern alle kyststier
@@ -443,6 +451,14 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 }
 
                 item.setChecked(!item.isChecked());
+                break;
+            case R.id.fisk:
+                item.setChecked(!item.isChecked());
+                popup.getMenu().findItem().
+                break;
+            case R.id.lam:
+                item.setChecked(!item.isChecked());
+                popup.show();
                 break;
 
         }

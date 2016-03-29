@@ -26,14 +26,16 @@
                     <item
                         android:id="@+id/fisk"
                         android:title="same"
-                        app:showAsAction="always">
+                        app:showAsAction="always"
+                        android:checkable="true">
 
                     </item>
 
                     <item
                         android:id="@+id/lam"
                         android:title="niga"
-                        app:showAsAction="always">
+                        app:showAsAction="always"
+                        android:checkable="true">
 
 
 
