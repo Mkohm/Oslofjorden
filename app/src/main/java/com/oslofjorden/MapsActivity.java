@@ -1090,13 +1090,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onLocationChanged(Location location) {
 
-        //Updates current location
-        currentPosition = new LatLng(location.getLatitude(), location.getLongitude());
+        if (locationUpdatesSwitch) {
+            //Updates current location
+            currentPosition = new LatLng(location.getLatitude(), location.getLongitude());
 
-        LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
-        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, mMap.getCameraPosition().zoom);
-        mMap.animateCamera(cameraUpdate);
-        //Log.i(TAG, "OnLocationChanged: Location oppdatert");
+            LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+            CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, mMap.getCameraPosition().zoom);
+            mMap.animateCamera(cameraUpdate);
+            Log.i(TAG, "OnLocationChanged: Location oppdatert");
+        }
+
+
 
     }
 
