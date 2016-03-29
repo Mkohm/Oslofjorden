@@ -20,6 +20,34 @@
             app:showAsAction="always"
           >
 
+
+            <menu>
+                <group>
+                    <item
+                        android:id="@+id/fisk"
+                        android:title="same"
+                        app:showAsAction="always">
+
+                    </item>
+
+                    <item
+                        android:id="@+id/lam"
+                        android:title="niga"
+                        app:showAsAction="always">
+
+
+
+                    </item>
+
+
+
+                </group>
+
+
+
+            </menu>
+
+
         </item>
 
         <item android:id="@+id/baatramper"

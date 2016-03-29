@@ -270,7 +270,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                 });
 
-
+                popup.show();
 
             }
         });
@@ -1866,7 +1866,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         if (line.contains("WC")){
             WCMarkers.add(new MyMarkerOptions(options));
         }
-        if (line.contains("Point of interes")){
+        if (line.contains("Point of Interes")){
             pointOfInterestMarkers.add(new MyMarkerOptions(options));
         }
         if (line.contains("Campingplass")){
