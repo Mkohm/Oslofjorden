@@ -209,12 +209,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 && savedInstanceState.getBoolean(STATE_RESOLVING_ERROR, false);
 
 
-        Log.d(TAG, "onCreate: infoaddedtomap: " + infoAddedToMap);
-/*
-        if (savedInstanceState != null) {
-            addedToDataStructure = savedInstanceState.getBoolean("addedToDataStructure");
 
-        }*/
     }
 
     @Override
@@ -267,8 +262,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     protected void onStop() {
-
-        Log.d(TAG, "onStop: ");
 
         if (backGroundTaskRunning) {
             addInfoToMap.cancel(true);
@@ -349,12 +342,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     onOffLocationButton.setImageResource(R.drawable.location_off_64px);
                     Toast.makeText(getApplicationContext(), "Oppdatering av posisjon - av", Toast.LENGTH_SHORT).show();
                     locationUpdatesSwitch = false;
-
-
-
-                    //Debugtoast
-                    Toast.makeText(getApplicationContext(), "addedtodatastructure: " + addedToDataStructure + " infoaddedtomap: " + infoAddedToMap + " backgroundtaskrunning: " + backGroundTaskRunning, Toast.LENGTH_LONG).show();
-
 
 
                 } else if (locationUpdatesSwitch == false) {
@@ -440,10 +427,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 //Hvis kyststiinfo er oppe, lukk den
 
                     animateInfobarDown();
-
-
-
-
 
             }
         });
@@ -1016,7 +999,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     private void setUpClusterer() {
-        Log.d(TAG, "setUpClusterer: legger til markers");
+        Log.i(TAG, "setUpClusterer: legger til markers");
         // Declare a variable for the cluster manager.
 
 
@@ -1181,48 +1164,48 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         try {
             if (!infoAddedToMap) {
-                Log.d(TAG, "onResume: Try to run bakgrunnsprosess");
+                //Log.d(TAG, "onResume: Try to run bakgrunnsprosess");
 
                 addInfoToMap = new AddInfoToMap();
 
-                Log.d(TAG, "onresume: Info var ikke lagt til");
+                //Log.d(TAG, "onresume: Info var ikke lagt til");
 
 
-                Log.d(TAG, "onResume: status er " + addInfoToMap.getStatus());
+                //Log.d(TAG, "onResume: status er " + addInfoToMap.getStatus());
 
                 if (mMap != null) {
                     mMap.clear();
-                    Log.d(TAG, "onResume: Fjerner alt på kartet som eventuelt var der");
+                  //  Log.d(TAG, "onResume: Fjerner alt på kartet som eventuelt var der");
                 } else {
-                    Log.d(TAG, "onResume: Klarte ikke fjerne noe på kartet siden det ikke var noe der. ");
+                    //Log.d(TAG, "onResume: Klarte ikke fjerne noe på kartet siden det ikke var noe der. ");
                 }
 
 
                 if (addInfoToMap.getStatus() == AsyncTask.Status.FINISHED) {
-                    Log.d(TAG, "onResume: må lage en ny tråd, siden status var FINISHED");
+                    //Log.d(TAG, "onResume: må lage en ny tråd, siden status var FINISHED");
                     addInfoToMap = new AddInfoToMap();
                     addInfoToMap.execute();
 
                 } else if (addInfoToMap.getStatus() == AsyncTask.Status.PENDING) {
-                    Log.d(TAG, "onResume: må kjøre, siden status var PENDING");
+                    //Log.d(TAG, "onResume: må kjøre, siden status var PENDING");
                     addInfoToMap.execute();
 
 
                 } else if (addInfoToMap.getStatus() == AsyncTask.Status.RUNNING) {
-                    Log.d(TAG, "onResume: Denne bakgrunnsprosess kjører allerede, gjør ingenting.");
+                    //Log.d(TAG, "onResume: Denne bakgrunnsprosess kjører allerede, gjør ingenting.");
                 }
 
                 backGroundTaskRunning = true;
 
 
             } else {
-                Log.d(TAG, "onResume: Info var lastet inn");
+                //Log.d(TAG, "onResume: Info var lastet inn");
             }
 
 
         } catch (Exception e) {
             e.printStackTrace();
-            Log.d(TAG, "onMapReady: Her gikk noe galt under innlastingen.");
+            //Log.d(TAG, "onMapReady: Her gikk noe galt under innlastingen.");
             new RuntimeException("skjedde en feil med innlasting");
         }
 
@@ -1246,7 +1229,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                 //Denne må ha executet
                 animateInfobarUp();
-                Log.d(TAG, "onPreExecute: animerer opp");
+                //Log.d(TAG, "onPreExecute: animerer opp");
 
         }
 
@@ -1291,7 +1274,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                         if (iterator.hasNext() && !infoAddedToMap){
                             if (addInfoToMap.isCancelled()){
-                                Log.d(TAG, "run: stopper task");
+                                Log.i(TAG, "run: stopper task");
                                 infoAddedToMap = false;
                                 backGroundTaskRunning = false;
                                 return;
@@ -1308,12 +1291,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                           //  Log.d(TAG, "run: kyststi");
                         } else {
-                            Log.d(TAG, "run : alle kyststier er lastet inn");
+                            Log.i(TAG, "run : alle kyststier er lastet inn");
                             infoAddedToMap = true;
 
                             backGroundTaskRunning = false;
 
-                                Log.d(TAG, "run: animerer ned");
                                 animateInfobarDown();
 
 
