@@ -196,6 +196,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private ArrayList<ArrayList<MyMarkerOptions>> arrayListOfArrayLists = new ArrayList<>();
 
     private boolean[] checkedItems;
+    private boolean[] defaultChecked;
 
 
     private static ArrayList<Polyline> polylinesOnMap = new ArrayList<>();
@@ -209,6 +210,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         //Add arraylists to arraylist of arraylists //the first element is empty and never used
         addArrayListsToArraylistOfArrayLists();
+        createDefaultCheckedArray();
+
 
 
 
@@ -271,21 +274,21 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private void addArrayListsToArraylistOfArrayLists() {
         arrayListOfArrayLists.add(beachMarkers);
-        arrayListOfArrayLists.add(rampeMarkers);
-        arrayListOfArrayLists.add(butikkMarkers);
         arrayListOfArrayLists.add(spisestedMarkers);
-        arrayListOfArrayLists.add(fyrMarkers);
-        arrayListOfArrayLists.add(bunkersMarkers);
-        arrayListOfArrayLists.add(marinaMarkers);
-        arrayListOfArrayLists.add(gjestehavnMarkers);
+        arrayListOfArrayLists.add(butikkMarkers);
         arrayListOfArrayLists.add(parkeringTranspMarkers);
         arrayListOfArrayLists.add(pointOfInterestMarkers);
+        arrayListOfArrayLists.add(fiskeplassMarkers);
+        arrayListOfArrayLists.add(gjestehavnMarkers);
         arrayListOfArrayLists.add(uthavnMarkers);
+        arrayListOfArrayLists.add(bunkersMarkers);
+        arrayListOfArrayLists.add(marinaMarkers);
+        arrayListOfArrayLists.add(rampeMarkers);
         arrayListOfArrayLists.add(kranTruckMarkers);
+        arrayListOfArrayLists.add(WCMarkers);
+        arrayListOfArrayLists.add(fyrMarkers);
         arrayListOfArrayLists.add(baatbutikkMarkers);
         arrayListOfArrayLists.add(campingplassMarkers);
-        arrayListOfArrayLists.add(WCMarkers);
-        arrayListOfArrayLists.add(fiskeplassMarkers);
     }
 
     @Override
@@ -412,6 +415,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private void setUpToolbar() {
         Toolbar myToolbar = (Toolbar) findViewById(R.id.my_toolbar);
         setSupportActionBar(myToolbar);
+        getSupportActionBar().setTitle("Oslofjorden Turguide");
+        myToolbar.setTitleTextColor(Color.WHITE);
     }
 
     @Override
@@ -700,8 +705,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         setOnClusterItemClickListener(markerInfo);
 
 
-        //Add last time loading
-        loadCheckedItems();
+
 
 
 
@@ -721,6 +725,51 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 
 
+    }
+
+    private void loadLastStateOfApplication() {
+        if (loadArray("userChecks", getApplicationContext()).length == 0) {
+            //Fant ingen checks på sharedpref
+            Log.d(TAG, "loadLastStateOfApplication: fant ingen tidligere checks");
+            checkedItems = defaultChecked;
+        } else {
+            checkedItems = loadArray("userChecks", getApplicationContext());
+            Log.d(TAG, "loadLastStateOfApplication: fant checks");
+        }
+        loadCheckedItems(checkedItems);
+    }
+
+    public boolean[] loadArray(String arrayName, Context mContext) {
+        SharedPreferences prefs = mContext.getSharedPreferences(arrayName, 0);
+
+        int size = prefs.getInt(arrayName + "_17", 0);
+        boolean[] array = new boolean[size];
+        for(int i=0;i<size;i++) {
+            array[i] = prefs.getBoolean(arrayName + "_" + i, false);
+        }
+        return array;
+    }
+
+    private void createDefaultCheckedArray() {
+        defaultChecked = new boolean[17];
+        defaultChecked[0] = true;
+        defaultChecked[1] = true;
+        defaultChecked[2] = true;
+        defaultChecked[3] = true;
+        defaultChecked[4] = true;
+        defaultChecked[5] = true;
+        defaultChecked[6] = true;
+
+        defaultChecked[7] = false;
+        defaultChecked[8] = false;
+        defaultChecked[9] = false;
+        defaultChecked[10] = false;
+        defaultChecked[11] = false;
+        defaultChecked[12] = false;
+        defaultChecked[13] = false;
+        defaultChecked[14] = false;
+        defaultChecked[15] = false;
+        defaultChecked[16] = false;
     }
 
     private void setOnOffLocationButtonStartstate(ImageButton onOffLocationButton) {
@@ -1506,6 +1555,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         @Override
         protected void onPostExecute(Void aVoid) {
+            loadLastStateOfApplication();
+
             animateInfobarDown();
         }
 
@@ -1584,6 +1635,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         //Is only loading the paths from the file
 
+        long time= System.currentTimeMillis();
+
+
         kyststiLayer = new GeoJsonLayer2(mMap, R.raw.alle_kyststier_without_markers, MyApplication.getAppContext());
 
         for (GeoJsonFeature2 feature : kyststiLayer.getFeatures()) {
@@ -1623,42 +1677,14 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
 
 
-        /*markerLayer = new GeoJsonLayer2(mMap, R.raw.interesting_points, MyApplication.getAppContext());
-        for (GeoJsonFeature2 feature : markerLayer.getFeatures()) {
-            GeoJsonPointStyle2 pointStyle = new GeoJsonPointStyle2();
 
-            pointStyle.setTitle(feature.getProperty("name"));
-
-
-
-            //Filter out the description and the different types and then set the description
-
-            String description = feature.getProperty("link1_href");
-
-            if (feature.getProperty("gpxx_WaypointExtension").contains("Beach")) {
-
-                markerDescriptionList.add(description);
-                markerNameList.add(feature.getProperty("name"));
-
-            }
-
-
-
-            pointStyle.setSnippet();
-
-
-
-            Log.d(TAG, "getDataFromFileAndPutInDatastructure: " + feature.getProperty("name"));
-
-            feature.setPointStyle(pointStyle);
-        }
-*/
 
         addGeoJsonLayerToDataStructure();
 
-        addedToDataStructure = true;
+        Log.d(TAG, "getDataFromFileAndPutInDatastructure: tid kyststier: " + (System.currentTimeMillis()-time));
 
 
+        time = System.currentTimeMillis();
         //Read all the markers from file and put in different arraylists for different types of markers
         InputStream inputStream = getResources().openRawResource(R.raw.interesting_points);
         BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
@@ -1705,6 +1731,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 
         }
+
+        Log.d(TAG, "getDataFromFileAndPutInDatastructure: time markers: " + (System.currentTimeMillis()-time));
+        addedToDataStructure = true;
+
 
 
     }

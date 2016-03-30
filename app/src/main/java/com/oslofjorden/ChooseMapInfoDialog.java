@@ -113,16 +113,17 @@ public class ChooseMapInfoDialog extends DialogFragment {
         defaultChecked = new boolean[17];
         defaultChecked[0] = true;
         defaultChecked[1] = true;
-        defaultChecked[2] = false;
+        defaultChecked[2] = true;
         defaultChecked[3] = true;
         defaultChecked[4] = true;
         defaultChecked[5] = true;
         defaultChecked[6] = true;
+
         defaultChecked[7] = false;
-        defaultChecked[8] = true;
-        defaultChecked[9] = true;
-        defaultChecked[10] = true;
-        defaultChecked[11] = true;
+        defaultChecked[8] = false;
+        defaultChecked[9] = false;
+        defaultChecked[10] = false;
+        defaultChecked[11] = false;
         defaultChecked[12] = false;
         defaultChecked[13] = false;
         defaultChecked[14] = false;
@@ -134,21 +135,29 @@ public class ChooseMapInfoDialog extends DialogFragment {
         mapInfo = new String[17];
         mapInfo[0] = "Kyststier";
         mapInfo[1] = "Badeplasser";
-        mapInfo[2] = "Båtramper";
+        mapInfo[2] = "Spisested";
         mapInfo[3] = "Butikk";
-        mapInfo[4] = "Spisested";
-        mapInfo[5] = "Fyr";
-        mapInfo[6] = "Bunkers - Steder å fylle bensin";
-        mapInfo[7] = "Marinaer";
-        mapInfo[8] = "Gjestehavn";
-        mapInfo[9] = "Parkering og Transport";
-        mapInfo[10] = "Point of interest";
-        mapInfo[11] = "Uthavner";
+        mapInfo[4] = "Parkering og Transport";
+        mapInfo[5] = "Interessante steder";
+        mapInfo[6] = "Fiskeplasser";
+
+        mapInfo[7] = "Gjestehavn";
+        mapInfo[8] = "Uthavner";
+        mapInfo[9] = "Bunkers - Steder å fylle bensin";
+        mapInfo[10] = "Marinaer";
+
+
+
+        mapInfo[11] = "Båtramper";
         mapInfo[12] = "Kran/Truck";
-        mapInfo[13] = "Båtbutikker";
-        mapInfo[14] = "Campingplasser";
-        mapInfo[15] = "WC";
-        mapInfo[16] = "Fiskeplasser";
+
+
+
+        mapInfo[13] = "Toaletter";
+        mapInfo[14] = "Fyr";
+        mapInfo[15] = "Båtbutikker";
+        mapInfo[16] = "Campingplasser";
+
     }
 
 
