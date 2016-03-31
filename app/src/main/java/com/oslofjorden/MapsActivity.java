@@ -18,31 +18,24 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.StrictMode;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.customtabs.CustomTabsIntent;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
-import android.support.v4.app.Fragment;
 import android.text.Html;
 import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
-import android.text.style.ForegroundColorSpan;
 import android.text.style.URLSpan;
-import android.text.style.UnderlineSpan;
-import android.util.EventLogTags;
 import android.util.Log;
 import android.view.Display;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
-import android.widget.CheckBox;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -67,17 +60,13 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.LatLngBounds;
-import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
-import com.google.maps.android.clustering.Cluster;
 import com.google.maps.android.clustering.ClusterItem;
 import com.google.maps.android.clustering.ClusterManager;
 
 import org.json.JSONException;
-import org.w3c.dom.Text;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -112,7 +101,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     CameraPosition currentCameraPosition;
     LatLng currentMapClickPosition;
 
-    boolean infoAddedToMap;
+    static boolean infoAddedToMap;
     static boolean addedToDataStructure;
 
     MyMarkerOptions clickedClusterItem;
@@ -134,7 +123,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     boolean locationUpdatesSwitch = true;
 
 
-
+    //Loading of polylines variables
     public static HashMap<List<LatLng>, String[]> kyststiInfoMap = new HashMap<List<LatLng>, String[]>();
     public static ArrayList<String> descriptionList = new ArrayList<String>();
     public static int indexInDescriptionList = 0;
@@ -143,6 +132,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     public static List<MarkerOptions> markersReadyToAdd = new ArrayList<MarkerOptions>();
     public static List<PolylineOptions> polylinesReadyToAdd = new ArrayList<PolylineOptions>();
+
+
+
 
 
     private Polyline currentPolyline;
@@ -162,8 +154,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
     private CustomTabActivityHelper customTabActivityHelper;
-    private boolean backGroundTaskRunning;
-    private AddInfoToMap addInfoToMap;
+    private static boolean backGroundTaskRunning;
+    private static AddInfoToMap addInfoToMap;
+    private boolean polylinesLoading;
 
 
     @Override
@@ -175,6 +168,19 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         infobarUp = false;
         backGroundTaskRunning = false;
 
+        //If the thread is not already running
+        if (addInfoToMap != null) {
+            if (! (addInfoToMap.getStatus() == AsyncTask.Status.RUNNING)) {
+                addInfoToMap = new AddInfoToMap();
+            }
+        } else {
+            //This is the first time running
+            addInfoToMap = new AddInfoToMap();
+        }
+
+
+
+        Log.d(TAG, "onCreate: " + polylinesReadyToAdd.size() + markersReadyToAdd.size() + " " + kyststiInfoMap.size());
 
 
 
@@ -207,6 +213,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         //Something with running google play services safaly
         mResolvingError = savedInstanceState != null
                 && savedInstanceState.getBoolean(STATE_RESOLVING_ERROR, false);
+
+        TextView startTextview = (TextView) findViewById(R.id.infobar);
+        startTextview.setVisibility(View.INVISIBLE);
 
 
 
@@ -262,11 +271,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     protected void onStop() {
+        Log.d(TAG, "onStop: ");
 
-        if (backGroundTaskRunning) {
+
+        if (! infoAddedToMap) {
             addInfoToMap.cancel(true);
-
         }
+
 
 
 
@@ -290,6 +301,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         super.onBackPressed();
         this.finish();
+        //markersReadyToAdd.clear();
+        //polylinesReadyToAdd.clear();
+
     }
 
     @Override
@@ -596,6 +610,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
     public static void addGeoJsonLayerToDataStructure() {
+        if (stopAsyncTaskIfOnStop()) return;
+
         jsonLayer.addLayerToMap();
     }
 
@@ -1029,10 +1045,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private void addItems() {
         for (MarkerOptions marker : markersReadyToAdd) {
-
-            if (addInfoToMap.isCancelled()){
-                return;
-            }
+            if (stopAsyncTaskIfOnStop()) return;
 
             mClusterManager.addItem(new MyMarkerOptions(marker));
         }
@@ -1162,52 +1175,61 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
 
-        try {
             if (!infoAddedToMap) {
-                //Log.d(TAG, "onResume: Try to run bakgrunnsprosess");
 
-                addInfoToMap = new AddInfoToMap();
-
-                //Log.d(TAG, "onresume: Info var ikke lagt til");
-
-
-                //Log.d(TAG, "onResume: status er " + addInfoToMap.getStatus());
 
                 if (mMap != null) {
+                    Log.d(TAG, "onResume: fjerner kyststier");
                     mMap.clear();
-                  //  Log.d(TAG, "onResume: Fjerner alt på kartet som eventuelt var der");
-                } else {
-                    //Log.d(TAG, "onResume: Klarte ikke fjerne noe på kartet siden det ikke var noe der. ");
+                    kyststiInfoMap.clear();
+
+
+                    markersReadyToAdd.clear();
+                    polylinesReadyToAdd.clear();
+                    nameList.clear();
+                    descriptionList.clear();
+                    indexInNameList = 0;
+                    indexInDescriptionList = 0;
+                }
+
+                if (mClusterManager != null) {
+
+                    mClusterManager.clearItems();
+                    Log.d(TAG, "onResume: fjerna markers");
+
                 }
 
 
                 if (addInfoToMap.getStatus() == AsyncTask.Status.FINISHED) {
-                    //Log.d(TAG, "onResume: må lage en ny tråd, siden status var FINISHED");
+                    Log.d(TAG, "onResume: status var FINISHED, starter en ny");
                     addInfoToMap = new AddInfoToMap();
                     addInfoToMap.execute();
 
+
+
                 } else if (addInfoToMap.getStatus() == AsyncTask.Status.PENDING) {
-                    //Log.d(TAG, "onResume: må kjøre, siden status var PENDING");
+                    Log.d(TAG, "onResume: må kjøre, siden status var PENDING");
                     addInfoToMap.execute();
 
 
                 } else if (addInfoToMap.getStatus() == AsyncTask.Status.RUNNING) {
-                    //Log.d(TAG, "onResume: Denne bakgrunnsprosess kjører allerede, gjør ingenting.");
+                    Log.d(TAG, "onResume: Denne bakgrunnsprosess kjører allerede, stopper den, fjerner det gamle og lager ny.");
+
+
+                    addInfoToMap = new AddInfoToMap();
+                    addInfoToMap.execute();
+
+
+                } else {
+                    Log.d(TAG, "onResume: startet ingen ny");
                 }
 
                 backGroundTaskRunning = true;
 
-
             } else {
-                //Log.d(TAG, "onResume: Info var lastet inn");
+                Log.d(TAG, "onResume: Info var lastet inn");
             }
 
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            //Log.d(TAG, "onMapReady: Her gikk noe galt under innlastingen.");
-            new RuntimeException("skjedde en feil med innlasting");
-        }
 
 
 
@@ -1218,14 +1240,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         @Override
         protected void onPreExecute() {
-            if (addInfoToMap.isCancelled()){
+            if (stopAsyncTaskIfOnStop()) {
                 return;
             }
+
 
                 TextView loading = (TextView) findViewById(R.id.infobar);
                 loading.setVisibility(View.VISIBLE);
 
-                loading.setText("Oslofjorden laster inn kyststier.. De vil poppe opp på kartet ditt snart :)");
+                loading.setText("Oslofjorden laster inn kyststier. Stiene vil poppe opp på kartet ditt snart, vennligst vent..");
 
                 //Denne må ha executet
                 animateInfobarUp();
@@ -1236,23 +1259,34 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         @Override
         protected Void doInBackground(Void... params) {
 
-
-            try {
                 if (! addedToDataStructure) {
 
+                    if (stopAsyncTaskIfOnStop()) {
+                        return null;
+                    }
 
-                    getDataFromFileAndPutInDatastructure();
-                    Log.i(TAG, "doInBackground: Lastet inn data til datastrukturen");
+                    try {
+                        getDataFromFileAndPutInDatastructure();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+
+
+                    if (stopAsyncTaskIfOnStop()) {
+                        return null;
+                    }
+
+
+                    addedToDataStructure = true;
+                    backGroundTaskRunning = false;
+
+                    Log.i(TAG, "doInBackground: Lastet inn data til datastrukturen" + markersReadyToAdd.size() + " " + polylinesReadyToAdd.size());
+
+
                 }
 
-
-            } catch (IOException e) {
-                e.printStackTrace();
-                new RuntimeException("datainnlasting skjedde en feil");
-            } catch (JSONException e) {
-                e.printStackTrace();
-                new RuntimeException("datainnlasntingsfeil");
-            }
 
 
             return null;
@@ -1272,33 +1306,29 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     public void run() {
 
 
-                        if (iterator.hasNext() && !infoAddedToMap){
-                            if (addInfoToMap.isCancelled()){
-                                Log.i(TAG, "run: stopper task");
-                                infoAddedToMap = false;
-                                backGroundTaskRunning = false;
+                        if (iterator.hasNext()){
+
+                            if (stopAsyncTaskIfOnStop()) {
+                                mMap.clear();
                                 return;
                             }
-
 
 
                             mMap.addPolyline(iterator.next());
 
 
+                            //Delay
                             handler.postDelayed(this, 1);
 
 
 
-                          //  Log.d(TAG, "run: kyststi");
+                          //Log.d(TAG, "run: kyststi");
                         } else {
                             Log.i(TAG, "run : alle kyststier er lastet inn");
                             infoAddedToMap = true;
 
-                            backGroundTaskRunning = false;
 
-                                animateInfobarDown();
-
-
+                            animateInfobarDown();
 
                         }
                     }
@@ -1311,7 +1341,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
 
             try {
+
                 setUpClusterer();
+
+
             } catch (Exception e) {
                 e.printStackTrace();
                 Toast.makeText(getApplicationContext(), "Dette gikk dårlig, markers ble ikke lastet inn.", Toast.LENGTH_SHORT).show();
@@ -1323,6 +1356,18 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             setOnClusterItemClickListener(markerInfo);
 
         }
+    }
+
+    public static boolean stopAsyncTaskIfOnStop() {
+        if (addInfoToMap.isCancelled()) {
+            backGroundTaskRunning = false;
+            //Log.d(TAG, "Stopper task");
+            infoAddedToMap = false;
+            addedToDataStructure = false;
+
+            return true;
+        }
+        return false;
     }
 
     private void setOnClusterItemClickListener(final TextView markerInfo) {
@@ -1352,9 +1397,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         jsonLayer = new GeoJsonLayer2(mMap, R.raw.alle_kyststier, MyApplication.getAppContext());
 
         for (GeoJsonFeature2 feature : jsonLayer.getFeatures()) {
-            if (addInfoToMap.isCancelled()){
+
+            if (stopAsyncTaskIfOnStop()) {
+                Log.d(TAG, "getDataFromFileAndPutInDatastructure: stopp");
                 return;
             }
+
 
             GeoJsonPointStyle2 pointStyle = new GeoJsonPointStyle2();
             GeoJsonLineStringStyle2 stringStyle;
@@ -1388,7 +1436,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         addGeoJsonLayerToDataStructure();
 
-        addedToDataStructure = true;
     }
 
 

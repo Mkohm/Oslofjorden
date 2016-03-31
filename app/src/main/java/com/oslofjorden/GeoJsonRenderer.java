@@ -121,6 +121,7 @@ import java.util.Set;
         if (!mLayerOnMap) {
             mLayerOnMap = true;
             for (GeoJsonFeature2 feature : getFeatures()) {
+                if (MapsActivity.stopAsyncTaskIfOnStop()) return;
                 addFeature(feature);
             }
         }

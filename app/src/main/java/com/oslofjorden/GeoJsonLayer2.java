@@ -2,6 +2,7 @@ package com.oslofjorden;
 
 import android.content.Context;
 import android.test.suitebuilder.annotation.Suppress;
+import android.util.Log;
 
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLngBounds;
@@ -32,7 +33,7 @@ import java.util.HashMap;
 @Suppress
 public class GeoJsonLayer2 {
 
-    private final GeoJsonRenderer mRenderer;
+    private GeoJsonRenderer mRenderer = null;
 
     private LatLngBounds mBoundingBox;
 
@@ -53,6 +54,9 @@ public class GeoJsonLayer2 {
         mBoundingBox = parser.getBoundingBox();
         HashMap<GeoJsonFeature2, Object> geoJsonFeatures = new HashMap<GeoJsonFeature2, Object>();
         for (GeoJsonFeature2 feature : parser.getFeatures()) {
+
+            if (MapsActivity.stopAsyncTaskIfOnStop()) return;
+
             geoJsonFeatures.put(feature, null);
         }
         mRenderer = new GeoJsonRenderer(map, geoJsonFeatures);
@@ -89,6 +93,10 @@ public class GeoJsonLayer2 {
         try {
             // Read each line of the GeoJSON file into a string
             while ((line = reader.readLine()) != null) {
+                if (MapsActivity.stopAsyncTaskIfOnStop()) {
+                    Log.d("TAG", "createJsonFileObject: geojsonalayer2");
+                    return null;
+                }
                 result.append(line);
             }
         } finally {
