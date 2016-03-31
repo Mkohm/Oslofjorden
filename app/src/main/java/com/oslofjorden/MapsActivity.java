@@ -157,6 +157,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private static boolean backGroundTaskRunning;
     private static AddInfoToMap addInfoToMap;
     private boolean polylinesLoading;
+    private boolean exit;
 
 
     @Override
@@ -167,16 +168,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         infoAddedToMap = false;
         infobarUp = false;
         backGroundTaskRunning = false;
+        exit = false;
 
+        addInfoToMap = new AddInfoToMap();
+/*
         //If the thread is not already running
-        if (addInfoToMap != null) {
-            if (! (addInfoToMap.getStatus() == AsyncTask.Status.RUNNING)) {
-                addInfoToMap = new AddInfoToMap();
-            }
-        } else {
-            //This is the first time running
+        if (addInfoToMap == null) {
+
             addInfoToMap = new AddInfoToMap();
-        }
+        }*/
 
 
 
@@ -1200,17 +1200,20 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 }
 
 
-                if (addInfoToMap.getStatus() == AsyncTask.Status.FINISHED) {
+
+                /*if (addInfoToMap.getStatus() == AsyncTask.Status.FINISHED) {
                     Log.d(TAG, "onResume: status var FINISHED, starter en ny");
                     addInfoToMap = new AddInfoToMap();
                     addInfoToMap.execute();
+                */
 
 
 
-                } else if (addInfoToMap.getStatus() == AsyncTask.Status.PENDING) {
-                    Log.d(TAG, "onResume: må kjøre, siden status var PENDING");
-                    addInfoToMap.execute();
+                addInfoToMap = new AddInfoToMap();
+                addInfoToMap.execute();
+                Log.d(TAG, "onResume: kjører igjen");
 
+/*
 
                 } else if (addInfoToMap.getStatus() == AsyncTask.Status.RUNNING) {
                     Log.d(TAG, "onResume: Denne bakgrunnsprosess kjører allerede, stopper den, fjerner det gamle og lager ny.");
@@ -1224,15 +1227,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     Log.d(TAG, "onResume: startet ingen ny");
                 }
 
-                backGroundTaskRunning = true;
+                backGroundTaskRunning = true;*/
 
             } else {
                 Log.d(TAG, "onResume: Info var lastet inn");
             }
-
-
-
-
     }
 
 
@@ -1267,6 +1266,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                     try {
                         getDataFromFileAndPutInDatastructure();
+                        if (exit) {
+                            Log.d(TAG, "doInBackground: exit");
+                            return null;
+                        }
                     } catch (IOException e) {
                         e.printStackTrace();
                     } catch (JSONException e) {
@@ -1395,11 +1398,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private void getDataFromFileAndPutInDatastructure() throws IOException, JSONException {
         jsonLayer = new GeoJsonLayer2(mMap, R.raw.alle_kyststier, MyApplication.getAppContext());
+        if (stopAsyncTaskIfOnStop()) {
+            Log.d(TAG, "getDataFromFileAndPutInDatastructure: stopp");
+            return;
+        }
 
         for (GeoJsonFeature2 feature : jsonLayer.getFeatures()) {
 
             if (stopAsyncTaskIfOnStop()) {
                 Log.d(TAG, "getDataFromFileAndPutInDatastructure: stopp");
+                exit = true;
                 return;
             }
 
