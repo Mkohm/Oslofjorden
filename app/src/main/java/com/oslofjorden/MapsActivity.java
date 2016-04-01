@@ -465,6 +465,36 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
+    private void setKyststiColor(PolylineOptions polylineOptions, String description) {
+        if (description != null) {
+            if (isSykkelvei(description)) {
+                polylineOptions.color(Color.GREEN);
+            } else if (isFerge(description)) {
+                polylineOptions.color(Color.parseColor("#980009"));
+            } else if (isVanskeligKyststi(description)) {
+                polylineOptions.color(Color.RED);
+            } else {
+                polylineOptions.color(Color.BLUE);
+            }
+        }
+
+        if (description == null){
+            polylineOptions.color(Color.BLUE);
+        }
+    }
+
+    private boolean isSykkelvei(String description) {
+        return description.contains("Sykkelvei") || description.contains("sykkelvei");
+    }
+
+    private boolean isFerge(String description) {
+        return (description.contains("Ferge") || description.contains("ferge")) && !description.contains("fergeleie");
+    }
+
+    private boolean isVanskeligKyststi(String description) {
+        return description.contains("Vanskelig") || description.contains("vanskelig");
+    }
+
     private boolean setGoogleMapUISettings() {
         //enable zoom buttons, and remove toolbar when clicking on markers
         mMap.getUiSettings().setZoomControlsEnabled(false);
@@ -1456,14 +1486,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                 for (int j = 0; j < coordinates.length(); j++) {
 
-                    String coord = coordinates.get(0).toString();
+                    String coord = coordinates.get(j).toString();
                     double lng = Double.valueOf(coord.substring(1, coord.indexOf(",")));
 
                     coord = coord.substring(coord.indexOf(",")+1, coord.length());
                     double lat = Double.valueOf(coord.substring(0, coord.indexOf(",")));
 
-                    Log.d(TAG, "getDataFromFileAndPutInDatastructure: " + lat);
-                    Log.d(TAG, "getDataFromFileAndPutInDatastructure: " + lng);
 
                     buildCoordinates.add(new LatLng(lat, lng));
 
@@ -1476,17 +1504,18 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
                 poly.clickable(true);
+                poly.addAll(buildCoordinates);
 
 
-
-                //poly.addAll(buildCoordinates);
-                poly.add(new LatLng(59.809447126183, 10.48448537876474), new LatLng(0.809447126183, 0.48448537876474));
+                setKyststiColor(poly, description);
 
 
-                poly.color(Color.BLUE);
-                poly.width(5f);
-
-                polylinesReadyToAdd.add(poly);
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        mMap.addPolyline(poly);
+                    }
+                });
 
 
 
