@@ -314,6 +314,7 @@ import java.util.Set;
             return null;
         }
         PolylineOptions polylineOptions = lineStringStyle.toPolylineOptions();
+
         // Add coordinates
 
 

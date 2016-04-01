@@ -66,9 +66,14 @@ import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.maps.android.clustering.ClusterItem;
 import com.google.maps.android.clustering.ClusterManager;
 
+import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -1317,7 +1322,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                             }
 
 
-                            mMap.addPolyline(iterator.next());
+                            Polyline p = mMap.addPolyline(iterator.next());
+                            Log.d(TAG, "run: " + p.getPoints().size());
 
 
                             //Delay
@@ -1325,7 +1331,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
 
-                          //Log.d(TAG, "run: kyststi");
+                          Log.d(TAG, "run: kyststi");
                         } else {
                             Log.i(TAG, "run : alle kyststier er lastet inn");
                             infoAddedToMap = true;
@@ -1364,7 +1370,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public static boolean stopAsyncTaskIfOnStop() {
         if (addInfoToMap.isCancelled()) {
             backGroundTaskRunning = false;
-            //Log.d(TAG, "Stopper task");
+            Log.d(TAG, "Stopper task");
             infoAddedToMap = false;
             addedToDataStructure = false;
 
@@ -1397,53 +1403,139 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     private void getDataFromFileAndPutInDatastructure() throws IOException, JSONException {
-        jsonLayer = new GeoJsonLayer2(mMap, R.raw.alle_kyststier, MyApplication.getAppContext());
         if (stopAsyncTaskIfOnStop()) {
             Log.d(TAG, "getDataFromFileAndPutInDatastructure: stopp");
             return;
         }
 
-        for (GeoJsonFeature2 feature : jsonLayer.getFeatures()) {
-
-            if (stopAsyncTaskIfOnStop()) {
-                Log.d(TAG, "getDataFromFileAndPutInDatastructure: stopp");
-                exit = true;
-                return;
-            }
 
 
-            GeoJsonPointStyle2 pointStyle = new GeoJsonPointStyle2();
-            GeoJsonLineStringStyle2 stringStyle;
+        int[] xmlfile = { R.raw.k1, R.raw.k2, R.raw.k3, R.raw.k4, R.raw.k5, R.raw.k6, R.raw.k7, R.raw.k8, R.raw.k9, R.raw.k10,R.raw.k11, R.raw.k12, R.raw.k13, R.raw.k14, R.raw.k15,R.raw.k16, R.raw.k17, R.raw.k18, R.raw.k19, R.raw.k20,R.raw.k21, R.raw.k21, R.raw.k22, R.raw.k23, R.raw.k24,R.raw.k25, R.raw.k26, R.raw.k27, R.raw.k28, R.raw.k29,R.raw.k30, R.raw.k31, R.raw.k32, R.raw.k33, R.raw.k34,R.raw.k35, R.raw.k36, R.raw.k37, R.raw.k38, R.raw.k39,R.raw.k40, R.raw.k41, R.raw.k42, R.raw.k43, R.raw.k44,R.raw.k45};
 
-            //Gets the name property from the json file
-            pointStyle.setTitle(feature.getProperty("name"));
-            feature.setPointStyle(pointStyle);
 
-            //Gets the description property from the json file
-            pointStyle.setSnippet(feature.getProperty("description"));
+        for (int i = 0; i < xmlfile.length; i++) {
+            InputStream inputStream = getResources().openRawResource(xmlfile[i]);
+            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
 
-            stringStyle = feature.getLineStringStyle();
+            while (true) {
+                if (stopAsyncTaskIfOnStop()) return;
 
-            String description = feature.getProperty("description");
-            //Hvis det er en kyststi legg til description og navn
-            if (feature.getGeometry().getType().equals("LineString")) {
 
+
+                String line = reader.readLine();
+                if (line == null) {
+                    break;
+                }
+                if (!line.contains("coordinates")) {
+                    continue;
+                }
+
+                JSONObject obj = createJsonObject(line);
+
+
+                String properties = obj.getString("properties");
+                JSONObject obj2 = new JSONObject(properties);
+
+
+
+                String name = obj2.getString("Name");
+                nameList.add(name);
+
+                String description = obj2.getString("description");
                 descriptionList.add(description);
 
-                nameList.add(feature.getProperty("name"));
+                String geometry = obj.getString("geometry");
+                JSONObject obj3 = new JSONObject(geometry);
+
+                JSONArray coordinates = obj3.getJSONArray("coordinates");
+
+                //Put into list of latlng
+                List<LatLng> buildCoordinates = new ArrayList<>();
+
+                final PolylineOptions poly = new PolylineOptions();
+
+                for (int j = 0; j < coordinates.length(); j++) {
+
+                    String coord = coordinates.get(0).toString();
+                    double lng = Double.valueOf(coord.substring(1, coord.indexOf(",")));
+
+                    coord = coord.substring(coord.indexOf(",")+1, coord.length());
+                    double lat = Double.valueOf(coord.substring(0, coord.indexOf(",")));
+
+                    Log.d(TAG, "getDataFromFileAndPutInDatastructure: " + lat);
+                    Log.d(TAG, "getDataFromFileAndPutInDatastructure: " + lng);
+
+                    buildCoordinates.add(new LatLng(lat, lng));
+
+
+                }
+                Log.d(TAG, "getDataFromFileAndPutInDatastructure: " + kyststiInfoMap.size());
+
+                String[] descNameArray = {description, name};
+                kyststiInfoMap.put(buildCoordinates, descNameArray);
+
+
+                poly.clickable(true);
+
+
+
+                //poly.addAll(buildCoordinates);
+                poly.add(new LatLng(59.809447126183, 10.48448537876474), new LatLng(0.809447126183, 0.48448537876474));
+
+
+                poly.color(Color.BLUE);
+                poly.width(5f);
+
+                polylinesReadyToAdd.add(poly);
+
+
+
+
+
+               // Log.d(TAG, "getDataFromFileAndPutInDatastructure: " + coord.substring(coord.indexOf("[")+1), coord.in);
+
+/*
+                String markerTypes = obj2.getString("gpxx_WaypointExtension");
+                String link = obj2.getString("link1_href");
+
+                //Contains the different types of the marker, index 0 is irrelevant, start from index 1
+                String[] markerTypesArray = markerTypes.split("          ");
+
+                for (int i = 0; i < markerTypesArray.length; i++) {
+                    //Gets only the part with the relevant information
+                    markerTypesArray[i] = markerTypesArray[i].substring(markerTypesArray[i].indexOf(">") + 1, markerTypesArray[i].indexOf("</"));
+                }
+
+
+                //Create the description
+                StringBuilder desc = createDescriptionFromLinkAndMarkerTypes(link, markerTypesArray);
+
+
+                MarkerOptions options = setMarkerOptions(line, name, desc);
+
+
+                putMarkerInLists(line, options);*/
+
+
             }
 
-
-            stringStyle.setClickable(true);
-
-
-
-
-            feature.setLineStringStyle(stringStyle);
         }
 
-        addGeoJsonLayerToDataStructure();
 
+
+
+    }
+
+    private JSONObject createJsonObject(String line) throws JSONException {
+        JSONObject obj = null;
+        //For all the lines ending with ","
+        if (line.matches(".{0,},")) {
+            obj = new JSONObject(line.substring(0, line.length()-1));
+            //The line does not end with ","
+        } else if (line.matches(".{0,}[^,]")) {
+            obj = new JSONObject(line);
+        }
+        return obj;
     }
 
 
