@@ -483,7 +483,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     private boolean isSykkelvei(String description) {
-        return description.contains("Sykkelvei") || description.contains("sykkelvei");
+        return description.contains("Sykkel") || description.contains("sykkel");
     }
 
     private boolean isFerge(String description) {
@@ -549,7 +549,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     private boolean isSykkelvei() {
-        return currentPolylineDescription.contains("Sykkelvei") || currentPolylineDescription.contains("sykkelvei");
+        return currentPolylineDescription.contains("Sykkel") || currentPolylineDescription.contains("sykkel");
     }
 
     private void animateInfobarUp() {
@@ -788,7 +788,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             //If there is a link in the description
             if (urls.length != 0){
                 //Create the desired format of textview
-                String link = "<a href=\"" + urls[0].getURL() + "\"><u>Klikk her for mer info</u></a>";
+                String link = "<a href=\"" + urls[0].getURL() + "\"><u>Mer info fra Oslofjorden.com</u></a>";
                 CharSequence formattedText = Html.fromHtml(link);
                 withCustomLinkLayout = new SpannableStringBuilder(formattedText);
                 urls2 = withCustomLinkLayout.getSpans(0, formattedText.length(), URLSpan.class);
@@ -830,7 +830,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         //If there is a link in the description
         if (urls.length != 0){
             //Create the desired format of textview
-            String link = "<a href=\"" + urls[0].getURL() + "\"><u>Klikk her for mer info</u></a>";
+            String link = "<a href=\"" + urls[0].getURL() + "\"><u>Mer info fra Oslofjorden.com</u></a>";
             CharSequence formattedText = Html.fromHtml(link);
             withCustomLinkLayout = new SpannableStringBuilder(formattedText);
             urls2 = withCustomLinkLayout.getSpans(0, formattedText.length(), URLSpan.class);
@@ -1232,7 +1232,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             TextView loading = (TextView) findViewById(R.id.infobar);
             loading.setVisibility(View.VISIBLE);
 
-            loading.setText("Oslofjorden laster inn kyststier. Stiene vil poppe opp på kartet ditt snart, vennligst vent..");
+            loading.setText("Turguiden laster inn kyststier. Stiene vil poppe opp på kartet ditt snart, vennligst vent..");
 
             animateInfobarUp();
 
@@ -1277,7 +1277,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         @Override
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
-
 
 
             //Adds the polylines to the map
@@ -1428,9 +1427,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
                 String name = obj2.getString("Name");
-                nameList.add(name);
+                if (! name.equals("null")) {
+                    nameList.add(name);
+                }
+
                 String description = obj2.getString("description");
-                descriptionList.add(description);
+                if (! name.equals("null")) {
+                    descriptionList.add(description);
+                }
+
 
                 JSONArray coordinates = obj3.getJSONArray("coordinates");
 
@@ -1461,7 +1466,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 setKyststiColor(poly, description);
 
                 polylinesReadyToAdd.add(poly);
-                Log.d(TAG, "getDataFromFileAndPutInDatastructure: add a poly");
+                //Log.d(TAG, "getDataFromFileAndPutInDatastructure: add a poly");
 
 
             }
