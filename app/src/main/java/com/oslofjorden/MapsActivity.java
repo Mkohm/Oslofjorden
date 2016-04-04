@@ -1443,6 +1443,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         mResolvingError = false;
     }
 
+
     @Override
     public void onLocationChanged(Location location) {
 
