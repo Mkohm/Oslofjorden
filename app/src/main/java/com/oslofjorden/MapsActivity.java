@@ -14,6 +14,7 @@ import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.Icon;
 import android.location.Location;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -69,6 +70,8 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -78,6 +81,7 @@ import com.google.maps.android.clustering.ClusterItem;
 import com.google.maps.android.clustering.ClusterManager;
 import com.google.maps.android.clustering.algo.GridBasedAlgorithm;
 import com.google.maps.android.clustering.algo.PreCachingAlgorithmDecorator;
+import com.google.maps.android.clustering.view.DefaultClusterRenderer;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -87,7 +91,9 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -196,7 +202,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 
     private static ArrayList<Polyline> polylinesOnMap = new ArrayList<>();
-    private ArrayList<MyMarkerOptions> markersOnMap = new ArrayList<>();
+    private HashMap<LatLng, MyMarkerOptions> markersOnMap = new HashMap();
     private boolean setUpClustererIfMarkers = true;
     private boolean exit;
     private boolean loadingPolylines;
@@ -284,6 +290,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 
     private void addArrayListsToArraylistOfArrayLists() {
+        arrayListOfArrayLists.add(null);
         arrayListOfArrayLists.add(beachMarkers);
         arrayListOfArrayLists.add(spisestedMarkers);
         arrayListOfArrayLists.add(butikkMarkers);
@@ -311,17 +318,20 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private void loadCheckedItems(boolean[] checkedList) {
+        mClusterManager.clearItems();
+        markersOnMap.clear();
         for (int i = 0; i < checkedList.length; i++){
+
             
 
             //Load items if the checkbox was checked
-            if (checkedList[i] == true){
+            if (checkedList[i] == true) {
 
                 //Kyststier behandles spesielt
-                if (i == 0){
+                if (i == 0) {
 
                     //Bare legg til om det ikke var der fra før
-                    if (polylinesOnMap.size() == 0){
+                    if (polylinesOnMap.size() == 0) {
                         Log.d(TAG, "loadCheckedItems: laster inn kyststier ");
 
 
@@ -330,27 +340,19 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     }
 
 
-
                 } else {
-                    Log.d(TAG, "loadCheckedItems: laster inn markers");
-                    addMarkersToMap(arrayListOfArrayLists.get(i-1));
+                        addMarkersToMap(arrayListOfArrayLists.get(i));
                 }
 
-            //Remove items    
             } else {
-                
-                //Kyststier behandles spesielt
-                if (i == 0){
-
+                if (i == 0) {
                     if (polylinesOnMap.size() != 0) {
                         removePolylines();
                     }
-
-                   
-                } else {
-                    removeMarkersFromMap(arrayListOfArrayLists.get(i-1));
                 }
+
                 
+
             }
         }
 
@@ -360,26 +362,18 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     }
 
-    private void removeMarkersFromMap(ArrayList<MyMarkerOptions> categoryArrayList) {
-        //Remove the markers from the map
-        for (int i = 0; i < categoryArrayList.size(); i++){
-            if (markersOnMap.contains(categoryArrayList.get(i))) {
-
-                mClusterManager.removeItem(categoryArrayList.get(i));
-                markersOnMap.remove(categoryArrayList.get(i));
-            }
-        }
-    }
-
     private void addMarkersToMap(ArrayList<MyMarkerOptions> categoryArrayList) {
         //Add markers to the map
         for (int i = 0; i < categoryArrayList.size(); i++){
-            //If the readyto add list contains the element, do not add it
-            if (markersReadyToAdd.contains(categoryArrayList.get(i))){
+            //If the markersonmap add list contains the element, do not add it
+
+            if (markersOnMap.containsKey(categoryArrayList.get(i).getPosition())){
+                Log.d(TAG, "addMarkersToMap: var her fra før");
                 continue;
             } else {
+
                 mClusterManager.addItem(categoryArrayList.get(i));
-                markersOnMap.add(categoryArrayList.get(i));
+                markersOnMap.put(categoryArrayList.get(i).getPosition(), categoryArrayList.get(i));
 
             }
         }
@@ -716,9 +710,27 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             @Override
             public void onMapClick(final LatLng latLng) {
 
-                Log.i(TAG, "onMapClick: Du klikket på kartet.");
+                Log.i(TAG, "onMapClick: Du klikket på kartet med " + polylinesOnMap.size() + " kyststier og, " + markersOnMap.size() + " markers.");
+
+                Log.d(TAG, "onPostExecute: beachmarkers: " + beachMarkers.size());
+                Log.d(TAG, "onPostExecute: rampemarkers " + rampeMarkers.size());
+                Log.d(TAG, "onPostExecute: spisested: " + spisestedMarkers.size());
+                Log.d(TAG, "onPostExecute: butikk " + butikkMarkers.size());
+                Log.d(TAG, "onPostExecute: parkering: " + parkeringTranspMarkers.size());
+                Log.d(TAG, "onPostExecute: interest " + pointOfInterestMarkers.size());
+                Log.d(TAG, "onPostExecute: fisk: " + fiskeplassMarkers.size());
+                Log.d(TAG, "onPostExecute: gjestehavn " + gjestehavnMarkers.size());
+                Log.d(TAG, "onPostExecute: uthavn: " + uthavnMarkers.size());
+                Log.d(TAG, "onPostExecute: bunkers " + bunkersMarkers.size());
+                Log.d(TAG, "onPostExecute: marina: " + marinaMarkers.size());
+                Log.d(TAG, "onPostExecute: kran " + kranTruckMarkers.size());
+                Log.d(TAG, "onPostExecute: toalett: " + WCMarkers.size());
+                Log.d(TAG, "onPostExecute: fyr " + fyrMarkers.size());
+                Log.d(TAG, "onPostExecute: baatbutikk: " + baatbutikkMarkers.size());
+                Log.d(TAG, "onPostExecute: camping " + campingplassMarkers.size());
 
                 currentMapClickPosition = latLng;
+
 
                 int maxY = getDeviceMaxY();
 
@@ -1391,6 +1403,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         mClusterManager = new ClusterManager<MyMarkerOptions>(this, getMap());
         mClusterManager.setAlgorithm(new PreCachingAlgorithmDecorator<MyMarkerOptions>(new GridBasedAlgorithm<MyMarkerOptions>()));
+
+        mClusterManager.setRenderer(new OwnIconRendered(getApplicationContext(), getMap(), mClusterManager));
+
         mMap.setInfoWindowAdapter(mClusterManager.getMarkerManager());
 
         // Point the map's listeners at the listeners implemented by the cluster
@@ -1401,9 +1416,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 
 
-
-        // Add cluster items (markers) to the cluster manager.
-        addItems();
 
     }
 
@@ -1416,6 +1428,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         mClusterManager.addItem(new MyMarkerOptions(new MarkerOptions().position(new LatLng(0, 0))));
 
 
+
         Log.d(TAG, "addItems: " + markersReadyToAdd.size());
         for (MarkerOptions marker : markersReadyToAdd) {
             if (stopAsyncTaskIfOnStop()) return;
@@ -1423,7 +1436,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             mClusterManager.addItem(new MyMarkerOptions(marker));
 
 
-            markersOnMap.add(new MyMarkerOptions(marker));
+            markersOnMap.put(new MyMarkerOptions(marker).getPosition(), new MyMarkerOptions(marker));
 
         }
     }
@@ -1620,6 +1633,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             layerButton.setEnabled(true);
             layerButton.setImageResource(R.drawable.ic_layers_white_24dp);
             findViewById(R.id.loading).setVisibility(View.GONE);
+
+
+
         }
     }
 
@@ -1804,7 +1820,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             StringBuilder desc = createDescriptionFromLinkAndMarkerTypes(link, markerTypesArray);
 
 
-            MarkerOptions options = setMarkerOptions(line, name, desc);
+            MarkerOptions options = setMarkerOptions(line, name, desc, markerTypesArray);
 
 
             putMarkerInLists(line, options);
@@ -1885,11 +1901,21 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     @NonNull
-    private MarkerOptions setMarkerOptions(String line, String name, StringBuilder desc) {
+    private MarkerOptions setMarkerOptions(String line, String name, StringBuilder desc, String[] markerTypes) {
+        List<String> markerTypesArray = Arrays.asList(markerTypes);
+
         MarkerOptions options = new MarkerOptions();
         setMarkerPosition(line, options);
         options.title(name);
         options.snippet(""+ desc);
+
+/*
+
+        if (markerTypesArray.contains("Badeplass")) {
+            options.icon(BitmapDescriptorFactory.fromAsset("swimming"));
+        }*/
+
+
         return options;
     }
 
@@ -1928,6 +1954,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         private String title;
         private String description;
         private final LatLng position;
+        private BitmapDescriptor icon;
 
 
 
@@ -1935,6 +1962,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             this.title = myMarkerOptions.getTitle();
             this.description = myMarkerOptions.getSnippet();
             this.position = myMarkerOptions.getPosition();
+            this.icon = myMarkerOptions.getIcon();
 
         }
 
@@ -1954,6 +1982,25 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
 
 
+        public BitmapDescriptor getIcon() {
+            return icon;
+        }
+
+
+    }
+
+    class OwnIconRendered extends DefaultClusterRenderer<MyMarkerOptions> {
+
+        public OwnIconRendered(Context context, GoogleMap map, ClusterManager<MyMarkerOptions> clusterManager) {
+            super(context, map, clusterManager);
+        }
+
+        @Override
+        protected void onBeforeClusterItemRendered(MyMarkerOptions item, MarkerOptions markerOptions) {
+            markerOptions.icon(item.getIcon());
+
+            super.onBeforeClusterItemRendered(item, markerOptions);
+        }
     }
 
 }
