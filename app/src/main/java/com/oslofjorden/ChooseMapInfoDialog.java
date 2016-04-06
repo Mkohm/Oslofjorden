@@ -135,8 +135,8 @@ public class ChooseMapInfoDialog extends DialogFragment {
         mapInfo = new String[17];
         mapInfo[0] = "Kyststier";
         mapInfo[1] = "Badeplasser";
-        mapInfo[2] = "Spisested";
-        mapInfo[3] = "Butikk";
+        mapInfo[2] = "Spisesteder";
+        mapInfo[3] = "Butikker";
         mapInfo[4] = "Parkering og Transport";
         mapInfo[5] = "Interessante steder";
         mapInfo[6] = "Fiskeplasser";

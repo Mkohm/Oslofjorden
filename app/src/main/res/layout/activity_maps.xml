@@ -17,6 +17,18 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     >
 
+
+
+        <ProgressBar
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:indeterminate="true"
+            android:id="@+id/loading"
+            />
+
+
+
+
     <ImageButton
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -105,7 +117,14 @@
             android:paddingTop="5dp"
             android:shadowColor="#ffffff"
             android:paddingBottom="5dp"
-            android:clickable="true" />
+            android:clickable="true">
+
+
+
+
+        </TextView>
+
+
 
 
     </FrameLayout>

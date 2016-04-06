@@ -12,6 +12,8 @@ import android.content.pm.PackageManager;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Point;
+import android.graphics.PorterDuff;
+import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -19,11 +21,13 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.Settings;
+import android.support.annotation.ColorRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.customtabs.CustomTabsIntent;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.Toolbar;
@@ -42,6 +46,7 @@ import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
 import android.widget.ImageButton;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -74,6 +79,7 @@ import com.google.maps.android.clustering.ClusterManager;
 import com.google.maps.android.clustering.algo.GridBasedAlgorithm;
 import com.google.maps.android.clustering.algo.PreCachingAlgorithmDecorator;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -101,6 +107,7 @@ import java.util.List;
 public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleApiClient.OnConnectionFailedListener, GoogleApiClient.ConnectionCallbacks, LocationListener, ResultCallback, CustomTabActivityHelper.ConnectionCallback, NoticeDialogListener {
     //For debugging
     public static String TAG = "TAG";
+    private static boolean stopAddingPolylines = false;
 
     AddInfoToMap addInfoToMap;
 
@@ -114,16 +121,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     CameraPosition currentCameraPosition;
     LatLng currentMapClickPosition;
 
-    boolean infoAddedToMap = false;
     static boolean addedToDataStructure = false;
 
     MyMarkerOptions clickedClusterItem;
     public ClusterManager<MyMarkerOptions> mClusterManager;
 
-
-    //Different map layers
-    public static GeoJsonLayer2 kyststiLayer;
-    private GeoJsonLayer2 markerLayer;
 
 
 
@@ -144,13 +146,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     public static HashMap<List<LatLng>, String[]> kyststiInfoMap = new HashMap<List<LatLng>, String[]>();
     public static ArrayList<String> descriptionList = new ArrayList<String>();
-    public static int indexInDescriptionList = 0;
     public static ArrayList<String> nameList = new ArrayList<String>();
-    public static int indexInNameList = 0;
-
-
-
-
 
 
     public static List<MarkerOptions> markersReadyToAdd = new ArrayList<MarkerOptions>();
@@ -202,11 +198,26 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private static ArrayList<Polyline> polylinesOnMap = new ArrayList<>();
     private ArrayList<MyMarkerOptions> markersOnMap = new ArrayList<>();
     private boolean setUpClustererIfMarkers = true;
+    private boolean exit;
+    private boolean loadingPolylines;
+    private boolean addingPolylines = false;
+
+
+    private ImageButton layerButton;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        addedToDataStructure = false;
+        infobarUp = false;
+        backGroundTaskRunning = false;
+        exit = false;
+
+
+
+
 
         //Add arraylists to arraylist of arraylists //the first element is empty and never used
         addArrayListsToArraylistOfArrayLists();
@@ -242,20 +253,19 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         mResolvingError = savedInstanceState != null
                 && savedInstanceState.getBoolean(STATE_RESOLVING_ERROR, false);
 
-
-        if (savedInstanceState != null) {
-            addedToDataStructure = savedInstanceState.getBoolean("addedToDataStructure");
-
-        }
-
-        addInfoToMap = new AddInfoToMap();
-
         setUpToolbar();
 
 
-        //TODO: Set up default markers and paths, sharedprefs overrides this
+        ProgressBar progressBar = (ProgressBar) findViewById(R.id.loading);
+        progressBar.getIndeterminateDrawable().setColorFilter(
+                ContextCompat.getColor(getApplicationContext(), R.color.white),
+                android.graphics.PorterDuff.Mode.SRC_IN);
 
-        final ImageButton layerButton = (ImageButton) findViewById(R.id.layers);
+        layerButton = (ImageButton) findViewById(R.id.layers);
+        layerButton.setClickable(false);
+        layerButton.setEnabled(false);
+        layerButton.setImageResource(R.drawable.ic_layers_gray);
+
 
         layerButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -271,6 +281,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         });
 
     }
+
 
     private void addArrayListsToArraylistOfArrayLists() {
         arrayListOfArrayLists.add(beachMarkers);
@@ -308,8 +319,20 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                 //Kyststier behandles spesielt
                 if (i == 0){
-                    addPolylines();
+
+                    //Bare legg til om det ikke var der fra før
+                    if (polylinesOnMap.size() == 0){
+                        Log.d(TAG, "loadCheckedItems: laster inn kyststier ");
+
+
+                        addPolylines();
+
+                    }
+
+
+
                 } else {
+                    Log.d(TAG, "loadCheckedItems: laster inn markers");
                     addMarkersToMap(arrayListOfArrayLists.get(i-1));
                 }
 
@@ -318,7 +341,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 
                 //Kyststier behandles spesielt
                 if (i == 0){
-                    removePolylines();
+
+                    if (polylinesOnMap.size() != 0) {
+                        removePolylines();
+                    }
+
+                   
                 } else {
                     removeMarkersFromMap(arrayListOfArrayLists.get(i-1));
                 }
@@ -338,6 +366,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             if (markersOnMap.contains(categoryArrayList.get(i))) {
 
                 mClusterManager.removeItem(categoryArrayList.get(i));
+                markersOnMap.remove(categoryArrayList.get(i));
             }
         }
     }
@@ -358,6 +387,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private void addPolylines() {
         //Adds the polylines to the map
+
+        addingPolylines = true;
+
         final Iterator<PolylineOptions> iterator = polylinesReadyToAdd.iterator();
         try {
 
@@ -367,15 +399,21 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 public void run() {
 
 
+
+
                     if (iterator.hasNext()){
-                        if (addInfoToMap.isCancelled()){
+                        if (stopAddingPolylines){
                             Log.d(TAG, "run: stopper task");
-                            infoAddedToMap = false;
+
+                            stopAddingPolylines = false;
+                            Log.d(TAG, "run: stopaddingpolylines" + stopAddingPolylines);
                             backGroundTaskRunning = false;
+
                             return;
                         }
 
 
+                        Log.d(TAG, "run: legger til kyststi");
                         polylinesOnMap.add(mMap.addPolyline(iterator.next()));
 
                         handler.postDelayed(this, 1);
@@ -384,6 +422,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                     } else {
                         Log.d(TAG, "run : alle kyststier er lastet inn");
+                        stopAddingPolylines = false;
+                        addingPolylines = false;
+
+                        Log.d(TAG, "run: stopaddingpolylines" + stopAddingPolylines);
 
                         Log.d(TAG, "run: animerer ned");
                         animateInfobarDown();
@@ -400,10 +442,19 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
-    private static void removePolylines() {
+    private void removePolylines() {
+        if (addingPolylines) {
+            stopAddingPolylines = true;
+        }
+
+        Log.d(TAG, "removePolylines: setter variabel stoppinnlasting til true");
+
         for (Polyline poly : polylinesOnMap){
+            Log.d(TAG, "removePolylines: ");
             poly.remove();
         }
+        polylinesOnMap.clear();
+
     }
 
 
@@ -415,13 +466,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private void setUpToolbar() {
         Toolbar myToolbar = (Toolbar) findViewById(R.id.my_toolbar);
         setSupportActionBar(myToolbar);
-        getSupportActionBar().setTitle("Oslofjorden Turguide");
+        getSupportActionBar().setTitle("Oslofjorden Båt - og Turguide");
         myToolbar.setTitleTextColor(Color.WHITE);
     }
 
     @Override
     protected void onDestroy() {
-        infoAddedToMap = false;
+
         super.onDestroy();
         customTabActivityHelper.setConnectionCallback(null);
 
@@ -441,9 +492,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putBoolean(STATE_RESOLVING_ERROR, mResolvingError);
-        outState.putBoolean("addedToDataStructure", addedToDataStructure);
-
-
     }
 
 
@@ -485,31 +533,23 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 
 
+        if (!addedToDataStructure) {
 
 
-
-
-
-        try {
-            if (! infoAddedToMap){
-
-                if (addInfoToMap.getStatus() == AsyncTask.Status.FINISHED) {
-                    addInfoToMap = new AddInfoToMap();
-                    if (mMap != null) {
-                        mMap.clear();
-                        Log.d(TAG, "onResume: fjerner alt på kart");
-                    }
-                    addInfoToMap.execute();
-                    backGroundTaskRunning = true;
-                }
-
+            //Ikke lag ny
+            if (addInfoToMap != null && (addInfoToMap.getStatus() == AsyncTask.Status.RUNNING)){
+                Log.d(TAG, "onResume: gjør ingenting, fortsetter");
+            } else {
+                clearItems();
+                addInfoToMap = new AddInfoToMap();
+                addInfoToMap.execute();
+                Log.d(TAG, "onResume: kjører igjen");
             }
 
 
-        } catch (Exception e){
-            e.printStackTrace();
-            animateInfobarUp();
-            Log.d(TAG, "onResume: lel");
+
+        } else {
+            Log.d(TAG, "onResume: Info var lastet inn");
         }
 
 
@@ -519,12 +559,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     @Override
     protected void onStop() {
+        super.onStop();
+
 
         Log.d(TAG, "onStop: ");
 
-        if (backGroundTaskRunning) {
+        if (! addedToDataStructure) {
             addInfoToMap.cancel(true);
-
         }
 
 
@@ -538,7 +579,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
 
 
-        super.onStop();
+
 
         customTabActivityHelper.unbindCustomTabsService(this);
 
@@ -553,6 +594,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     @Override
     protected void onPause() {
+        Log.d(TAG, "onPause: onpause");
 
         try {
             currentZoom = mMap.getCameraPosition().zoom;
@@ -683,7 +725,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                 //Hvis kyststiinfo er oppe, lukk den
 
+                if (addedToDataStructure) {
                     animateInfobarDown();
+                }
+
 
 
 
@@ -693,35 +738,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         });
 
 
-        try {
-            setUpClusterer();
-            Log.d(TAG, "onMenuItemClick: setupcluster");
-        } catch (Exception e) {
-            e.printStackTrace();
-            Toast.makeText(getApplicationContext(), "Dette gikk dårlig, clusterer ble ikke satt opp.", Toast.LENGTH_SHORT).show();
-        }
-
-        final TextView markerInfo = (TextView) findViewById(R.id.infobar);
-        setOnClusterItemClickListener(markerInfo);
-
-
-
-
-
-
-        try {
-            if (! infoAddedToMap){
-                Log.d(TAG, "onMapReady: starter igjen");
-                addInfoToMap.execute();
-                backGroundTaskRunning = true;
-
-            }
-
-
-        } catch (Exception e){
-            e.printStackTrace();
-            Log.d(TAG, "onMapReady: Her gikk noe galt under innlastingen.");
-        }
+        setUpClusterer();
 
 
 
@@ -779,8 +796,38 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 
         } else {
-            onOffLocationButton.setImageResource(R.drawable.ic_location_off);
+            onOffLocationButton.setImageResource(R.drawable.location_off_64px);
         }
+    }
+
+    private void setKyststiColor(PolylineOptions polylineOptions, String description) {
+        if (description != null) {
+            if (isSykkelvei(description)) {
+                polylineOptions.color(Color.GREEN);
+            } else if (isFerge(description)) {
+                polylineOptions.color(Color.parseColor("#980009"));
+            } else if (isVanskeligKyststi(description)) {
+                polylineOptions.color(Color.RED);
+            } else {
+                polylineOptions.color(Color.BLUE);
+            }
+        }
+
+        if (description == null){
+            polylineOptions.color(Color.BLUE);
+        }
+    }
+
+    private boolean isSykkelvei(String description) {
+        return description.contains("Sykkel") || description.contains("sykkel");
+    }
+
+    private boolean isFerge(String description) {
+        return (description.contains("Ferge") || description.contains("ferge")) && !description.contains("fergeleie");
+    }
+
+    private boolean isVanskeligKyststi(String description) {
+        return description.contains("Vanskelig") || description.contains("vanskelig");
     }
 
     private boolean setGoogleMapUISettings() {
@@ -838,7 +885,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private boolean isSykkelvei() {
-        return currentPolylineDescription.contains("Sykkelvei") || currentPolylineDescription.contains("sykkelvei");
+        return currentPolylineDescription.contains("Sykkel") || currentPolylineDescription.contains("sykkel");
     }
 
     private void animateInfobarUp() {
@@ -932,14 +979,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
 
-    public static void addGeoJsonLayerToDataStructure() {
-        kyststiLayer.addLayerToMap();
-    }
-
     private void setMarkerDescription(String title, String description, TextView txtMarkerDescription) {
         txtMarkerDescription.setMovementMethod(LinkMovementMethod.getInstance());
 
-        Log.d(TAG, "setMarkerDescription: " + description);
        String type = "Marker";
        String markerTitle =title;
 
@@ -1001,8 +1043,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 
     }
-
-
 
     protected void makeLinkClickable(SpannableStringBuilder strBuilder, final URLSpan span) {
         int start = strBuilder.getSpanStart(span);
@@ -1080,7 +1120,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             //If there is a link in the description
             if (urls.length != 0){
                 //Create the desired format of textview
-                String link = "<a href=\"" + urls[0].getURL() + "\"><u>Klikk her for mer info</u></a>";
+                String link = "<a href=\"" + urls[0].getURL() + "\"><u>Mer info fra Oslofjorden.com</u></a>";
                 CharSequence formattedText = Html.fromHtml(link);
                 withCustomLinkLayout = new SpannableStringBuilder(formattedText);
                 urls2 = withCustomLinkLayout.getSpans(0, formattedText.length(), URLSpan.class);
@@ -1116,7 +1156,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         URLSpan[] urls = {new URLSpan(description)};
         Log.d(TAG, "setMarkerInfoText: " + description);
 
-
         //The first part of the description "her finner du: ... .. "
         String typesOfMarker = description.substring(0, description.indexOf("http"));
         SpannableStringBuilder withCustomLinkLayout = new SpannableStringBuilder("Tomt");
@@ -1125,7 +1164,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         //If there is a link in the description
         if (urls.length != 0){
             //Create the desired format of textview
-            String link = "<a href=\"" + urls[0].getURL() + "\"><u>Klikk her for mer info</u></a>";
+            String link = "<a href=\"" + urls[0].getURL() + "\"><u>Mer info fra Oslofjorden.com</u></a>";
             CharSequence formattedText = Html.fromHtml(link);
             withCustomLinkLayout = new SpannableStringBuilder(formattedText);
             urls2 = withCustomLinkLayout.getSpans(0, formattedText.length(), URLSpan.class);
@@ -1334,7 +1373,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             //Oslo sentrum
             lastLocation = new LatLng(59.903765, 10.699610);
         }
-        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(lastLocation, 9);
+        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(lastLocation, 13);
         mMap.moveCamera(cameraUpdate);
 
     }
@@ -1379,10 +1418,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         Log.d(TAG, "addItems: " + markersReadyToAdd.size());
         for (MarkerOptions marker : markersReadyToAdd) {
-
-            if (addInfoToMap.isCancelled()){
-                return;
-            }
+            if (stopAsyncTaskIfOnStop()) return;
 
             mClusterManager.addItem(new MyMarkerOptions(marker));
 
@@ -1447,13 +1483,17 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public void onLocationChanged(Location location) {
 
-        //Updates current location
-        currentPosition = new LatLng(location.getLatitude(), location.getLongitude());
+        if (locationUpdatesSwitch) {
+            //Updates current location
+            currentPosition = new LatLng(location.getLatitude(), location.getLongitude());
 
-        LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
-        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, mMap.getCameraPosition().zoom);
-        mMap.animateCamera(cameraUpdate);
-        Log.i(TAG, "OnLocationChanged: Location oppdatert");
+            LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+            CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, mMap.getCameraPosition().zoom);
+            mMap.animateCamera(cameraUpdate);
+            Log.i(TAG, "OnLocationChanged: Location oppdatert");
+        }
+
+
 
     }
 
@@ -1515,98 +1555,112 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         @Override
         protected void onPreExecute() {
-            if (addInfoToMap.isCancelled()){
+            if (stopAsyncTaskIfOnStop()) {
                 return;
             }
 
-                TextView loading = (TextView) findViewById(R.id.infobar);
-                loading.setVisibility(View.VISIBLE);
 
-                loading.setText("Oslofjorden laster inn data.. Du kan velge hva du vil vise med knappen oppe til høyre :)");
-                animateInfobarUp();
+            TextView loading = (TextView) findViewById(R.id.infobar);
+            loading.setVisibility(View.VISIBLE);
 
+            loading.setText("Laster inn data...\n\nEtter innlasting kan du velge hva som skal vises med knappen oppe til høyre.");
 
-
-
+            animateInfobarUp();
 
         }
 
         @Override
         protected Void doInBackground(Void... params) {
 
+            if (!addedToDataStructure) {
 
-            try {
-                if (! addedToDataStructure) {
+                if (stopAsyncTaskIfOnStop()) {
+                    return null;
+                }
+
+                try {
                     getDataFromFileAndPutInDatastructure();
-                    Log.i(TAG, "doInBackground: Lastet inn data til datastrukturen");
-                    addedToDataStructure = true;
-
+                    if (exit) {
+                        Log.d(TAG, "doInBackground: exit");
+                        return null;
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (JSONException e) {
+                    e.printStackTrace();
                 }
 
 
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (JSONException e) {
-                e.printStackTrace();
+                if (stopAsyncTaskIfOnStop()) {
+                    return null;
+                }
+
+
+
+                addedToDataStructure = true;
+                backGroundTaskRunning = false;
+
             }
 
 
             return null;
         }
 
+
         @Override
         protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+
+
             loadLastStateOfApplication();
 
             animateInfobarDown();
+
+            layerButton.setClickable(true);
+            layerButton.setEnabled(true);
+            layerButton.setImageResource(R.drawable.ic_layers_white_24dp);
+            findViewById(R.id.loading).setVisibility(View.GONE);
+        }
+    }
+
+
+
+
+
+    public boolean stopAsyncTaskIfOnStop() {
+        if (addInfoToMap.isCancelled()) {
+            backGroundTaskRunning = false;
+            Log.d(TAG, "Stopper task");
+            addedToDataStructure = false;
+
+            return true;
+        }
+        return false;
+    }
+
+    private void clearItems(){
+
+        if (mMap != null) {
+            Log.d(TAG, "onResume: fjerner kyststier");
+            mMap.clear();
+            kyststiInfoMap.clear();
+
+
+            markersReadyToAdd.clear();
+            polylinesReadyToAdd.clear();
+            nameList.clear();
+            descriptionList.clear();
+            kyststiInfoMap.clear();
+
         }
 
-        private void addPolylinesToMap() {
-            //Adds the polylines to the map
-            final Iterator<PolylineOptions> iterator = polylinesReadyToAdd.iterator();
-            try {
+        if (mClusterManager != null) {
 
-                final Handler handler = new Handler();
-                handler.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
+            mClusterManager.clearItems();
+            Log.d(TAG, "onResume: fjerna markers");
 
-
-                        if (iterator.hasNext() && !infoAddedToMap){
-                            if (addInfoToMap.isCancelled()){
-                                Log.d(TAG, "run: stopper task");
-                                infoAddedToMap = false;
-                                backGroundTaskRunning = false;
-                                return;
-                            }
-
-
-                            polylinesOnMap.add(mMap.addPolyline(iterator.next()));
-
-                            handler.postDelayed(this, 1);
-
-
-
-                        } else {
-                            Log.d(TAG, "run : alle kyststier er lastet inn");
-                            infoAddedToMap = true;
-
-                            backGroundTaskRunning = false;
-
-                                Log.d(TAG, "run: animerer ned");
-                                animateInfobarDown();
-
-
-                        }
-                    }
-                }, 100);
-
-
-            } catch (Exception e){
-                e.printStackTrace();
-                Toast.makeText(getApplicationContext(), "Dette gikk dårlig, kyststier ble ikke lastet inn.", Toast.LENGTH_SHORT).show();
-            }
         }
+
     }
 
     private void setOnClusterItemClickListener(final TextView markerInfo) {
@@ -1630,63 +1684,90 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         });
     }
 
-
     private void getDataFromFileAndPutInDatastructure() throws IOException, JSONException {
-        //Create a layer with markers for each of the markertypes
+        if (stopAsyncTaskIfOnStop()) {
+            Log.d(TAG, "getDataFromFileAndPutInDatastructure: stopp");
+            return;
+        }
 
-        //Is only loading the paths from the file
+        int[] xmlfile = { R.raw.k1, R.raw.k2, R.raw.k3, R.raw.k4, R.raw.k5, R.raw.k6, R.raw.k7, R.raw.k8, R.raw.k9, R.raw.k10,R.raw.k11, R.raw.k12, R.raw.k13, R.raw.k14, R.raw.k15,R.raw.k16, R.raw.k17, R.raw.k18, R.raw.k19, R.raw.k20,R.raw.k21, R.raw.k21, R.raw.k22, R.raw.k23, R.raw.k24,R.raw.k25, R.raw.k26, R.raw.k27, R.raw.k28, R.raw.k29,R.raw.k30, R.raw.k31, R.raw.k32, R.raw.k33, R.raw.k34,R.raw.k35, R.raw.k36, R.raw.k37, R.raw.k38, R.raw.k39,R.raw.k40, R.raw.k41, R.raw.k42, R.raw.k43, R.raw.k44,R.raw.k45};
 
-        long time= System.currentTimeMillis();
+        for (int i = 0; i < xmlfile.length; i++) {
+            InputStream inputStream = getResources().openRawResource(xmlfile[i]);
+            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+
+            while (true) {
+                if (stopAsyncTaskIfOnStop()) return;
 
 
-        kyststiLayer = new GeoJsonLayer2(mMap, R.raw.alle_kyststier_without_markers, MyApplication.getAppContext());
+                String line = reader.readLine();
+                if (line == null) {
+                    break;
+                }
+                if (!line.contains("coordinates")) {
+                    continue;
+                }
 
-        for (GeoJsonFeature2 feature : kyststiLayer.getFeatures()) {
-            if (addInfoToMap.isCancelled()){
-                return;
+                JSONObject obj = createJsonObject(line);
+                String properties = obj.getString("properties");
+                JSONObject obj2 = new JSONObject(properties);
+                String geometry = obj.getString("geometry");
+                JSONObject obj3 = new JSONObject(geometry);
+
+
+                String name = obj2.getString("Name");
+                if (! name.equals("null")) {
+                    nameList.add(name);
+                }
+
+                String description = obj2.getString("description");
+                if (! name.equals("null")) {
+                    descriptionList.add(description);
+                }
+
+
+                JSONArray coordinates = obj3.getJSONArray("coordinates");
+
+                //Put into list of latlng
+                List<LatLng> buildCoordinates = new ArrayList<>();
+
+                final PolylineOptions poly = new PolylineOptions();
+
+                for (int j = 0; j < coordinates.length(); j++) {
+
+                    String coord = coordinates.get(j).toString();
+                    double lng = Double.valueOf(coord.substring(1, coord.indexOf(",")));
+
+                    coord = coord.substring(coord.indexOf(",")+1, coord.length());
+                    double lat = Double.valueOf(coord.substring(0, coord.indexOf(",")));
+
+
+                    buildCoordinates.add(new LatLng(lat, lng));
+
+                }
+
+                String[] descNameArray = {description, name};
+                kyststiInfoMap.put(buildCoordinates, descNameArray);
+
+
+                poly.clickable(true);
+                poly.addAll(buildCoordinates);
+                setKyststiColor(poly, description);
+
+                polylinesReadyToAdd.add(poly);
+                //Log.d(TAG, "getDataFromFileAndPutInDatastructure: add a poly");
+
+
             }
 
-            //GeoJsonPointStyle2 pointStyle = new GeoJsonPointStyle2();
-            GeoJsonLineStringStyle2 stringStyle;
-
-            //Gets the name property from the json file
-            //pointStyle.setTitle(feature.getProperty("name"));
-            //pointStyle.setSnippet(feature.getProperty("description"));
-
-
-            //feature.setPointStyle(pointStyle);
-
-            //Gets the description property from the json file
-
-            stringStyle = feature.getLineStringStyle();
-
-
-            String description = feature.getProperty("description");
-
-            //Hvis det er en kyststi legg til description og navn
-            if (feature.getGeometry().getType().equals("LineString")) {
-
-                descriptionList.add(description);
-                nameList.add(feature.getProperty("name"));
-            }
-
-
-            stringStyle.setClickable(true);
-
-
-            feature.setLineStringStyle(stringStyle);
         }
 
 
+        //Add markers
 
+        final TextView markerInfo = (TextView) findViewById(R.id.infobar);
+        setOnClusterItemClickListener(markerInfo);
 
-        addGeoJsonLayerToDataStructure();
-
-        Log.d(TAG, "getDataFromFileAndPutInDatastructure: tid kyststier: " + (System.currentTimeMillis()-time));
-
-
-        time = System.currentTimeMillis();
-        //Read all the markers from file and put in different arraylists for different types of markers
         InputStream inputStream = getResources().openRawResource(R.raw.interesting_points);
         BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
 
@@ -1733,7 +1814,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         }
 
-        Log.d(TAG, "getDataFromFileAndPutInDatastructure: time markers: " + (System.currentTimeMillis()-time));
         addedToDataStructure = true;
 
 
