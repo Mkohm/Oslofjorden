@@ -178,6 +178,7 @@ public class ChooseMapInfoDialog extends DialogFragment {
         int size = prefs.getInt(arrayName + "_17", 0);
         boolean[] array = new boolean[size];
         for(int i=0;i<size;i++) {
+            Log.d(TAG, "loadArray: " + i + " checked: " + prefs.getBoolean(arrayName + "_" + i, false));
             array[i] = prefs.getBoolean(arrayName + "_" + i, false);
         }
         return array;
