@@ -133,8 +133,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public ClusterManager<MyMarkerOptions> mClusterManager;
 
 
-
-
     private boolean infobarUp = false;
 
     //If the last location was found, this variable is true, the app then swithches to use lastcameraposition to position the camera onPause/onResume
@@ -407,7 +405,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                         }
 
 
-                        Log.d(TAG, "run: legger til kyststi");
+                        //Log.d(TAG, "run: legger til kyststi");
                         polylinesOnMap.add(mMap.addPolyline(iterator.next()));
 
                         handler.postDelayed(this, 1);
@@ -437,6 +435,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private void removePolylines() {
+        Log.d(TAG, "removePolylines: fjerner kyststierh");
         if (addingPolylines) {
             stopAddingPolylines = true;
         }
@@ -766,6 +765,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             Log.d(TAG, "loadLastStateOfApplication: fant checks");
         }
         loadCheckedItems(checkedItems);
+        Log.d(TAG, "loadLastStateOfApplication: " + checkedItems[0]);
     }
 
     public boolean[] loadArray(String arrayName, Context mContext) {
@@ -1660,6 +1660,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             Log.d(TAG, "onResume: fjerner kyststier");
             mMap.clear();
             kyststiInfoMap.clear();
+
+            polylinesOnMap.clear();
+            markersOnMap.clear();
 
 
             markersReadyToAdd.clear();
