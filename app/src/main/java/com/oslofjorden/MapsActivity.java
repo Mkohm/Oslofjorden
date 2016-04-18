@@ -9,7 +9,9 @@ import android.content.Intent;
 import android.content.IntentSender;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.PorterDuff;
@@ -108,6 +110,7 @@ import java.util.List;
 //instillinger oppdateringshastighet ++
 //I nærheten
 //Database implementation and search
+//lagrer ikke
 
 
 public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleApiClient.OnConnectionFailedListener, GoogleApiClient.ConnectionCallbacks, LocationListener, ResultCallback, CustomTabActivityHelper.ConnectionCallback, NoticeDialogListener {
@@ -199,7 +202,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private boolean[] defaultChecked;
 
 
-    private static ArrayList<Polyline> polylinesOnMap = new ArrayList<>();
+    private static ArrayList<Polyline> polylinesOnMap;
     private HashMap<LatLng, MyMarkerOptions> markersOnMap = new HashMap();
     private boolean setUpClustererIfMarkers = true;
     private boolean exit;
@@ -213,11 +216,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.i(TAG, "onCreate: oncreate");
 
         addedToDataStructure = false;
         infobarUp = false;
         backGroundTaskRunning = false;
         exit = false;
+        polylinesOnMap = new ArrayList<>();
 
 
 
@@ -318,9 +323,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private void loadCheckedItems(boolean[] checkedList) {
         mClusterManager.clearItems();
         markersOnMap.clear();
+        Log.d(TAG, "loadCheckedItems: " + polylinesOnMap.size());
+
         for (int i = 0; i < checkedList.length; i++){
 
-            
+            Log.d(TAG, "loadCheckedItems: "+ i + " " + checkedList[i]);
 
             //Load items if the checkbox was checked
             if (checkedList[i] == true) {
@@ -369,6 +376,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 Log.d(TAG, "addMarkersToMap: var her fra før");
                 continue;
             } else {
+
+                //Find the highest priority icon, and then add it to the cluster manager
+                //categoryArrayList.get(i).setIcon();
 
                 mClusterManager.addItem(categoryArrayList.get(i));
                 markersOnMap.put(categoryArrayList.get(i).getPosition(), categoryArrayList.get(i));
@@ -774,6 +784,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         int size = prefs.getInt(arrayName + "_17", 0);
         boolean[] array = new boolean[size];
         for(int i=0;i<size;i++) {
+            Log.d(TAG, "loadArray: " + i + " checked: " + prefs.getBoolean(arrayName + "_" + i, false));
             array[i] = prefs.getBoolean(arrayName + "_" + i, false);
         }
         return array;
@@ -1913,14 +1924,30 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         options.snippet(""+ desc);
 
 /*
+        //ditching icons for now
 
         if (markerTypesArray.contains("Badeplass")) {
-            options.icon(BitmapDescriptorFactory.fromAsset("swimming"));
-        }*/
+
+            //To create image
+            //open the svg file with gimp
+            //konverter "bildeinnholdet" til png
+            //svg resize til 64x64 px / 75x75
+            //legg til bildeinnholdet og lag transparent
+
+            Bitmap image = BitmapFactory.decodeResource(getResources(), R.drawable.boat_ramp);
+            Bitmap scaled = Bitmap.createScaledBitmap(image, image.getWidth()/2, image.getHeight()/2, false);
+
+
+            options.icon(BitmapDescriptorFactory.fromBitmap(scaled));
+        }
+*/
 
 
         return options;
     }
+
+
+
 
     @NonNull
     private StringBuilder createDescriptionFromLinkAndMarkerTypes(String link, String[] markerTypesArray) {
@@ -1956,7 +1983,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public class MyMarkerOptions implements ClusterItem {
         private String title;
         private String description;
-        private final LatLng position;
+        private LatLng position;
         private BitmapDescriptor icon;
 
 
@@ -1989,7 +2016,21 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             return icon;
         }
 
+        public void setDescription(String description) {
+            this.description = description;
+        }
 
+        public void setIcon(BitmapDescriptor icon) {
+            this.icon = icon;
+        }
+
+        public void setPosition(LatLng position) {
+            this.position = position;
+        }
+
+        public void setTitle(String title) {
+            this.title = title;
+        }
     }
 
     class OwnIconRendered extends DefaultClusterRenderer<MyMarkerOptions> {
