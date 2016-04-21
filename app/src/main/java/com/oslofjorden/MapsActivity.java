@@ -1646,19 +1646,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             layerButton.setImageResource(R.drawable.ic_layers_white_24dp);
             findViewById(R.id.loading).setVisibility(View.GONE);
 
-           // writeBinaryFile();
-
-
-
-
-
-
-
-
-
-
-
-
         }
     }
 
@@ -1687,10 +1674,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private void readBinaryFile() {
-        Log.d(TAG, "onPostExecute: start lesing binær");
+        Log.d(TAG, "onPostExecute: start lesing binary");
         long time = System.currentTimeMillis();
 
-        Log.d(TAG, "onPostExecute: start");
         try {
             InputStream inputStream = getResources().openRawResource(R.raw.binarypolylinesmap);
             ObjectInputStream is = new ObjectInputStream(inputStream);
@@ -1703,6 +1689,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             e.printStackTrace();
         }
         Log.d(TAG, "onPostExecute: slutt lesing" + (System.currentTimeMillis()-time));
+
+
+
+        if (stopAsyncTaskIfOnStop()) {
+            Log.d(TAG, "getDataFromFileAndPutInDatastructure: stopp");
+            return;
+        }
 
 
 
@@ -1746,6 +1739,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             polylinesOnMap.clear();
             markersOnMap.clear();
+
 
 
             markersReadyToAdd.clear();
@@ -1799,12 +1793,22 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         //Add the polylines to the map with ready polylines
         for (List<double[]> coordinatelist : binaryPolylinesMap.keySet()) {
+            if (stopAsyncTaskIfOnStop()) {
+                Log.d(TAG, "getDataFromFileAndPutInDatastructure: stopp");
+                return;
+            }
 
             List<LatLng> coordinates = new ArrayList<>();
             for (double[] coordinatepair: coordinatelist) {
                 coordinates.add(new LatLng(coordinatepair[0], coordinatepair[1]));
 
 
+
+
+                if (stopAsyncTaskIfOnStop()) {
+                    Log.d(TAG, "getDataFromFileAndPutInDatastructure: stopp");
+                    return;
+                }
             }
 
 
@@ -1817,7 +1821,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             String desc = binaryPolylinesMap.get(coordinatelist)[1];
             String name = binaryPolylinesMap.get(coordinatelist)[0];
 
-            setKyststiColor(polyline, binaryPolylinesMap.get(coordinatelist)[1]);
+            setKyststiColor(polyline, desc);
 
             polylinesReadyToAdd.add(polyline);
 
@@ -1838,6 +1842,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
 
         while (true) {
+            if (stopAsyncTaskIfOnStop()) {
+                Log.d(TAG, "getDataFromFileAndPutInDatastructure: stopp");
+                return;
+            }
 
             String line = reader.readLine();
             if (line == null) {
@@ -1874,9 +1882,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 
             putMarkerInLists(line, options);
-
-
-
 
         }
 
