@@ -1727,7 +1727,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                 binarykyststiInfoMap.put(coord, info);
 
-
                 counter++;
             }
 
