@@ -1711,7 +1711,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         Log.d(TAG, "onPostExecute: start");
         try {
-            InputStream inputStream = getResources().openRawResource(R.raw.binarykyststiinfomapmany);
+            InputStream inputStream = getResources().openRawResource(R.raw.binarykyststiinfomapmanynew);
             ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
 
             int counter = 0;
@@ -1742,7 +1742,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private boolean readBinaryPolylinesMap() {
         try {
-            InputStream inputStream = getResources().openRawResource(R.raw.binarypolylinesmapmany);
+            InputStream inputStream = getResources().openRawResource(R.raw.binarypolylinesmanynew);
             ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
 
             int counter = 0;
@@ -1849,7 +1849,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 
         //readFromJsonfilesAndPutInBinaryMaps();
-        //writeBinaryFile();
+        //writeBinaryFile("binarykyststiinfomapmanynew", binarykyststiInfoMap);
+        //writeBinaryFile("binarypolylinesmanynew", binaryPolylinesMap);
+
+
         readBinaryFiles();
 
         //
@@ -2003,11 +2006,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 JSONArray coordinates = obj3.getJSONArray("coordinates");
 
                 //Put into list of latlng
-                List<LatLng> buildCoordinates = new ArrayList<>();
+                //List<LatLng> buildCoordinates = new ArrayList<>();
                 List<double[]> binaryBuildCoordinates = new ArrayList<>();
 
 
-                final PolylineOptions poly = new PolylineOptions();
+                //final PolylineOptions poly = new PolylineOptions();
 
 
                 for (int j = 0; j < coordinates.length(); j++) {
@@ -2020,7 +2023,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                     double[] latLng = {lat, lng};
                     binaryBuildCoordinates.add(latLng);
-                    buildCoordinates.add(new LatLng(lat, lng));
+                    //buildCoordinates.add(new LatLng(lat, lng));
 
 
                 }
@@ -2029,15 +2032,15 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 binaryPolylinesMap.put(binaryBuildCoordinates, polyOptions);
 
                 String[] descNameArray = {description, name};
-                kyststiInfoMap.put(buildCoordinates, descNameArray);
+                //kyststiInfoMap.put(buildCoordinates, descNameArray);
                 binarykyststiInfoMap.put(binaryBuildCoordinates, descNameArray);
 
 
-                poly.clickable(true);
-                poly.addAll(buildCoordinates);
-                setKyststiColor(poly, description);
+                //poly.clickable(true);
+                //poly.addAll(buildCoordinates);
+                //setKyststiColor(poly, description);
 
-                polylinesReadyToAdd.add(poly);
+                //polylinesReadyToAdd.add(poly);
                 //Log.d(TAG, "getDataFromFileAndPutInDatastructure: add a poly");
 
 
@@ -2150,6 +2153,22 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     @NonNull
     private StringBuilder createDescriptionFromLinkAndMarkerTypes(String link, String[] markerTypesArray) {
+
+        //Sets the correct name on the markertype - from the name from the gpx-file to whatever you want
+        for (int i = 0; i < markerTypesArray.length; i++) {
+            String name = markerTypesArray[i];
+
+            if (name.contains("Point of interes")) {
+                markerTypesArray[i] = "Interessant sted";
+            }
+
+            if (name.contains("Parkering transp")) {
+                markerTypesArray[i] = "Parkering og transport";
+            }
+
+        }
+
+
         StringBuilder desc = new StringBuilder();
         desc.append("- ");
         for (int i = 1; i < markerTypesArray.length; i++){
