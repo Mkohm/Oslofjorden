@@ -22,7 +22,6 @@ import android.os.Handler;
 import com.google.android.gms.maps.model.LatLng;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.ObjectInputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -211,7 +210,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 
     private ImageButton layerButton;
-
+    private InputStream inputStream;
+    private ObjectInputStream objectInputStream;
 
 
     @Override
@@ -566,6 +566,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         super.onStop();
 
 
+
+
+
         Log.d(TAG, "onStop: ");
 
         if (! addedToDataStructure) {
@@ -586,6 +589,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 
         customTabActivityHelper.unbindCustomTabsService(this);
+
+
 
     }
 
@@ -1604,7 +1609,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 }
 
                 try {
+
+                    long tid = System.currentTimeMillis();
                     getDataFromFileAndPutInDatastructure();
+                    Log.d(TAG, "doInBackground: " + (System.currentTimeMillis() - tid));
                     if (exit) {
                         Log.d(TAG, "doInBackground: exit");
                         return null;
@@ -1649,17 +1657,30 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
-    private void writeBinaryFile() {
+    //Writes objects to the file, two objects at each iteration, so when reading it can be checked if the thread is cancelled
+    private void writeBinaryFile(String filename, Map<List<double[]>, String[]> infoArray) {
         Log.d(TAG, "onPostExecute: start" + System.currentTimeMillis());
         long time = System.currentTimeMillis();
 
         try {
 
-            File myFile = new File("/sdcard/binarykyststiinfomap.bin");
+            File myFile = new File("/sdcard/" + filename + ".bin");
 
             FileOutputStream fileout = new FileOutputStream(myFile);
             ObjectOutputStream out = new ObjectOutputStream(fileout);
-            out.writeObject(binarykyststiInfoMap);
+            //out.writeObject(binarykyststiInfoMap);
+
+            for (List coord : infoArray.keySet()) {
+                Log.d(TAG, "writeBinaryFile: skriver fil");
+                //writes the coordinates
+                out.writeObject(coord);
+
+                //writes the info
+                out.writeObject(infoArray.get(coord));
+            }
+
+
+
             out.close();
 
 
@@ -1667,55 +1688,90 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 
         } catch (IOException e) {
+            Log.d(TAG, "writeBinaryFile: her skjedde det noe tull und er skriving ava fil");
             e.printStackTrace();
         }
 
         Log.d(TAG, "onPostExecute: slutt skriving " + (System.currentTimeMillis()-time));
     }
 
-    private void readBinaryFile() {
+
+    //Reads the binary files, two objects in each iteration, so there is possibility to test if the thread is canceled
+    private void readBinaryFiles() {
         Log.d(TAG, "onPostExecute: start lesing binary");
-        long time = System.currentTimeMillis();
 
-        try {
-            InputStream inputStream = getResources().openRawResource(R.raw.binarypolylinesmap);
-            ObjectInputStream is = new ObjectInputStream(inputStream);
+        readBinaryPolylinesMap();
+        readBinaryKyststiInfoMap();
 
-            binaryPolylinesMap = (Map<List<double[]>, String[]>) is.readObject();
-            is.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
-        Log.d(TAG, "onPostExecute: slutt lesing" + (System.currentTimeMillis()-time));
+    }
 
-
-
-        if (stopAsyncTaskIfOnStop()) {
-            Log.d(TAG, "getDataFromFileAndPutInDatastructure: stopp");
-            return;
-        }
-
-
-
+    private void readBinaryKyststiInfoMap() {
         Log.d(TAG, "onPostExecute: start lesing binær");
         long time2 = System.currentTimeMillis();
 
         Log.d(TAG, "onPostExecute: start");
         try {
-            InputStream inputStream = getResources().openRawResource(R.raw.binarykyststiinfomap);
-            ObjectInputStream is = new ObjectInputStream(inputStream);
+            InputStream inputStream = getResources().openRawResource(R.raw.binarykyststiinfomapmany);
+            ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
 
-            binarykyststiInfoMap = (Map<List<double[]>, String[]>) is.readObject();
-            is.close();
+            int counter = 0;
+            while (counter < 400) {
+                if (stopAsyncTaskIfOnStop()) {
+                    Log.d(TAG, "getDataFromFileAndPutInDatastructure: stopp");
+                    return;
+                }
+
+
+                List<double[]> coord = (List<double[]>) objectInputStream.readObject();
+                String[] info = (String[]) objectInputStream.readObject();
+
+                binarykyststiInfoMap.put(coord, info);
+
+
+                counter++;
+            }
+
+            objectInputStream.close();
         } catch (IOException e) {
             e.printStackTrace();
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
         Log.d(TAG, "onPostExecute: slutt lesing" + (System.currentTimeMillis()-time2));
+    }
 
+    private boolean readBinaryPolylinesMap() {
+        try {
+            InputStream inputStream = getResources().openRawResource(R.raw.binarypolylinesmapmany);
+            ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
+
+            int counter = 0;
+            while (counter < 400) {
+                if (stopAsyncTaskIfOnStop()) {
+                    Log.d(TAG, "getDataFromFileAndPutInDatastructure: stopp");
+                    return true;
+                }
+
+
+                List<double[]> coord = (List<double[]>) objectInputStream.readObject();
+                String[] info = (String[]) objectInputStream.readObject();
+
+
+                binaryPolylinesMap.put(coord, info);
+
+                counter++;
+            }
+
+            objectInputStream.close();
+
+        } catch (IOException e) {
+            Log.d(TAG, "readBinaryFile: her skjedde det noe tull under lesning av fil" + binaryPolylinesMap.size());
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            Log.d(TAG, "readBinaryFile: mer tull under lesing av fil" + binaryPolylinesMap.size());
+            e.printStackTrace();
+        }
+        return false;
     }
 
 
@@ -1733,7 +1789,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private void clearItems(){
 
         if (mMap != null) {
-            Log.d(TAG, "onResume: fjerner kyststier");
             mMap.clear();
             kyststiInfoMap.clear();
 
@@ -1754,7 +1809,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         if (mClusterManager != null) {
 
             mClusterManager.clearItems();
-            Log.d(TAG, "onResume: fjerna markers");
 
         }
 
@@ -1788,47 +1842,28 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
 
 
-        readBinaryFile();
+        /////
+        ///
+        //
+        //Choose which way to read files here, readBinaryFiles is the best option and could be alone in its execution
 
 
-        //Add the polylines to the map with ready polylines
-        for (List<double[]> coordinatelist : binaryPolylinesMap.keySet()) {
-            if (stopAsyncTaskIfOnStop()) {
-                Log.d(TAG, "getDataFromFileAndPutInDatastructure: stopp");
-                return;
-            }
+        //readFromJsonfilesAndPutInBinaryMaps();
+        //writeBinaryFile();
+        readBinaryFiles();
 
-            List<LatLng> coordinates = new ArrayList<>();
-            for (double[] coordinatepair: coordinatelist) {
-                coordinates.add(new LatLng(coordinatepair[0], coordinatepair[1]));
-
-
-
-
-                if (stopAsyncTaskIfOnStop()) {
-                    Log.d(TAG, "getDataFromFileAndPutInDatastructure: stopp");
-                    return;
-                }
-            }
+        //
+        ///
+        ////
+        /////
 
 
 
-            //Make a new polyline
-            PolylineOptions polyline = new PolylineOptions();
-            polyline.addAll(coordinates);
-            polyline.clickable(true);
-
-            String desc = binaryPolylinesMap.get(coordinatelist)[1];
-            String name = binaryPolylinesMap.get(coordinatelist)[0];
-
-            setKyststiColor(polyline, desc);
-
-            polylinesReadyToAdd.add(polyline);
 
 
-            String[] descnameArray = {desc, name};
-            kyststiInfoMap.put(coordinates, descnameArray);
-        }
+
+
+        if (createPolylinesAndPutInInfomap()) return;
 
 
         //Add markers
@@ -1891,6 +1926,45 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 
 
+    }
+
+    private boolean createPolylinesAndPutInInfomap() {
+        //Add the polylines to the map with ready polylines
+        for (List<double[]> coordinatelist : binaryPolylinesMap.keySet()) {
+            if (stopAsyncTaskIfOnStop()) {
+                Log.d(TAG, "getDataFromFileAndPutInDatastructure: stopp");
+                return true;
+            }
+
+            List<LatLng> coordinates = new ArrayList<>();
+            for (double[] coordinatepair: coordinatelist) {
+                coordinates.add(new LatLng(coordinatepair[0], coordinatepair[1]));
+
+                if (stopAsyncTaskIfOnStop()) {
+                    Log.d(TAG, "getDataFromFileAndPutInDatastructure: stopp");
+                    return true;
+                }
+            }
+
+
+
+            //Make a new polyline
+            PolylineOptions polyline = new PolylineOptions();
+            polyline.addAll(coordinates);
+            polyline.clickable(true);
+
+            String desc = binaryPolylinesMap.get(coordinatelist)[1];
+            String name = binaryPolylinesMap.get(coordinatelist)[0];
+
+            setKyststiColor(polyline, desc);
+
+            polylinesReadyToAdd.add(polyline);
+
+
+            String[] descnameArray = {desc, name};
+            kyststiInfoMap.put(coordinates, descnameArray);
+        }
+        return false;
     }
 
     private void readFromJsonfilesAndPutInBinaryMaps() throws IOException, JSONException {
