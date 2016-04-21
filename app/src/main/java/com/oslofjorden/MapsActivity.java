@@ -9,22 +9,27 @@ import android.content.Intent;
 import android.content.IntentSender;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Point;
-import android.graphics.PorterDuff;
-import android.graphics.drawable.Drawable;
-import android.graphics.drawable.Icon;
 import android.location.Location;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+
+import com.google.android.gms.maps.model.LatLng;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.ObjectInputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+
 import android.provider.Settings;
-import android.support.annotation.ColorRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.customtabs.CustomTabsIntent;
@@ -32,7 +37,6 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.Toolbar;
 import android.text.Html;
 import android.text.SpannableStringBuilder;
@@ -44,7 +48,6 @@ import android.util.Log;
 import android.view.ContextMenu;
 import android.view.Display;
 import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
@@ -73,9 +76,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptor;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
-import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
@@ -90,15 +91,13 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.io.ObjectOutputStream;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
+import java.util.Map;
 
 //TODO: helgeroaferfgene link meld inn - fikset i fil, fix animation of infobar, back faast after removes kyststier
 //Set different markers on different types of items
@@ -150,16 +149,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     boolean locationUpdatesSwitch = true;
 
 
-
-    public static HashMap<List<LatLng>, String[]> kyststiInfoMap = new HashMap<List<LatLng>, String[]>();
-    public static ArrayList<String> descriptionList = new ArrayList<String>();
-    public static ArrayList<String> nameList = new ArrayList<String>();
-
-
-    public static List<MarkerOptions> markersReadyToAdd = new ArrayList<MarkerOptions>();
-    public static List<PolylineOptions> polylinesReadyToAdd = new ArrayList<PolylineOptions>();
-
-
     private Polyline currentPolyline;
     private String currentPolylineDescription;
     //Variables that the callback onconnectionfailed needs
@@ -198,19 +187,31 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private ArrayList<MyMarkerOptions> campingplassMarkers = new ArrayList<>();
     private ArrayList<ArrayList<MyMarkerOptions>> arrayListOfArrayLists = new ArrayList<>();
 
-    private boolean[] checkedItems;
-    private boolean[] defaultChecked;
+    //is used for finding the name and description when clicking a polyline
+    public static HashMap<List<LatLng>, String[]> kyststiInfoMap = new HashMap<List<LatLng>, String[]>();
+
+    public static List<MarkerOptions> markersReadyToAdd = new ArrayList<MarkerOptions>();
+    public static List<PolylineOptions> polylinesReadyToAdd = new ArrayList<PolylineOptions>();
 
 
     private static ArrayList<Polyline> polylinesOnMap;
     private HashMap<LatLng, MyMarkerOptions> markersOnMap = new HashMap();
-    private boolean setUpClustererIfMarkers = true;
+
+
+    //coordinate pair, name, description, color
+    private Map<List<double[]>, String[]> binaryPolylinesMap = new HashMap();
+    private Map<List<double[]>, String[]> binarykyststiInfoMap = new HashMap<>();
+
+
+    private boolean[] checkedItems;
+    private boolean[] defaultChecked;
+
     private boolean exit;
-    private boolean loadingPolylines;
     private boolean addingPolylines = false;
 
 
     private ImageButton layerButton;
+
 
 
     @Override
@@ -1645,13 +1646,84 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             layerButton.setImageResource(R.drawable.ic_layers_white_24dp);
             findViewById(R.id.loading).setVisibility(View.GONE);
 
+           // writeBinaryFile();
+
+
+
+
+
+
+
+
+
+
 
 
         }
     }
 
+    private void writeBinaryFile() {
+        Log.d(TAG, "onPostExecute: start" + System.currentTimeMillis());
+        long time = System.currentTimeMillis();
+
+        try {
+
+            File myFile = new File("/sdcard/binarykyststiinfomap.bin");
+
+            FileOutputStream fileout = new FileOutputStream(myFile);
+            ObjectOutputStream out = new ObjectOutputStream(fileout);
+            out.writeObject(binarykyststiInfoMap);
+            out.close();
 
 
+            Log.d(TAG, "onPostExecute: finito");
+
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        Log.d(TAG, "onPostExecute: slutt skriving " + (System.currentTimeMillis()-time));
+    }
+
+    private void readBinaryFile() {
+        Log.d(TAG, "onPostExecute: start lesing binær");
+        long time = System.currentTimeMillis();
+
+        Log.d(TAG, "onPostExecute: start");
+        try {
+            InputStream inputStream = getResources().openRawResource(R.raw.binarypolylinesmap);
+            ObjectInputStream is = new ObjectInputStream(inputStream);
+
+            binaryPolylinesMap = (Map<List<double[]>, String[]>) is.readObject();
+            is.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+        Log.d(TAG, "onPostExecute: slutt lesing" + (System.currentTimeMillis()-time));
+
+
+
+        Log.d(TAG, "onPostExecute: start lesing binær");
+        long time2 = System.currentTimeMillis();
+
+        Log.d(TAG, "onPostExecute: start");
+        try {
+            InputStream inputStream = getResources().openRawResource(R.raw.binarykyststiinfomap);
+            ObjectInputStream is = new ObjectInputStream(inputStream);
+
+            binarykyststiInfoMap = (Map<List<double[]>, String[]>) is.readObject();
+            is.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+        Log.d(TAG, "onPostExecute: slutt lesing" + (System.currentTimeMillis()-time2));
+
+    }
 
 
     public boolean stopAsyncTaskIfOnStop() {
@@ -1678,9 +1750,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             markersReadyToAdd.clear();
             polylinesReadyToAdd.clear();
-            nameList.clear();
-            descriptionList.clear();
-            kyststiInfoMap.clear();
+
+
+            binarykyststiInfoMap.clear();
+            binaryPolylinesMap.clear();
 
         }
 
@@ -1720,80 +1793,43 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             return;
         }
 
-        int[] xmlfile = { R.raw.k1, R.raw.k2, R.raw.k3, R.raw.k4, R.raw.k5, R.raw.k6, R.raw.k7, R.raw.k8, R.raw.k9, R.raw.k10,R.raw.k11, R.raw.k12, R.raw.k13, R.raw.k14, R.raw.k15,R.raw.k16, R.raw.k17, R.raw.k18, R.raw.k19, R.raw.k20,R.raw.k21, R.raw.k21, R.raw.k22, R.raw.k23, R.raw.k24,R.raw.k25, R.raw.k26, R.raw.k27, R.raw.k28, R.raw.k29,R.raw.k30, R.raw.k31, R.raw.k32, R.raw.k33, R.raw.k34,R.raw.k35, R.raw.k36, R.raw.k37, R.raw.k38, R.raw.k39,R.raw.k40, R.raw.k41, R.raw.k42, R.raw.k43, R.raw.k44,R.raw.k45};
 
-        for (int i = 0; i < xmlfile.length; i++) {
-            InputStream inputStream = getResources().openRawResource(xmlfile[i]);
-            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-
-            while (true) {
-                if (stopAsyncTaskIfOnStop()) return;
+        readBinaryFile();
 
 
-                String line = reader.readLine();
-                if (line == null) {
-                    break;
-                }
-                if (!line.contains("coordinates")) {
-                    continue;
-                }
+        //Add the polylines to the map with ready polylines
+        for (List<double[]> coordinatelist : binaryPolylinesMap.keySet()) {
 
-                JSONObject obj = createJsonObject(line);
-                String properties = obj.getString("properties");
-                JSONObject obj2 = new JSONObject(properties);
-                String geometry = obj.getString("geometry");
-                JSONObject obj3 = new JSONObject(geometry);
-
-
-                String name = obj2.getString("Name");
-                if (! name.equals("null")) {
-                    nameList.add(name);
-                }
-
-                String description = obj2.getString("description");
-                if (! name.equals("null")) {
-                    descriptionList.add(description);
-                }
-
-
-                JSONArray coordinates = obj3.getJSONArray("coordinates");
-
-                //Put into list of latlng
-                List<LatLng> buildCoordinates = new ArrayList<>();
-
-                final PolylineOptions poly = new PolylineOptions();
-
-                for (int j = 0; j < coordinates.length(); j++) {
-
-                    String coord = coordinates.get(j).toString();
-                    double lng = Double.valueOf(coord.substring(1, coord.indexOf(",")));
-
-                    coord = coord.substring(coord.indexOf(",")+1, coord.length());
-                    double lat = Double.valueOf(coord.substring(0, coord.indexOf(",")));
-
-
-                    buildCoordinates.add(new LatLng(lat, lng));
-
-                }
-
-                String[] descNameArray = {description, name};
-                kyststiInfoMap.put(buildCoordinates, descNameArray);
-
-
-                poly.clickable(true);
-                poly.addAll(buildCoordinates);
-                setKyststiColor(poly, description);
-
-                polylinesReadyToAdd.add(poly);
-                //Log.d(TAG, "getDataFromFileAndPutInDatastructure: add a poly");
+            List<LatLng> coordinates = new ArrayList<>();
+            for (double[] coordinatepair: coordinatelist) {
+                coordinates.add(new LatLng(coordinatepair[0], coordinatepair[1]));
 
 
             }
 
+
+
+            //Make a new polyline
+            PolylineOptions polyline = new PolylineOptions();
+            polyline.addAll(coordinates);
+            polyline.clickable(true);
+
+            String desc = binaryPolylinesMap.get(coordinatelist)[1];
+            String name = binaryPolylinesMap.get(coordinatelist)[0];
+
+            setKyststiColor(polyline, binaryPolylinesMap.get(coordinatelist)[1]);
+
+            polylinesReadyToAdd.add(polyline);
+
+
+            String[] descnameArray = {desc, name};
+            kyststiInfoMap.put(coordinates, descnameArray);
         }
 
 
         //Add markers
+        Log.d(TAG, "getDataFromFileAndPutInDatastructure: start markerparsing");
+        long time2 = System.currentTimeMillis();
 
         final TextView markerInfo = (TextView) findViewById(R.id.infobar);
         setOnClusterItemClickListener(markerInfo);
@@ -1844,9 +1880,93 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         }
 
+        Log.d(TAG, "getDataFromFileAndPutInDatastructure: ferdig parse markres" + (System.currentTimeMillis()-time2));
+
         addedToDataStructure = true;
 
 
+
+    }
+
+    private void readFromJsonfilesAndPutInBinaryMaps() throws IOException, JSONException {
+
+        Log.d(TAG, "getDataFromFileAndPutInDatastructure: start filparsing");
+        long time = System.currentTimeMillis();
+        int[] xmlfile = { R.raw.k1, R.raw.k2, R.raw.k3, R.raw.k4, R.raw.k5, R.raw.k6, R.raw.k7, R.raw.k8, R.raw.k9, R.raw.k10,R.raw.k11, R.raw.k12, R.raw.k13, R.raw.k14, R.raw.k15,R.raw.k16, R.raw.k17, R.raw.k18, R.raw.k19, R.raw.k20,R.raw.k21, R.raw.k21, R.raw.k22, R.raw.k23, R.raw.k24,R.raw.k25, R.raw.k26, R.raw.k27, R.raw.k28, R.raw.k29,R.raw.k30, R.raw.k31, R.raw.k32, R.raw.k33, R.raw.k34,R.raw.k35, R.raw.k36, R.raw.k37, R.raw.k38, R.raw.k39,R.raw.k40, R.raw.k41, R.raw.k42, R.raw.k43, R.raw.k44,R.raw.k45};
+
+        for (int i = 0; i < xmlfile.length; i++) {
+            InputStream inputStream = getResources().openRawResource(xmlfile[i]);
+            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+
+            while (true) {
+                if (stopAsyncTaskIfOnStop()) return;
+
+
+                String line = reader.readLine();
+                if (line == null) {
+                    break;
+                }
+                if (!line.contains("coordinates")) {
+                    continue;
+                }
+
+                JSONObject obj = createJsonObject(line);
+                String properties = obj.getString("properties");
+                JSONObject obj2 = new JSONObject(properties);
+                String geometry = obj.getString("geometry");
+                JSONObject obj3 = new JSONObject(geometry);
+
+
+                String name = obj2.getString("Name");
+
+                String description = obj2.getString("description");
+
+                JSONArray coordinates = obj3.getJSONArray("coordinates");
+
+                //Put into list of latlng
+                List<LatLng> buildCoordinates = new ArrayList<>();
+                List<double[]> binaryBuildCoordinates = new ArrayList<>();
+
+
+                final PolylineOptions poly = new PolylineOptions();
+
+
+                for (int j = 0; j < coordinates.length(); j++) {
+
+                    String coord = coordinates.get(j).toString();
+                    double lng = Double.valueOf(coord.substring(1, coord.indexOf(",")));
+
+                    coord = coord.substring(coord.indexOf(",")+1, coord.length());
+                    double lat = Double.valueOf(coord.substring(0, coord.indexOf(",")));
+
+                    double[] latLng = {lat, lng};
+                    binaryBuildCoordinates.add(latLng);
+                    buildCoordinates.add(new LatLng(lat, lng));
+
+
+                }
+
+                String[] polyOptions = {name, description};
+                binaryPolylinesMap.put(binaryBuildCoordinates, polyOptions);
+
+                String[] descNameArray = {description, name};
+                kyststiInfoMap.put(buildCoordinates, descNameArray);
+                binarykyststiInfoMap.put(binaryBuildCoordinates, descNameArray);
+
+
+                poly.clickable(true);
+                poly.addAll(buildCoordinates);
+                setKyststiColor(poly, description);
+
+                polylinesReadyToAdd.add(poly);
+                //Log.d(TAG, "getDataFromFileAndPutInDatastructure: add a poly");
+
+
+            }
+
+        }
+
+        Log.d(TAG, "getDataFromFileAndPutInDatastructure: ferdig parse kyststier" + (System.currentTimeMillis()-time));
 
     }
 
@@ -2046,6 +2166,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             super.onBeforeClusterItemRendered(item, markerOptions);
         }
     }
+
 
 }
 
