@@ -213,6 +213,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private InputStream inputStream;
     private ObjectInputStream objectInputStream;
     private Iterator<PolylineOptions> iterator;
+    private Handler addPolylinesHandler;
 
 
     @Override
@@ -397,14 +398,17 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         try {
 
-            final Handler handler = new Handler();
-            handler.postDelayed(new Runnable() {
+            addPolylinesHandler = new Handler();
+            addPolylinesHandler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
 
                     if (stopAsyncTaskIfOnStop()) {
 
-                        handler.removeCallbacksAndMessages(null);
+
+                        //if you are loading kyststier and then pressing back - error, only when addinfotomap not running
+
+                        addPolylinesHandler.removeCallbacksAndMessages(null);
                         Log.d(TAG, "run: stoppet adding av kyststier trådenh");
 
                         return;
@@ -428,7 +432,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                         //Log.d(TAG, "run: legger til kyststi");
                         polylinesOnMap.add(mMap.addPolyline(iterator.next()));
 
-                        handler.postDelayed(this, 1);
+                        addPolylinesHandler.postDelayed(this, 1);
 
 
 
@@ -582,6 +586,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     protected void onStop() {
         super.onStop();
+
+        if (addingPolylines) {
+            addPolylinesHandler.removeCallbacksAndMessages(null);
+            clearItems();
+            addedToDataStructure = false;
+        }
 
 
 
@@ -1822,9 +1832,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             markersOnMap.clear();
 
 
-            if (iterator != null) {
-                iterator.remove();
-            }
 
 
             markersReadyToAdd.clear();
