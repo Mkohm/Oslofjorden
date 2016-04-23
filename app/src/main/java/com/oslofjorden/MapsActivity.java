@@ -212,6 +212,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private ImageButton layerButton;
     private InputStream inputStream;
     private ObjectInputStream objectInputStream;
+    private Iterator<PolylineOptions> iterator;
 
 
     @Override
@@ -243,7 +244,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         //Set up custom tabs
         setUpCustomTabs();
-
 
 
 
@@ -393,13 +393,22 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         addingPolylines = true;
 
-        final Iterator<PolylineOptions> iterator = polylinesReadyToAdd.iterator();
+        iterator = polylinesReadyToAdd.iterator();
+
         try {
 
             final Handler handler = new Handler();
             handler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
+
+                    if (stopAsyncTaskIfOnStop()) {
+
+                        handler.removeCallbacksAndMessages(null);
+                        Log.d(TAG, "run: stoppet adding av kyststier trådenh");
+
+                        return;
+                    }
 
 
 
@@ -423,10 +432,19 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 
 
+
+
                     } else {
                         Log.d(TAG, "run : alle kyststier er lastet inn");
                         stopAddingPolylines = false;
                         addingPolylines = false;
+
+
+                        if (checkedItems[0] == true) {
+                            Log.d(TAG, "run: satt addedtodatastructure til true");
+                            addedToDataStructure = true;
+                            backGroundTaskRunning = false;
+                        }
 
                         Log.d(TAG, "run: stopaddingpolylines" + stopAddingPolylines);
 
@@ -615,6 +633,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         } catch (Exception e) {
             e.printStackTrace();
             Log.i(TAG, "onPause: Noe gikk galt under pause");
+
+
         }
 
 
@@ -636,6 +656,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void onMapReady(GoogleMap googleMap) {
 
         mMap = googleMap;
+        setUpClusterer();
+
+
+
+        
        // mMap.clear();
         if (setGoogleMapUISettings()) return;
 
@@ -765,9 +790,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         });
 
 
-        setUpClusterer();
-
-
 
     }
 
@@ -825,7 +847,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 
         } else {
-            onOffLocationButton.setImageResource(R.drawable.location_off_64px);
+            onOffLocationButton.setImageResource(R.drawable.ic_location_off);
         }
     }
 
@@ -1628,11 +1650,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     return null;
                 }
 
-
-
-                addedToDataStructure = true;
-                backGroundTaskRunning = false;
-
             }
 
 
@@ -1647,12 +1664,22 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             loadLastStateOfApplication();
 
+
             animateInfobarDown();
 
             layerButton.setClickable(true);
             layerButton.setEnabled(true);
             layerButton.setImageResource(R.drawable.ic_layers_white_24dp);
             findViewById(R.id.loading).setVisibility(View.GONE);
+
+
+
+            if (checkedItems[0] == false) {
+                Log.d(TAG, "onPostExecute: satt addedtodatastructure til true");
+                addedToDataStructure = true;
+                backGroundTaskRunning = false;
+            }
+
 
         }
     }
@@ -1795,6 +1822,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             markersOnMap.clear();
 
 
+            if (iterator != null) {
+                iterator.remove();
+            }
+
 
             markersReadyToAdd.clear();
             polylinesReadyToAdd.clear();
@@ -1841,9 +1872,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
 
 
-        /////
-        ///
-        //
+        /////  /
+        ////  /
+        ///  /
+        //  /
         //Choose which way to read files here, readBinaryFiles is the best option and could be alone in its execution
 
 
@@ -1855,6 +1887,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         readBinaryFiles();
 
         //
+        ///
         ///
         ////
         /////
@@ -1923,9 +1956,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
 
         Log.d(TAG, "getDataFromFileAndPutInDatastructure: ferdig parse markres" + (System.currentTimeMillis()-time2));
-
-        addedToDataStructure = true;
-
 
 
     }
