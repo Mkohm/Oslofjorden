@@ -214,6 +214,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private ObjectInputStream objectInputStream;
     private Iterator<PolylineOptions> iterator;
     private Handler addPolylinesHandler;
+    private boolean askForLocationPermission;
 
 
     @Override
@@ -375,7 +376,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             //If the markersonmap add list contains the element, do not add it
 
             if (markersOnMap.containsKey(categoryArrayList.get(i).getPosition())){
-                Log.d(TAG, "addMarkersToMap: var her fra før");
                 continue;
             } else {
 
@@ -563,13 +563,14 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 
             //Ikke lag ny
-            if (addInfoToMap != null && (addInfoToMap.getStatus() == AsyncTask.Status.RUNNING)){
+            if (addInfoToMap != null && (addInfoToMap.getStatus() == AsyncTask.Status.RUNNING) || askForLocationPermission){
                 Log.d(TAG, "onResume: gjør ingenting, fortsetter");
             } else {
+                Log.d(TAG, "onResume: kjører igjen");
                 clearItems();
                 addInfoToMap = new AddInfoToMap();
                 addInfoToMap.execute();
-                Log.d(TAG, "onResume: kjører igjen");
+
             }
 
 
@@ -1368,6 +1369,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private void handleUsersWithoutLocationEnabled(LocationRequest mLocationRequest) {
+        askForLocationPermission = true;
+
+
         LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
                 .addLocationRequest(mLocationRequest);
 
@@ -2194,7 +2198,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         for (int i = 0; i < markerTypesArray.length; i++) {
             String name = markerTypesArray[i];
 
-            if (name.contains("Point of interes")) {
+            if (name.contains("Point of Interes")) {
                 markerTypesArray[i] = "Interessant sted";
             }
 
