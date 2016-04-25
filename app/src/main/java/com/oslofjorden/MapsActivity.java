@@ -214,7 +214,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private ObjectInputStream objectInputStream;
     private Iterator<PolylineOptions> iterator;
     private Handler addPolylinesHandler;
-    private boolean askForLocationPermission;
+
+    //handles the event where user pressing on the location popup
+  //  private boolean askForLocationPermission;
 
 
     @Override
@@ -326,11 +328,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private void loadCheckedItems(boolean[] checkedList) {
         mClusterManager.clearItems();
         markersOnMap.clear();
-        Log.d(TAG, "loadCheckedItems: " + polylinesOnMap.size());
+        //Log.d(TAG, "loadCheckedItems: " + polylinesOnMap.size());
 
         for (int i = 0; i < checkedList.length; i++){
 
-            Log.d(TAG, "loadCheckedItems: "+ i + " " + checkedList[i]);
+           // Log.d(TAG, "loadCheckedItems: "+ i + " " + checkedList[i]);
 
             //Load items if the checkbox was checked
             if (checkedList[i] == true) {
@@ -430,7 +432,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 
                         //Log.d(TAG, "run: legger til kyststi");
-                        polylinesOnMap.add(mMap.addPolyline(iterator.next()));
+                        try {
+                            polylinesOnMap.add(mMap.addPolyline(iterator.next()));
+                            
+                        } catch (Exception e) {
+                            Log.d(TAG, "run: her kjørte allerede en fra før så det er mest sannsynlig concurrentmodificationexception");
+                            e.printStackTrace();
+                        }
 
                         addPolylinesHandler.postDelayed(this, 1);
 
@@ -558,27 +566,27 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
 
 
-
         if (!addedToDataStructure) {
 
 
             //Ikke lag ny
-            if (addInfoToMap != null && (addInfoToMap.getStatus() == AsyncTask.Status.RUNNING) || askForLocationPermission){
+            if (addInfoToMap != null && (addInfoToMap.getStatus() == AsyncTask.Status.RUNNING)) {
                 Log.d(TAG, "onResume: gjør ingenting, fortsetter");
             } else {
+
+
                 Log.d(TAG, "onResume: kjører igjen");
                 clearItems();
                 addInfoToMap = new AddInfoToMap();
                 addInfoToMap.execute();
 
-            }
 
+            }
 
 
         } else {
             Log.d(TAG, "onResume: Info var lastet inn");
         }
-
 
 
     }
@@ -1369,8 +1377,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private void handleUsersWithoutLocationEnabled(LocationRequest mLocationRequest) {
-        askForLocationPermission = true;
-
 
         LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
                 .addLocationRequest(mLocationRequest);
@@ -1383,6 +1389,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         result.setResultCallback(new ResultCallback<LocationSettingsResult>() {
             @Override
             public void onResult(LocationSettingsResult result) {
+
 
                 final Status status = result.getStatus();
                 final LocationSettingsStates states = result.getLocationSettingsStates();
@@ -1403,6 +1410,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                             // Show the dialog by calling startResolutionForResult(),
                             // and check the result in onActivityResult().
                             status.startResolutionForResult(MapsActivity.this,0);
+
+
+
                         } catch (IntentSender.SendIntentException e) {
                             // Ignore the error.
                         }
