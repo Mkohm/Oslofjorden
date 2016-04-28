@@ -286,8 +286,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             @Override
             public void onClick(View v) {
 
+                Log.d(TAG, "onClick: klikk på knapp");
 
-
+                //Show the choose map info dialog
+                ChooseMapInfoDialog mapInfoDialog = new ChooseMapInfoDialog();
+                mapInfoDialog.show(getSupportFragmentManager(), "test");
 
             }
         });
@@ -1020,6 +1023,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
 
+        Log.d(TAG, "onRequestPermissionsResult: spurte om rettigheter");
+
 
 
         switch (requestCode) {
@@ -1408,6 +1413,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                             // Show the dialog by calling startResolutionForResult(),
                             // and check the result in onActivityResult().
                             status.startResolutionForResult(MapsActivity.this,0);
+                            Log.d(TAG, "onResult: svarte");
 
 
 

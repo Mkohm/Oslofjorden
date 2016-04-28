@@ -34,7 +34,7 @@
                 android:adjustViewBounds="false"
                 android:clickable="false"
                 android:contentDescription="bilde"
-                android:layout_gravity="right"
+                android:layout_gravity="end"
                 android:paddingRight="8dp"/>
 
             <ImageButton
@@ -45,9 +45,8 @@
                 android:background="@android:color/transparent"
 
                 android:adjustViewBounds="false"
-                android:clickable="false"
                 android:contentDescription="bilde"
-                android:layout_gravity="right"
+                android:layout_gravity="end"
                 android:paddingRight="8dp"/>
 
         </android.support.v7.widget.Toolbar>
