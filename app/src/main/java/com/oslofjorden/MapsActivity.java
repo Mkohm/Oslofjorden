@@ -2,6 +2,7 @@ package com.oslofjorden;
 
 
 import android.Manifest;
+import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -13,6 +14,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.location.Location;
+import android.location.LocationManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -52,6 +54,7 @@ import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
+import android.widget.SectionIndexer;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -123,7 +126,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     GoogleApiClient mGoogleApiClient;
 
 
-    float currentZoom;
+    float currentZoom = 13;
     LatLng currentPosition;
     CameraPosition currentCameraPosition;
     LatLng currentMapClickPosition;
@@ -147,6 +150,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     //is locationupdates enabled or not
     boolean locationUpdatesSwitch = true;
 
+    protected static final int REQUEST_CHECK_SETTINGS = 0x1;
+
 
     private Polyline currentPolyline;
     private String currentPolylineDescription;
@@ -161,8 +166,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private static final String STATE_RESOLVING_ERROR = "resolving_error";
 
-    private final int PERMISSIONS_OK = 0;
-
+    private final int PERMISSIONS_OK = 1;
 
 
     private CustomTabActivityHelper customTabActivityHelper;
@@ -214,9 +218,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private ObjectInputStream objectInputStream;
     private Iterator<PolylineOptions> iterator;
     private Handler addPolylinesHandler;
+    private boolean haslocationPermission;
+    private boolean locationEnabled;
 
     //handles the event where user pressing on the location popup
-  //  private boolean askForLocationPermission;
+    //  private boolean askForLocationPermission;
 
 
     @Override
@@ -231,24 +237,18 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         polylinesOnMap = new ArrayList<>();
 
 
-
-
-
         //Add arraylists to arraylist of arraylists //the first element is empty and never used
         addArrayListsToArraylistOfArrayLists();
         createDefaultCheckedArray();
 
 
-
-
-        //Hvis man hadde location fra start av skal den ikke spørre mer
-        if (isLocationEnabled(getApplicationContext())){
-            userAcceptLocation = true;
-        }
+        //The first time the user launches the app, this message will be shown
+        showInfomessageToUserIfFirstTime();
 
         //Set up custom tabs
         setUpCustomTabs();
 
+        locationEnabled = isGPSEnabled(getApplicationContext());
 
 
         setContentView(R.layout.activity_maps);
@@ -297,6 +297,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     }
 
+    public boolean isGPSEnabled (Context mContext){
+        LocationManager locationManager = (LocationManager)
+                mContext.getSystemService(Context.LOCATION_SERVICE);
+        return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+    }
+
 
     private void addArrayListsToArraylistOfArrayLists() {
         arrayListOfArrayLists.add(null);
@@ -331,9 +337,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         markersOnMap.clear();
         //Log.d(TAG, "loadCheckedItems: " + polylinesOnMap.size());
 
-        for (int i = 0; i < checkedList.length; i++){
+        for (int i = 0; i < checkedList.length; i++) {
 
-           // Log.d(TAG, "loadCheckedItems: "+ i + " " + checkedList[i]);
+            // Log.d(TAG, "loadCheckedItems: "+ i + " " + checkedList[i]);
 
             //Load items if the checkbox was checked
             if (checkedList[i] == true) {
@@ -352,7 +358,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 
                 } else {
-                        addMarkersToMap(arrayListOfArrayLists.get(i));
+                    addMarkersToMap(arrayListOfArrayLists.get(i));
                 }
 
             } else {
@@ -362,7 +368,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     }
                 }
 
-                
 
             }
         }
@@ -375,10 +380,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private void addMarkersToMap(ArrayList<MyMarkerOptions> categoryArrayList) {
         //Add markers to the map
-        for (int i = 0; i < categoryArrayList.size(); i++){
+        for (int i = 0; i < categoryArrayList.size(); i++) {
             //If the markersonmap add list contains the element, do not add it
 
-            if (markersOnMap.containsKey(categoryArrayList.get(i).getPosition())){
+            if (markersOnMap.containsKey(categoryArrayList.get(i).getPosition())) {
                 continue;
             } else {
 
@@ -418,10 +423,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     }
 
 
-
-
-                    if (iterator.hasNext()){
-                        if (stopAddingPolylines){
+                    if (iterator.hasNext()) {
+                        if (stopAddingPolylines) {
                             Log.d(TAG, "run: stopper task");
 
                             stopAddingPolylines = false;
@@ -435,16 +438,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                         //Log.d(TAG, "run: legger til kyststi");
                         try {
                             polylinesOnMap.add(mMap.addPolyline(iterator.next()));
-                            
+
                         } catch (Exception e) {
                             Log.d(TAG, "run: her kjørte allerede en fra før så det er mest sannsynlig concurrentmodificationexception");
                             e.printStackTrace();
                         }
 
                         addPolylinesHandler.postDelayed(this, 1);
-
-
-
 
 
                     } else {
@@ -470,7 +470,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             }, 100);
 
 
-        } catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
             Toast.makeText(getApplicationContext(), "Dette gikk dårlig, kyststier ble ikke lastet inn.", Toast.LENGTH_SHORT).show();
         }
@@ -484,7 +484,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         Log.d(TAG, "removePolylines: setter variabel stoppinnlasting til true");
 
-        for (Polyline poly : polylinesOnMap){
+        for (Polyline poly : polylinesOnMap) {
             Log.d(TAG, "removePolylines: ");
             poly.remove();
         }
@@ -545,7 +545,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         customTabActivityHelper.bindCustomTabsService(this);
 
 
-
     }
 
     @Override
@@ -604,30 +603,23 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
 
 
-
-
-
         Log.d(TAG, "onStop: ");
 
-        if (! addedToDataStructure) {
+        if (!addedToDataStructure) {
             addInfoToMap.cancel(true);
         }
 
 
-
-        try{
+        try {
             stopLocationUpdates();
             mGoogleApiClient.disconnect();
 
-        } catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
 
-
-
         customTabActivityHelper.unbindCustomTabsService(this);
-
 
 
     }
@@ -648,7 +640,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             currentCameraPosition = mMap.getCameraPosition();
 
 
-
             stopLocationUpdates();
         } catch (Exception e) {
             e.printStackTrace();
@@ -656,7 +647,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 
         }
-
 
 
         super.onPause();
@@ -676,41 +666,61 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void onMapReady(GoogleMap googleMap) {
 
         mMap = googleMap;
+
+        //enable zoom buttons, and remove toolbar when clicking on markers
+        mMap.getUiSettings().setZoomControlsEnabled(false);
+        mMap.getUiSettings().setMapToolbarEnabled(false);
+
+
+
         setUpClusterer();
 
 
 
-        
-       // mMap.clear();
-        if (setGoogleMapUISettings()) return;
-
 
         final ImageButton onOffLocationButton = (ImageButton) findViewById(R.id.onofflocationbutton);
-        setOnOffLocationButtonStartstate(onOffLocationButton);
+        onOffLocationButton.setImageResource(R.drawable.ic_location_off);
+        locationUpdatesSwitch = false;
 
 
         onOffLocationButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                if (!haslocationPermission) {
+                    checkPermission();
 
-                if (locationUpdatesSwitch == true) {
-                    onOffLocationButton.setImageResource(R.drawable.ic_location_off);
-                    Toast.makeText(getApplicationContext(), "Oppdatering av posisjon - av", Toast.LENGTH_SHORT).show();
-                    locationUpdatesSwitch = false;
-                } else if (locationUpdatesSwitch == false) {
+                }
 
 
-                    if (!userAcceptLocation || !isLocationEnabled(getApplicationContext())){
 
-                        handleUsersWithoutLocationEnabled(mLocationRequest);
+                //Hvis location er enabled skal man kunne flicke swithchen akkurat sånn man vil
+                if (locationEnabled) {
 
-                    } else {
+                    if (locationUpdatesSwitch == true) {
+
+                        onOffLocationButton.setImageResource(R.drawable.ic_location_off);
+                        Toast.makeText(getApplicationContext(), "Oppdatering av posisjon - av", Toast.LENGTH_SHORT).show();
+                        locationUpdatesSwitch = false;
+
+                    } else if (locationUpdatesSwitch == false) {
+
+
                         onOffLocationButton.setImageResource(R.drawable.ic_location_on);
                         Toast.makeText(getApplicationContext(), "Oppdatering av posisjon - på", Toast.LENGTH_SHORT).show();
                         locationUpdatesSwitch = true;
+
                     }
 
+
                 }
+                //Hvis location er på skal man få flicket switchen hvis det har skjedd en endring altså location er blitt skrudd på, dette må settingsrequest handle selv siden det er et callback som blir kallt
+                else if (! locationEnabled) {
+                    Log.d(TAG, "onClick: gps ikke på");
+                    settingsrequest();
+
+                }
+
+
 
                 if (locationUpdatesSwitch == true) {
                     startLocationUpdates();
@@ -722,9 +732,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         });
 
-        //The first time the user launches the app, this message will be shown
-        showInfomessageToUserIfFirstTime();
-
         final TextView kyststiInfo = (TextView) findViewById(R.id.infobar);
 
 
@@ -734,7 +741,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 
                 //This is setting the polyline to blue color if the last polyline did not have a description
-                if (currentPolylineDescription == null && currentPolyline != null){
+                if (currentPolylineDescription == null && currentPolyline != null) {
                     currentPolyline.setColor(Color.BLUE);
                 }
 
@@ -758,12 +765,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 animateInfobarUp();
 
 
-
                 currentPolyline.setColor(Color.BLACK);
 
             }
         });
-
 
 
         mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
@@ -802,13 +807,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 }
 
 
-
-
-
-
             }
         });
-
 
 
     }
@@ -831,7 +831,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         int size = prefs.getInt(arrayName + "_17", 0);
         boolean[] array = new boolean[size];
-        for(int i=0;i<size;i++) {
+        for (int i = 0; i < size; i++) {
             Log.d(TAG, "loadArray: " + i + " checked: " + prefs.getBoolean(arrayName + "_" + i, false));
             array[i] = prefs.getBoolean(arrayName + "_" + i, false);
         }
@@ -860,16 +860,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         defaultChecked[16] = false;
     }
 
-    private void setOnOffLocationButtonStartstate(ImageButton onOffLocationButton) {
-        //Sets the initial icon depending on current settings
-        if (isLocationEnabled(getApplicationContext())){
-            onOffLocationButton.setImageResource(R.drawable.ic_location_on);
 
-
-        } else {
-            onOffLocationButton.setImageResource(R.drawable.ic_location_off);
-        }
-    }
 
     private void setKyststiColor(PolylineOptions polylineOptions, String description) {
         if (description != null) {
@@ -884,7 +875,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         }
 
-        if (description == null){
+        if (description == null) {
             polylineOptions.color(Color.BLUE);
         }
     }
@@ -901,24 +892,33 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         return description.contains("Vanskelig") || description.contains("vanskelig");
     }
 
-    private boolean setGoogleMapUISettings() {
-        //enable zoom buttons, and remove toolbar when clicking on markers
-        mMap.getUiSettings().setZoomControlsEnabled(false);
-        mMap.getUiSettings().setMapToolbarEnabled(false);
+    private void setGoogleMapUISettings() throws SecurityException{
 
         //enables location dot, and removes the standard google button
-        if (checkPermission()) return true;
-        mMap.setMyLocationEnabled(true);
-        mMap.getUiSettings().setMyLocationButtonEnabled(false);
-        mMap.getUiSettings().setCompassEnabled(true);
-        return false;
+
+
+        //Depending on permissions UI will change
+        if (haslocationPermission) {
+
+            //Skru på location i googlemap ui
+            try {
+                mMap.setMyLocationEnabled(true);
+                mMap.getUiSettings().setMyLocationButtonEnabled(false);
+                mMap.getUiSettings().setCompassEnabled(true);
+
+            } catch (SecurityException e) {
+                e.printStackTrace();
+            }
+        }
+
+
     }
 
     private void showInfomessageToUserIfFirstTime() {
         SharedPreferences sharedPref = this.getPreferences(Context.MODE_PRIVATE);
         boolean firstTimeUserLaunchesApp = sharedPref.getBoolean("firstTimeUserLaunchesApp", true);
 
-        if (firstTimeUserLaunchesApp){
+        if (firstTimeUserLaunchesApp) {
             //Saving that the user has opened the app before
             SharedPreferences.Editor editor = sharedPref.edit();
             editor.putBoolean("firstTimeUserLaunchesApp", false);
@@ -940,8 +940,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 currentPolyline.setColor(Color.parseColor("#980009"));
             } else if (isVanskeligKyststi()) {
                 currentPolyline.setColor(Color.RED);
-            }
-            else {
+            } else {
                 currentPolyline.setColor(Color.BLUE);
             }
         }
@@ -978,7 +977,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private void animateInfobarDown() {
         TextView infobar = (TextView) findViewById(R.id.infobar);
 
-        if (infobarUp){
+        if (infobarUp) {
             int maxY = getDeviceMaxY();
             Animation animation = new TranslateAnimation(0, 0, 0, maxY);
             animation.setDuration(500);
@@ -999,32 +998,41 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         return mdispSize.y;
     }
 
-    private boolean checkPermission() {
+    private void checkPermission() {
+        Log.d(TAG, "checkPermission: sjekker for permission");
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
+
+            //If we dont have permisson, request
+            Log.d(TAG, "checkPermission: request permission");
             String[] permissions = {Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION};
             ActivityCompat.requestPermissions(this, permissions, 1);
+
+
             //    ActivityCompat#requestPermissions
             // here to request the missing permissions, and then overriding
             //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
             //                                          int[] grantResults)
-            
+
             // to handle the case where the user grants the permission. See the documentation
             // for ActivityCompat#requestPermissions for more details.
 
-            return true;
+
+        } else {
+            Log.d(TAG, "checkPermission: hadde permission fra før av ");
+
+            haslocationPermission = true;
+            setGoogleMapUISettings();
 
 
         }
-        //TODO: return true?
-        return false;
+
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) throws SecurityException{
 
-        Log.d(TAG, "onRequestPermissionsResult: spurte om rettigheter");
-
+        Log.d(TAG, "onRequestPermissionsResult: fikk svar om rettigheter");
 
 
         switch (requestCode) {
@@ -1035,20 +1043,42 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                     // permission was granted, yay!
                     Log.i(TAG, "onRequestPermissionsResult: Fikk tilgang kan nå skru på location");
-                    //Skru på location
+
+
+                    CameraUpdate cameraUpdate2 = CameraUpdateFactory.newLatLngZoom(new LatLng(59.903079, 10.740479), 13);
+                    mMap.moveCamera(cameraUpdate2);
+
+
+
+                    haslocationPermission = true;
+                    locationUpdatesSwitch = true;
+                    final ImageButton onOffLocationButton = (ImageButton) findViewById(R.id.onofflocationbutton);
+                    onOffLocationButton.setImageResource(R.drawable.ic_location_on);
+
+
+                    setGoogleMapUISettings();
 
 
                 } else {
                     Log.i(TAG, "onRequestPermissionsResult: Fikk ikke tilgang til location");
                     // permission denied, boo! Disable the
                     // functionality that depends on this permission.
+                    haslocationPermission = false;
+                    locationUpdatesSwitch = false;
+                    final ImageButton onOffLocationButton = (ImageButton) findViewById(R.id.onofflocationbutton);
+                    onOffLocationButton.setImageResource(R.drawable.ic_location_off);
+
                 }
                 return;
             }
 
+
+
             // other 'case' lines to check for other
             // permissions this app might request
         }
+
+        setGoogleMapUISettings();
     }
 
 
@@ -1268,45 +1298,29 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         }
 
-        final ImageButton onOffLocationButton = (ImageButton) findViewById(R.id.onofflocationbutton);
 
-        if (resultCode == 0){
+        //The result for request for turn on gps
+        switch (requestCode) {
+            // Check for the integer request code originally supplied to startResolutionForResult().
+            case REQUEST_CHECK_SETTINGS:
+                switch (resultCode) {
+                    case Activity.RESULT_OK:
+                        locationEnabled = true;
 
-            //Sporing button should be off
-            Toast.makeText(getApplicationContext(), "Oppdatering av posisjon - av", Toast.LENGTH_SHORT).show();
-            onOffLocationButton.setImageResource(R.drawable.ic_location_off);
+                        ImageButton onOffLocationButton = (ImageButton) findViewById(R.id.onofflocationbutton);
+                        onOffLocationButton.setImageResource(R.drawable.ic_location_on);
+                        locationUpdatesSwitch = true;
 
-            locationUpdatesSwitch = false;
-            userAcceptLocation = false;
-        } else {
-            Toast.makeText(getApplicationContext(), "Oppdatering av posisjon - på", Toast.LENGTH_SHORT).show();
-            onOffLocationButton.setImageResource(R.drawable.ic_location_on);
 
-            locationUpdatesSwitch = true;
-            userAcceptLocation = true;
+                        break;
+                    case Activity.RESULT_CANCELED:
+                        locationEnabled = false;
+                        break;
+                }
+                break;
         }
 
 
-    }
-
-    public static boolean isLocationEnabled(Context context) {
-        int locationMode = 0;
-        String locationProviders;
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            try {
-                locationMode = Settings.Secure.getInt(context.getContentResolver(), Settings.Secure.LOCATION_MODE);
-
-            } catch (Settings.SettingNotFoundException e) {
-                e.printStackTrace();
-            }
-
-            return locationMode != Settings.Secure.LOCATION_MODE_OFF;
-
-        } else {
-            locationProviders = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.LOCATION_PROVIDERS_ALLOWED);
-            return !TextUtils.isEmpty(locationProviders);
-        }
 
 
     }
@@ -1315,44 +1329,39 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void onConnected(Bundle connectionHint) {
         //Connected to google play services: This is where the magic happens
 
-        //check for permissions to get location
-        if (checkPermission()) return;
-        //Enable marker for current location
-        mMap.setMyLocationEnabled(true);
 
-        //Will finde the last known location only the first time
+        //Will find the the last known location only the first time
         if (!foundLastLocation) {
             findAndGoToLastKnownLocation();
-            foundLastLocation = true;
-        }
-
-
-        if (locationUpdatesSwitch) {
             startLocationUpdates();
+            foundLastLocation = true;
+
+        } else {
+            if (locationUpdatesSwitch) {
+                startLocationUpdates();
+            }
         }
+
+
+
 
 
     }
 
 
     protected void startLocationUpdates() {
-        if (checkPermission()) return;
-
-
-        //Request locationupdates
-        mLocationRequest = requestLocationUpdates();
-
-        if (! userHasAnsweredLocationTurnOn){
-            //Handle users without location enabled
-            handleUsersWithoutLocationEnabled(mLocationRequest);
-
+        //If the user has the needed permissions
+        if (haslocationPermission) {
+            mLocationRequest = requestLocationUpdates();
         }
+
 
     }
 
     private GoogleMap getMap() {
         return mMap;
     }
+    
 
     @NonNull
     private LocationRequest requestLocationUpdates() {
@@ -1364,10 +1373,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             //                                          int[] grantResults)
             String[] permissions = {Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION};
             ActivityCompat.requestPermissions(this, permissions, 1);
+
             // to handle the case where the user grants the permission. See the documentation
             // for ActivityCompat#requestPermissions for more details.
 
         }
+
+        Log.d(TAG, "requestLocationUpdates: lager ny request om oppdateringer");
 
         mLocationRequest = new LocationRequest();
         mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
@@ -1379,71 +1391,91 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         return mLocationRequest;
     }
 
-    private void handleUsersWithoutLocationEnabled(LocationRequest mLocationRequest) {
+    private void handleUsersWithoutLocationEnabled() {
+
+        LocationRequest settingsRequest = new LocationRequest();
+
 
         LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
-                .addLocationRequest(mLocationRequest);
+                .addLocationRequest(settingsRequest);
 
-        PendingResult<LocationSettingsResult> result =
-                LocationServices.SettingsApi.checkLocationSettings(mGoogleApiClient,
-                        builder.build());
+        PendingResult<LocationSettingsResult> result = LocationServices.SettingsApi.checkLocationSettings(mGoogleApiClient, builder.build());
 
         //Make user add location
         result.setResultCallback(new ResultCallback<LocationSettingsResult>() {
             @Override
-            public void onResult(LocationSettingsResult result) {
+            public void onResult(@NonNull LocationSettingsResult locationSettingsResult) {
+                final Status status = locationSettingsResult.getStatus();
 
-
-                final Status status = result.getStatus();
-                final LocationSettingsStates states = result.getLocationSettingsStates();
                 switch (status.getStatusCode()) {
-                    case LocationSettingsStatusCodes.SUCCESS:
-                        // All location settings are satisfied. The client can
-                        // initialize location requests here.
-                        userHasAnsweredLocationTurnOn = true;
-
-                        break;
                     case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
-                        // Location settings are not satisfied, but this can be fixed
-                        // by showing the user a dialog.
-
-                        //No is answered
-                        userHasAnsweredLocationTurnOn = true;
                         try {
                             // Show the dialog by calling startResolutionForResult(),
                             // and check the result in onActivityResult().
-                            status.startResolutionForResult(MapsActivity.this,0);
-                            Log.d(TAG, "onResult: svarte");
+                            status.startResolutionForResult(
+                                    MapsActivity.this,
+                                    REQUEST_CHECK_SETTINGS);
+                        } catch (IntentSender.SendIntentException e) {
+                            // Ignore the error.
+                        }
+                        break;
+                }
+            }
+        });
+    }
 
+    public void settingsrequest()
+    {
+        LocationRequest locationRequest = LocationRequest.create();
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        locationRequest.setInterval(30 * 1000);
+        locationRequest.setFastestInterval(5 * 1000);
+        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
+                .addLocationRequest(locationRequest);
+        builder.setAlwaysShow(true); //this is the key ingredient
 
-
+        PendingResult<LocationSettingsResult> result =
+                LocationServices.SettingsApi.checkLocationSettings(mGoogleApiClient, builder.build());
+        result.setResultCallback(new ResultCallback<LocationSettingsResult>() {
+            @Override
+            public void onResult(LocationSettingsResult result) {
+                final Status status = result.getStatus();
+                final LocationSettingsStates state = result.getLocationSettingsStates();
+                switch (status.getStatusCode()) {
+                    case LocationSettingsStatusCodes.SUCCESS:
+                        // All location settings are satisfied. The client can initialize location
+                        // requests here.
+                        break;
+                    case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
+                        // Location settings are not satisfied. But could be fixed by showing the user
+                        // a dialog.
+                        try {
+                            // Show the dialog by calling startResolutionForResult(),
+                            // and check the result in onActivityResult().
+                            status.startResolutionForResult(MapsActivity.this, REQUEST_CHECK_SETTINGS);
                         } catch (IntentSender.SendIntentException e) {
                             // Ignore the error.
                         }
                         break;
                     case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
-                        // Location settings are not satisfied. However, we have no way
-                        // to fix the settings so we won't show the dialog.
-                        userHasAnsweredLocationTurnOn = true;
-
-                        //Oslo sentrum
-                        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLng(new LatLng(59.903079, 10.740479));
-                        mMap.moveCamera(cameraUpdate);
-
+                        // Location settings are not satisfied. However, we have no way to fix the
+                        // settings so we won't show the dialog.
                         break;
                 }
-
             }
-
-
         });
     }
 
-    private void findAndGoToLastKnownLocation() {
-        //Find the last known location
-        if (checkPermission()) return;
 
-        Location mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+    private void findAndGoToLastKnownLocation() throws SecurityException {
+
+        Location mLastLocation = null;
+        try {
+          mLastLocation  = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+        } catch (SecurityException e) {
+            e.printStackTrace();
+        }
+
 
         LatLng lastLocation;
         if (mLastLocation != null) {
