@@ -255,6 +255,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         //Removes the oslofjorden picture
         getWindow().setBackgroundDrawableResource(R.drawable.graybackground);
+
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
@@ -286,9 +287,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             public void onClick(View v) {
 
 
-                //Show the choose map info dialog
-                ChooseMapInfoDialog mapInfoDialog = new ChooseMapInfoDialog();
-                mapInfoDialog.show(getSupportFragmentManager(), "test");
 
 
             }
@@ -585,7 +583,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 
         } else {
-            Log.d(TAG, "onResume: Info var lastet inn");
+            Log.i(TAG, "onResume: Info var lastet inn");
         }
 
 
