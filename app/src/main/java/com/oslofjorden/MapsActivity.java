@@ -101,6 +101,7 @@ import java.io.ObjectOutputStream;
 import java.util.HashMap;
 import java.util.Map;
 
+
 //TODO: helgeroaferfgene link meld inn - fikset i fil, fix animation of infobar, back faast after removes kyststier
 //Set different markers on different types of items
 //Let user choose what type of info to see
@@ -145,8 +146,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     LocationRequest mLocationRequest;
     boolean mRequestingLocationUpdates;
-    boolean userHasAnsweredLocationTurnOn = false;
-    boolean userAcceptLocation = false;
+
     //is locationupdates enabled or not
     boolean locationUpdatesSwitch = true;
 
@@ -170,7 +170,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 
     private CustomTabActivityHelper customTabActivityHelper;
-    private boolean backGroundTaskRunning = false;
 
     private static ArrayList<MyMarkerOptions> beachMarkers = new ArrayList<>();
     private ArrayList<MyMarkerOptions> rampeMarkers = new ArrayList<>();
@@ -232,7 +231,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         addedToDataStructure = false;
         infobarUp = false;
-        backGroundTaskRunning = false;
         exit = false;
         polylinesOnMap = new ArrayList<>();
 
@@ -429,7 +427,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                             stopAddingPolylines = false;
                             Log.d(TAG, "run: stopaddingpolylines" + stopAddingPolylines);
-                            backGroundTaskRunning = false;
 
                             return;
                         }
@@ -456,7 +453,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                         if (checkedItems[0] == true) {
                             Log.d(TAG, "run: satt addedtodatastructure til true");
                             addedToDataStructure = true;
-                            backGroundTaskRunning = false;
                         }
 
                         Log.d(TAG, "run: stopaddingpolylines" + stopAddingPolylines);
@@ -1737,7 +1733,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             if (checkedItems[0] == false) {
                 Log.d(TAG, "onPostExecute: satt addedtodatastructure til true");
                 addedToDataStructure = true;
-                backGroundTaskRunning = false;
             }
 
 
@@ -1863,7 +1858,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     public boolean stopAsyncTaskIfOnStop() {
         if (addInfoToMap.isCancelled()) {
-            backGroundTaskRunning = false;
             Log.d(TAG, "Stopper task");
             addedToDataStructure = false;
 

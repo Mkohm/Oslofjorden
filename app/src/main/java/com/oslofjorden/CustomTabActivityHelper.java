@@ -8,6 +8,7 @@ import android.support.customtabs.CustomTabsIntent;
 import android.support.customtabs.CustomTabsServiceConnection;
 import android.support.customtabs.CustomTabsSession;
 import android.util.Log;
+import android.widget.Toast;
 
 
 import java.util.List;
@@ -37,6 +38,9 @@ public class CustomTabActivityHelper implements ServiceConnectionCallback {
 
         //If we cant find a package name, it means theres no browser that supports
         //Chrome Custom Tabs installed. So, we fallback to the webview
+
+        Toast.makeText(activity.getApplicationContext(), packageName + " er pakkenavnet", Toast.LENGTH_LONG).show();
+        Log.d("TAG", "openCustomTab: " + packageName + " er pakkenavn.");
         if (packageName == null) {
             if (fallback != null) {
                 fallback.openUri(activity, uri);

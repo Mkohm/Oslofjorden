@@ -80,9 +80,15 @@ public class CustomTabsHelper {
             serviceIntent.setAction(ACTION_CUSTOM_TABS_CONNECTION);
             serviceIntent.setPackage(info.activityInfo.packageName);
             if (pm.resolveService(serviceIntent, 0) != null) {
-                packagesSupportingCustomTabs.add(info.activityInfo.packageName);
+
+                //If the packagename is not the samsung thing, add it to the list
+                if (! info.activityInfo.packageName.equals("com.sec.android.app.sbrowser")) {
+                    packagesSupportingCustomTabs.add(info.activityInfo.packageName);
+                }
+
             }
         }
+
 
         // Now packagesSupportingCustomTabs contains all apps that can handle both VIEW intents
         // and service calls.

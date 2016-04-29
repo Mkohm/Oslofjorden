@@ -17,6 +17,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
 import android.util.Log;
+import android.widget.Toast;
 
 /**
  * A Fallback that opens a Webview when Custom Tabs is not available
@@ -24,7 +25,8 @@ import android.util.Log;
 public class WebviewFallback implements CustomTabActivityHelper.CustomTabFallback {
     @Override
     public void openUri(Activity activity, Uri uri) {
-        Log.i("TAG", "openUri: Bruker har ikke chrome. Åpner webview.");
+        //Toast.makeText(activity.getApplicationContext(), "Fikk desverre ikke åpnet chrome.", Toast.LENGTH_SHORT).show();
+
         Intent intent = new Intent(activity, WebviewActivity.class);
         intent.putExtra(WebviewActivity.EXTRA_URL, uri.toString());
         activity.startActivity(intent);
