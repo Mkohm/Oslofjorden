@@ -13,6 +13,7 @@ import android.content.pm.PackageManager;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Point;
+import android.graphics.PorterDuff;
 import android.location.Location;
 import android.location.LocationManager;
 import android.net.Uri;
@@ -21,6 +22,8 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 
+import com.google.android.gms.appindexing.Action;
+import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.maps.model.LatLng;
 
 import java.io.File;
@@ -219,6 +222,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private Handler addPolylinesHandler;
     private boolean haslocationPermission;
     private boolean locationEnabled;
+    /**
+     * ATTENTION: This was auto-generated to implement the App Indexing API.
+     * See https://g.co/AppIndexing/AndroidStudio for more information.
+     */
+    private GoogleApiClient client;
 
     //handles the event where user pressing on the location popup
     //  private boolean askForLocationPermission;
@@ -272,7 +280,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         ProgressBar progressBar = (ProgressBar) findViewById(R.id.loading);
         progressBar.getIndeterminateDrawable().setColorFilter(
                 ContextCompat.getColor(getApplicationContext(), R.color.white),
-                android.graphics.PorterDuff.Mode.SRC_IN);
+                PorterDuff.Mode.SRC_IN);
 
         layerButton = (ImageButton) findViewById(R.id.layers);
         layerButton.setClickable(false);
@@ -293,9 +301,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         });
 
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
     }
 
-    public boolean isGPSEnabled (Context mContext){
+    public boolean isGPSEnabled(Context mContext) {
         LocationManager locationManager = (LocationManager)
                 mContext.getSystemService(Context.LOCATION_SERVICE);
         return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
@@ -390,6 +401,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                 mClusterManager.addItem(categoryArrayList.get(i));
                 markersOnMap.put(categoryArrayList.get(i).getPosition(), categoryArrayList.get(i));
+
 
             }
         }
@@ -537,14 +549,31 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 
         super.onStart();
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        client.connect();
 
         customTabActivityHelper.bindCustomTabsService(this);
 
 
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        Action viewAction = Action.newAction(
+                Action.TYPE_VIEW, // TODO: choose an action type.
+                "Maps Page", // TODO: Define a title for the content shown.
+                // TODO: If you have web page content that matches this app activity's content,
+                // make sure this auto-generated web page URL is correct.
+                // Otherwise, set the URL to null.
+                Uri.parse("http://host/path"),
+                // TODO: Make sure this auto-generated app URL is correct.
+                Uri.parse("android-app://com.oslofjorden/http/host/path")
+        );
+        AppIndex.AppIndexApi.start(client, viewAction);
     }
 
     @Override
     protected void onResume() {
+
 
         super.onResume();
 
@@ -591,6 +620,19 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     protected void onStop() {
         super.onStop();
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        Action viewAction = Action.newAction(
+                Action.TYPE_VIEW, // TODO: choose an action type.
+                "Maps Page", // TODO: Define a title for the content shown.
+                // TODO: If you have web page content that matches this app activity's content,
+                // make sure this auto-generated web page URL is correct.
+                // Otherwise, set the URL to null.
+                Uri.parse("http://host/path"),
+                // TODO: Make sure this auto-generated app URL is correct.
+                Uri.parse("android-app://com.oslofjorden/http/host/path")
+        );
+        AppIndex.AppIndexApi.end(client, viewAction);
 
         if (addingPolylines) {
             addPolylinesHandler.removeCallbacksAndMessages(null);
@@ -618,6 +660,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         customTabActivityHelper.unbindCustomTabsService(this);
 
 
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        client.disconnect();
     }
 
     @Override
@@ -668,10 +713,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         mMap.getUiSettings().setMapToolbarEnabled(false);
 
 
-
         setUpClusterer();
-
-
 
 
         final ImageButton onOffLocationButton = (ImageButton) findViewById(R.id.onofflocationbutton);
@@ -686,7 +728,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     checkPermission();
 
                 }
-
 
 
                 //Hvis location er enabled skal man kunne flicke swithchen akkurat sånn man vil
@@ -710,12 +751,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                 }
                 //Hvis location er på skal man få flicket switchen hvis det har skjedd en endring altså location er blitt skrudd på, dette må settingsrequest handle selv siden det er et callback som blir kallt
-                else if (! locationEnabled) {
+                else if (!locationEnabled) {
                     Log.d(TAG, "onClick: gps ikke på");
                     settingsrequest();
 
                 }
-
 
 
                 if (locationUpdatesSwitch == true) {
@@ -857,7 +897,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
 
-
     private void setKyststiColor(PolylineOptions polylineOptions, String description) {
         if (description != null) {
             if (isSykkelvei(description)) {
@@ -888,7 +927,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         return description.contains("Vanskelig") || description.contains("vanskelig");
     }
 
-    private void setGoogleMapUISettings() throws SecurityException{
+    private void setGoogleMapUISettings() throws SecurityException {
 
         //enables location dot, and removes the standard google button
 
@@ -1026,7 +1065,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) throws SecurityException{
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) throws SecurityException {
 
         Log.d(TAG, "onRequestPermissionsResult: fikk svar om rettigheter");
 
@@ -1043,7 +1082,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                     CameraUpdate cameraUpdate2 = CameraUpdateFactory.newLatLngZoom(new LatLng(59.903079, 10.740479), 13);
                     mMap.moveCamera(cameraUpdate2);
-
 
 
                     haslocationPermission = true;
@@ -1069,7 +1107,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
 
 
-
             // other 'case' lines to check for other
             // permissions this app might request
         }
@@ -1081,8 +1118,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private void setMarkerDescription(String title, String description, TextView txtMarkerDescription) {
         txtMarkerDescription.setMovementMethod(LinkMovementMethod.getInstance());
 
-       String type = "Marker";
-       String markerTitle =title;
+        String type = "Marker";
+        String markerTitle = title;
 
         //Hvis den ikke er tom og er en url så skal link vises
         if (description != null) {
@@ -1099,7 +1136,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         } else {
             txtMarkerDescription.setText(markerTitle);
         }
-
 
 
     }
@@ -1132,7 +1168,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         } else if (description != null && title == null) {
 
 
-
             setTextViewHTML(kyststiInfo, description, type, title);
 
 
@@ -1152,7 +1187,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         //May launch this link
         Log.i(TAG, "makeLinkClickable: Gjør link klar for å åpnes." + span.getURL());
-        final Uri uri  = Uri.parse(uriWithDesc + "?app=1");
+        final Uri uri = Uri.parse(uriWithDesc + "?app=1");
         customTabActivityHelper.mayLaunchUrl(uri, null, null);
 
         ClickableSpan clickable = new ClickableSpan() {
@@ -1169,7 +1204,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 intentBuilder.setExitAnimations(MapsActivity.this, android.R.anim.slide_in_left, android.R.anim.slide_out_right);
 
 
-
                 //CustomTabsIntent customTabsIntent = new CustomTabsIntent.Builder(customTabActivityHelper.getSession()).build();
                 CustomTabActivityHelper.openCustomTab(MapsActivity.this, intentBuilder.build(), uri, new WebviewFallback());
             }
@@ -1183,14 +1217,14 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     @NonNull
     private String extractUrlFromDescription(URLSpan span) {
         String uriWithDesc = span.getURL();
-        uriWithDesc = uriWithDesc.substring(span.getURL().indexOf("http"),span.getURL().length());
+        uriWithDesc = uriWithDesc.substring(span.getURL().indexOf("http"), span.getURL().length());
         return uriWithDesc;
     }
 
     protected void setTextViewHTML(TextView text, String description, String type, String title) {
 
 
-        if (type.equals("Marker")){
+        if (type.equals("Marker")) {
             setMarkerInfoText(text, description, title);
         }
 
@@ -1215,9 +1249,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             URLSpan[] urls2 = null;
 
 
-
             //If there is a link in the description
-            if (urls.length != 0){
+            if (urls.length != 0) {
                 //Create the desired format of textview
                 String link = "<a href=\"" + urls[0].getURL() + "\"><u>Mer info fra Oslofjorden.com</u></a>";
                 CharSequence formattedText = Html.fromHtml(link);
@@ -1226,7 +1259,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 withCustomLinkLayout.insert(0, descriptionWithoutLink);
 
                 //If the link does not contain www return
-                if (! urls[0].getURL().contains("www")){
+                if (!urls[0].getURL().contains("www")) {
                     text.setText(description);
                     return;
                 }
@@ -1234,7 +1267,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
 
 
-            for(URLSpan span : urls2) {
+            for (URLSpan span : urls2) {
                 makeLinkClickable(withCustomLinkLayout, span);
             }
             text.setMovementMethod(LinkMovementMethod.getInstance());
@@ -1242,10 +1275,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             text.setText(withCustomLinkLayout);
 
 
-        } catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
             //Det var ingen link her
-           // descriptionWithoutLink = "Her var det desverre ingen link";
+            // descriptionWithoutLink = "Her var det desverre ingen link";
             text.setText(description);
         }
     }
@@ -1261,7 +1294,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         URLSpan[] urls2 = null;
 
         //If there is a link in the description
-        if (urls.length != 0){
+        if (urls.length != 0) {
             //Create the desired format of textview
             String link = "<a href=\"" + urls[0].getURL() + "\"><u>Mer info fra Oslofjorden.com</u></a>";
             CharSequence formattedText = Html.fromHtml(link);
@@ -1271,7 +1304,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
 
 
-        for(URLSpan span : urls2) {
+        for (URLSpan span : urls2) {
             makeLinkClickable(withCustomLinkLayout, span);
         }
         text.setMovementMethod(LinkMovementMethod.getInstance());
@@ -1317,8 +1350,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
 
 
-
-
     }
 
     @Override
@@ -1339,9 +1370,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
 
 
-
-
-
     }
 
 
@@ -1357,7 +1385,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private GoogleMap getMap() {
         return mMap;
     }
-    
+
 
     @NonNull
     private LocationRequest requestLocationUpdates() {
@@ -1420,8 +1448,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         });
     }
 
-    public void settingsrequest()
-    {
+    public void settingsrequest() {
         LocationRequest locationRequest = LocationRequest.create();
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         locationRequest.setInterval(30 * 1000);
@@ -1467,7 +1494,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         Location mLastLocation = null;
         try {
-          mLastLocation  = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+            mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
         } catch (SecurityException e) {
             e.printStackTrace();
         }
@@ -1509,11 +1536,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         getMap().setOnMarkerClickListener(mClusterManager);
 
 
-
-
-
     }
-
 
 
     private void addItems() {
@@ -1521,7 +1544,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         //Create a list of added markers
 
         mClusterManager.addItem(new MyMarkerOptions(new MarkerOptions().position(new LatLng(0, 0))));
-
 
 
         Log.d(TAG, "addItems: " + markersReadyToAdd.size());
@@ -1602,7 +1624,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
 
 
-
     }
 
     @Override
@@ -1627,7 +1648,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         this.checkedItems = checkedItems;
 
         loadCheckedItems(checkedItems);
-
 
 
     }
@@ -1729,7 +1749,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             findViewById(R.id.loading).setVisibility(View.GONE);
 
 
-
             if (checkedItems[0] == false) {
                 Log.d(TAG, "onPostExecute: satt addedtodatastructure til true");
                 addedToDataStructure = true;
@@ -1762,7 +1781,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
 
 
-
             out.close();
 
 
@@ -1774,7 +1792,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             e.printStackTrace();
         }
 
-        Log.d(TAG, "onPostExecute: slutt skriving " + (System.currentTimeMillis()-time));
+        Log.d(TAG, "onPostExecute: slutt skriving " + (System.currentTimeMillis() - time));
     }
 
 
@@ -1818,7 +1836,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
-        Log.d(TAG, "onPostExecute: slutt lesing" + (System.currentTimeMillis()-time2));
+        Log.d(TAG, "onPostExecute: slutt lesing" + (System.currentTimeMillis() - time2));
     }
 
     private boolean readBinaryPolylinesMap() {
@@ -1866,7 +1884,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         return false;
     }
 
-    private void clearItems(){
+    private void clearItems() {
 
         if (mMap != null) {
             mMap.clear();
@@ -1874,8 +1892,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             polylinesOnMap.clear();
             markersOnMap.clear();
-
-
 
 
             markersReadyToAdd.clear();
@@ -1907,7 +1923,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 clickedClusterItem = item;
 
                 setMarkerDescription(item.getTitle(), item.getDescription(), markerInfo);
-
 
 
                 return false;
@@ -1944,11 +1959,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         /////
 
 
-
-
-
-
-
         if (createPolylinesAndPutInInfomap()) return;
 
 
@@ -1972,7 +1982,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             if (line == null) {
                 break;
             }
-            if (! line.contains("gpxx_WaypointExtension")) {
+            if (!line.contains("gpxx_WaypointExtension")) {
                 continue;
             }
 
@@ -1991,7 +2001,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             for (int i = 0; i < markerTypesArray.length; i++) {
                 //Gets only the part with the relevant information
-                markerTypesArray[i] = markerTypesArray[i].substring(markerTypesArray[i].indexOf(">")+1, markerTypesArray[i].indexOf("</"));
+                markerTypesArray[i] = markerTypesArray[i].substring(markerTypesArray[i].indexOf(">") + 1, markerTypesArray[i].indexOf("</"));
             }
 
 
@@ -2006,7 +2016,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         }
 
-        Log.d(TAG, "getDataFromFileAndPutInDatastructure: ferdig parse markres" + (System.currentTimeMillis()-time2));
+        Log.d(TAG, "getDataFromFileAndPutInDatastructure: ferdig parse markres" + (System.currentTimeMillis() - time2));
 
 
     }
@@ -2020,7 +2030,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
 
             List<LatLng> coordinates = new ArrayList<>();
-            for (double[] coordinatepair: coordinatelist) {
+            for (double[] coordinatepair : coordinatelist) {
                 coordinates.add(new LatLng(coordinatepair[0], coordinatepair[1]));
 
                 if (stopAsyncTaskIfOnStop()) {
@@ -2028,7 +2038,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     return true;
                 }
             }
-
 
 
             //Make a new polyline
@@ -2054,7 +2063,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         Log.d(TAG, "getDataFromFileAndPutInDatastructure: start filparsing");
         long time = System.currentTimeMillis();
-        int[] xmlfile = { R.raw.k1, R.raw.k2, R.raw.k3, R.raw.k4, R.raw.k5, R.raw.k6, R.raw.k7, R.raw.k8, R.raw.k9, R.raw.k10,R.raw.k11, R.raw.k12, R.raw.k13, R.raw.k14, R.raw.k15,R.raw.k16, R.raw.k17, R.raw.k18, R.raw.k19, R.raw.k20,R.raw.k21, R.raw.k21, R.raw.k22, R.raw.k23, R.raw.k24,R.raw.k25, R.raw.k26, R.raw.k27, R.raw.k28, R.raw.k29,R.raw.k30, R.raw.k31, R.raw.k32, R.raw.k33, R.raw.k34,R.raw.k35, R.raw.k36, R.raw.k37, R.raw.k38, R.raw.k39,R.raw.k40, R.raw.k41, R.raw.k42, R.raw.k43, R.raw.k44,R.raw.k45};
+        int[] xmlfile = {R.raw.k1, R.raw.k2, R.raw.k3, R.raw.k4, R.raw.k5, R.raw.k6, R.raw.k7, R.raw.k8, R.raw.k9, R.raw.k10, R.raw.k11, R.raw.k12, R.raw.k13, R.raw.k14, R.raw.k15, R.raw.k16, R.raw.k17, R.raw.k18, R.raw.k19, R.raw.k20, R.raw.k21, R.raw.k21, R.raw.k22, R.raw.k23, R.raw.k24, R.raw.k25, R.raw.k26, R.raw.k27, R.raw.k28, R.raw.k29, R.raw.k30, R.raw.k31, R.raw.k32, R.raw.k33, R.raw.k34, R.raw.k35, R.raw.k36, R.raw.k37, R.raw.k38, R.raw.k39, R.raw.k40, R.raw.k41, R.raw.k42, R.raw.k43, R.raw.k44, R.raw.k45};
 
         for (int i = 0; i < xmlfile.length; i++) {
             InputStream inputStream = getResources().openRawResource(xmlfile[i]);
@@ -2098,7 +2107,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     String coord = coordinates.get(j).toString();
                     double lng = Double.valueOf(coord.substring(1, coord.indexOf(",")));
 
-                    coord = coord.substring(coord.indexOf(",")+1, coord.length());
+                    coord = coord.substring(coord.indexOf(",") + 1, coord.length());
                     double lat = Double.valueOf(coord.substring(0, coord.indexOf(",")));
 
                     double[] latLng = {lat, lng};
@@ -2128,7 +2137,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         }
 
-        Log.d(TAG, "getDataFromFileAndPutInDatastructure: ferdig parse kyststier" + (System.currentTimeMillis()-time));
+        Log.d(TAG, "getDataFromFileAndPutInDatastructure: ferdig parse kyststier" + (System.currentTimeMillis() - time));
 
     }
 
@@ -2137,8 +2146,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         JSONObject obj = null;
         //For all the lines ending with ","
         if (line.matches(".{0,},")) {
-             obj = new JSONObject(line.substring(0, line.length()-1));
-          //The line does not end with ","
+            obj = new JSONObject(line.substring(0, line.length() - 1));
+            //The line does not end with ","
         } else if (line.matches(".{0,}[^,]")) {
             obj = new JSONObject(line);
         }
@@ -2146,52 +2155,52 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private void putMarkerInLists(String line, MarkerOptions options) {
-        if (line.contains("Rampe")){
+        if (line.contains("Rampe")) {
             rampeMarkers.add(new MyMarkerOptions(options));
         }
-        if (line.contains("Badeplass")){
+        if (line.contains("Badeplass")) {
             beachMarkers.add(new MyMarkerOptions(options));
         }
-        if (line.contains("Kran/Truck")){
+        if (line.contains("Kran/Truck")) {
             kranTruckMarkers.add(new MyMarkerOptions(options));
         }
-        if (line.contains("Bunkers")){
+        if (line.contains("Bunkers")) {
             bunkersMarkers.add(new MyMarkerOptions(options));
         }
-        if (line.contains("Butikk")){
+        if (line.contains("Butikk")) {
             butikkMarkers.add(new MyMarkerOptions(options));
         }
-        if (line.contains("Spisested")){
+        if (line.contains("Spisested")) {
             spisestedMarkers.add(new MyMarkerOptions(options));
         }
-        if (line.contains("Uthavn")){
+        if (line.contains("Uthavn")) {
             uthavnMarkers.add(new MyMarkerOptions(options));
         }
-        if (line.contains("Fyr")){
+        if (line.contains("Fyr")) {
             fyrMarkers.add(new MyMarkerOptions(options));
         }
-        if (line.contains("Båtbutikk")){
+        if (line.contains("Båtbutikk")) {
             baatbutikkMarkers.add(new MyMarkerOptions(options));
         }
-        if (line.contains("Marina")){
+        if (line.contains("Marina")) {
             marinaMarkers.add(new MyMarkerOptions(options));
         }
-        if (line.contains("Gjestehavn")){
+        if (line.contains("Gjestehavn")) {
             gjestehavnMarkers.add(new MyMarkerOptions(options));
         }
-        if (line.contains("Parkering transp")){
+        if (line.contains("Parkering transp")) {
             parkeringTranspMarkers.add(new MyMarkerOptions(options));
         }
-        if (line.contains("WC")){
+        if (line.contains("WC")) {
             WCMarkers.add(new MyMarkerOptions(options));
         }
-        if (line.contains("Point of Interes")){
+        if (line.contains("Point of Interes")) {
             pointOfInterestMarkers.add(new MyMarkerOptions(options));
         }
-        if (line.contains("Campingplass")){
+        if (line.contains("Campingplass")) {
             campingplassMarkers.add(new MyMarkerOptions(options));
         }
-        if (line.contains("Fiskeplass")){
+        if (line.contains("Fiskeplass")) {
             fiskeplassMarkers.add(new MyMarkerOptions(options));
         }
     }
@@ -2203,7 +2212,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         MarkerOptions options = new MarkerOptions();
         setMarkerPosition(line, options);
         options.title(name);
-        options.snippet(""+ desc);
+        options.snippet("" + desc);
 
 /*
         //ditching icons for now
@@ -2229,8 +2238,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
 
-
-
     @NonNull
     private StringBuilder createDescriptionFromLinkAndMarkerTypes(String link, String[] markerTypesArray) {
 
@@ -2251,8 +2258,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         StringBuilder desc = new StringBuilder();
         desc.append("- ");
-        for (int i = 1; i < markerTypesArray.length; i++){
-            if (i == markerTypesArray.length-1){
+        for (int i = 1; i < markerTypesArray.length; i++) {
+            if (i == markerTypesArray.length - 1) {
                 desc.append(markerTypesArray[i]);
                 break;
             }
@@ -2271,7 +2278,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         String coordinates = line.substring(indexOfStartCoordinate, indexOfEndCoordinate);
 
         double longitude = Double.valueOf(coordinates.substring(0, coordinates.indexOf(",")));
-        double latitude = Double.valueOf(coordinates.substring(coordinates.indexOf(",")+1));
+        double latitude = Double.valueOf(coordinates.substring(coordinates.indexOf(",") + 1));
 
 
         options.position(new LatLng(latitude, longitude));
@@ -2285,7 +2292,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         private BitmapDescriptor icon;
 
 
-
         public MyMarkerOptions(MarkerOptions myMarkerOptions) {
             this.title = myMarkerOptions.getTitle();
             this.description = myMarkerOptions.getSnippet();
@@ -2293,7 +2299,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             this.icon = myMarkerOptions.getIcon();
 
         }
-
 
 
         @Override
