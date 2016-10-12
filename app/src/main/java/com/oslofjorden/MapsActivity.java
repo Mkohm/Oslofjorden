@@ -1532,7 +1532,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         // Point the map's listeners at the listeners implemented by the cluster
         // manager.
-        getMap().setOnCameraChangeListener(mClusterManager);
+        //getMap().setOnCameraChangeListener(mClusterManager);
+        getMap().setOnCameraIdleListener(mClusterManager);
+
         getMap().setOnMarkerClickListener(mClusterManager);
 
 
@@ -1944,6 +1946,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         //  /
         //Choose which way to read files here, readBinaryFiles is the best option and could be alone in its execution
 
+        //If you want to update the data
+        // 1. Uncomment the three methods below and comment out readBinaryFiles() - also uncomment the permission in the manifest
+        // 2. Run
+        // 3. Comment out the three methods again and uncomment readBinaryFiles - comment out the permission in the manifest
 
         //readFromJsonfilesAndPutInBinaryMaps();
         //writeBinaryFile("binarykyststiinfomapmanynew", binarykyststiInfoMap);
@@ -1969,7 +1975,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         final TextView markerInfo = (TextView) findViewById(R.id.infobar);
         setOnClusterItemClickListener(markerInfo);
 
-        InputStream inputStream = getResources().openRawResource(R.raw.interesting_points);
+        InputStream inputStream = getResources().openRawResource(R.raw.interesting_points_oktober);
         BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
 
         while (true) {
@@ -2063,7 +2069,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         Log.d(TAG, "getDataFromFileAndPutInDatastructure: start filparsing");
         long time = System.currentTimeMillis();
-        int[] xmlfile = {R.raw.k1, R.raw.k2, R.raw.k3, R.raw.k4, R.raw.k5, R.raw.k6, R.raw.k7, R.raw.k8, R.raw.k9, R.raw.k10, R.raw.k11, R.raw.k12, R.raw.k13, R.raw.k14, R.raw.k15, R.raw.k16, R.raw.k17, R.raw.k18, R.raw.k19, R.raw.k20, R.raw.k21, R.raw.k21, R.raw.k22, R.raw.k23, R.raw.k24, R.raw.k25, R.raw.k26, R.raw.k27, R.raw.k28, R.raw.k29, R.raw.k30, R.raw.k31, R.raw.k32, R.raw.k33, R.raw.k34, R.raw.k35, R.raw.k36, R.raw.k37, R.raw.k38, R.raw.k39, R.raw.k40, R.raw.k41, R.raw.k42, R.raw.k43, R.raw.k44, R.raw.k45};
+        int[] xmlfile = {R.raw.k1, R.raw.k2, R.raw.k3, R.raw.k4, R.raw.k5, R.raw.k6, R.raw.k7, R.raw.k8, R.raw.k9, R.raw.k10, R.raw.k11, R.raw.k12, R.raw.k13, R.raw.k14, R.raw.k15, R.raw.k16, R.raw.k17, R.raw.k18, R.raw.k19, R.raw.k20, R.raw.k21, R.raw.k21, R.raw.k22, R.raw.k23, R.raw.k24, R.raw.k25, R.raw.k26, R.raw.k27, R.raw.k28, R.raw.k29, R.raw.k30, R.raw.k31, R.raw.k32, R.raw.k33, R.raw.k34, R.raw.k35, R.raw.k36, R.raw.k37, R.raw.k38, R.raw.k39, R.raw.k40, R.raw.k41, R.raw.k42, R.raw.k43, R.raw.k44, R.raw.k45, R.raw.k46, R.raw.k47, R.raw.k48, R.raw.k49, R.raw.k50, R.raw.k51};
 
         for (int i = 0; i < xmlfile.length; i++) {
             InputStream inputStream = getResources().openRawResource(xmlfile[i]);
