@@ -20,6 +20,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 
 import com.google.android.gms.appindexing.Action;
@@ -247,6 +248,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         addArrayListsToArraylistOfArrayLists();
         createDefaultCheckedArray();
 
+
+        
 
         //The first time the user launches the app, this message will be shown
         showInfomessageToUserIfFirstTime();
@@ -1767,7 +1770,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         try {
 
-            File myFile = new File("/sdcard/" + filename + ".bin");
+            File myFile = new File(getApplicationContext().getExternalFilesDir("minfil"), filename + ".bin");
 
             FileOutputStream fileout = new FileOutputStream(myFile);
             ObjectOutputStream out = new ObjectOutputStream(fileout);
@@ -1813,7 +1816,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         Log.d(TAG, "onPostExecute: start");
         try {
-            InputStream inputStream = getResources().openRawResource(R.raw.binarykyststiinfomapmanynew);
+            InputStream inputStream = getResources().openRawResource(R.raw.kyststiinfomap_new);
             ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
 
             int counter = 0;
@@ -1843,7 +1846,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private boolean readBinaryPolylinesMap() {
         try {
-            InputStream inputStream = getResources().openRawResource(R.raw.binarypolylinesmanynew);
+            InputStream inputStream = getResources().openRawResource(R.raw.polylinesmap_new);
             ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
 
             int counter = 0;
@@ -1949,12 +1952,14 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         //If you want to update the data
         // 1. Uncomment the three methods below and comment out readBinaryFiles() - also uncomment the permission in the manifest
         // 2. Run
-        // 3. Comment out the three methods again and uncomment readBinaryFiles - comment out the permission in the manifest
+        // 3. The binary files will be stored at the sd-card where you manually will have to get them out. Stored in com.oslofjorden/data ...
+        // 4. Paste the files into the project, and delete the old ones, update the methods with the correct filenames
+        // 5. Comment out the three methods again and uncomment readBinaryFiles - comment out the permission in the manifest
+        
 
         //readFromJsonfilesAndPutInBinaryMaps();
-        //writeBinaryFile("binarykyststiinfomapmanynew", binarykyststiInfoMap);
-        //writeBinaryFile("binarypolylinesmanynew", binaryPolylinesMap);
-
+        //writeBinaryFile("kyststiinfomap", binarykyststiInfoMap);
+        //writeBinaryFile("polylinesmap", binaryPolylinesMap);
 
         readBinaryFiles();
 
@@ -1975,7 +1980,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         final TextView markerInfo = (TextView) findViewById(R.id.infobar);
         setOnClusterItemClickListener(markerInfo);
 
-        InputStream inputStream = getResources().openRawResource(R.raw.interesting_points_oktober);
+        InputStream inputStream = getResources().openRawResource(R.raw.interesting_points_oktober2);
         BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
 
         while (true) {

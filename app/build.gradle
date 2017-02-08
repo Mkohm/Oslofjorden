@@ -7,8 +7,8 @@ android {
         applicationId 'com.oslofjorden'
         minSdkVersion 16
         targetSdkVersion 23
-        versionName '1.1.14'
-        versionCode 37
+        versionName '1.1.17'
+        versionCode 40
 
     }
     buildTypes {
