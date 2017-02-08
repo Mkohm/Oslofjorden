@@ -1,0 +1,150 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    >
+
+    <!-- Settings, should always be in the overflow, this is not used!!!!!!!!!!!!!!!!!!!!    -->
+
+    <group
+        android:checkableBehavior="all"
+        >
+        <item android:id="@+id/kyststier"
+            android:title="Kyststier"
+            app:showAsAction="always"
+            android:checkable="true"
+
+            >
+
+        </item>
+
+        <item android:id="@+id/badeplasser"
+            android:title="Badeplasser"
+            app:showAsAction="always"
+            android:icon="@drawable/swimming"
+          >
+
+
+        </item>
+
+        <item android:id="@+id/baatramper"
+            android:title="Båtramper"
+            app:showAsAction="always"
+            >
+
+        </item>
+
+        <item android:id="@+id/butikk"
+            android:title="Butikk"
+            app:showAsAction="never"
+
+            >
+
+        </item>
+
+        <item android:id="@+id/spisested"
+            android:title="Spisesteder"
+            app:showAsAction="never"
+            >
+
+        </item>
+
+        <item android:id="@+id/fyr"
+            android:title="Fyr"
+            app:showAsAction="never"
+            >
+
+        </item>
+
+        <item android:id="@+id/bunkers"
+            android:title="Bunkers"
+            app:showAsAction="never"
+            >
+
+        </item>
+
+        <item android:id="@+id/marina"
+            android:title="Marinaer"
+            app:showAsAction="never"
+                >
+
+        </item>
+        <item android:id="@+id/gjestehavn"
+            android:title="Gjestehavner"
+            app:showAsAction="never"
+            >
+
+        </item>
+        <item android:id="@+id/parkeringTrans"
+            android:title="Parkering/Transport"
+            app:showAsAction="never"
+            >
+
+        </item>
+        <item android:id="@+id/poi"
+            android:title="Point of interest"
+            app:showAsAction="never"
+            >
+
+        </item>
+
+
+        <item android:id="@+id/uthavn"
+            android:title="Uthavner"
+            app:showAsAction="never"
+            >
+
+        </item>
+
+
+        <item android:id="@+id/mer"
+            android:title="Mer.."
+            android:checkable="false">
+
+            <menu>
+                <group
+                    android:checkableBehavior="all">
+                    <item android:id="@+id/kranTruck"
+                        android:title="Kran/Truck"
+                        app:showAsAction="never"
+                        >
+
+                    </item>
+                    <item android:id="@+id/baatbutikk"
+                        android:title="Båtbutikker"
+                        app:showAsAction="never"
+                        >
+
+                    </item>
+                    <item android:id="@+id/campingplass"
+                        android:title="Campingplasser"
+                        app:showAsAction="never"
+                        >
+
+                    </item>
+                    <item android:id="@+id/wc"
+                        android:title="WC"
+                        app:showAsAction="never"
+                        >
+
+                    </item>
+
+                    <item android:id="@+id/fiskeplasser"
+                        android:title="Fiskeplasser"
+                        app:showAsAction="never"
+                        >
+
+                    </item>
+                </group>
+            </menu>
+
+        </item>
+
+
+
+    </group>
+
+
+
+
+
+
+</menu>
