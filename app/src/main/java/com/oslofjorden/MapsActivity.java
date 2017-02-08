@@ -174,6 +174,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private final int PERMISSIONS_OK = 1;
 
 
+
     private CustomTabActivityHelper customTabActivityHelper;
 
     private static ArrayList<MyMarkerOptions> beachMarkers = new ArrayList<>();
