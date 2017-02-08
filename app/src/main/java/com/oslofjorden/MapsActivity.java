@@ -142,7 +142,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public ClusterManager<MyMarkerOptions> mClusterManager;
 
 
-
     private boolean infobarUp = false;
 
     //If the last location was found, this variable is true, the app then swithches to use lastcameraposition to position the camera onPause/onResume
@@ -172,8 +171,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private static final String STATE_RESOLVING_ERROR = "resolving_error";
 
     private final int PERMISSIONS_OK = 1;
-
-
 
     private CustomTabActivityHelper customTabActivityHelper;
 
