@@ -13,50 +13,57 @@ class BinaryGenerator {
 
         val path = System.getProperty("user.dir")
 
+        File(path + "/binarygenerator/src/main/java/com/oslofjorden/binarygenerator/mapData/")
+                .walk().forEach {
 
-        //  for (i in xmlfile.indices) {
-        val inputStream = File(path + "/binarygenerator/src/main/java/com/oslofjorden/binarygenerator/mapData/k3.json").inputStream()
+            if (it.isFile) {
 
-        val reader = BufferedReader(InputStreamReader(inputStream))
+                val reader = BufferedReader(InputStreamReader(it.inputStream()))
 
-        while (true) {
 
-            val line = reader.readLine() ?: break
-            if (!line.contains("coordinates")) {
-                continue
+                while (true) {
+
+                    val line = reader.readLine() ?: break
+                    if (!line.contains("coordinates")) {
+                        continue
+                    }
+
+                    println(line)
+
+
+                    val jsonObject = createJsonObject(line)
+
+                    val properties = jsonObject?.getJSONObject("properties")
+                    val name = properties?.get("Name") as String
+
+
+                    val description = properties.optString("description", "Vi har desverre " +
+                            "ingen beskrivelse av dette stedet")
+
+
+                    val geometry = jsonObject?.getJSONObject("geometry")
+                    val jsonCoordinates = geometry?.getJSONArray("coordinates")
+
+                    val coordinates = ArrayList<DoubleArray>()
+
+                    for (j in 0 until (jsonCoordinates?.length() ?: 0)) {
+
+                        var coord = jsonCoordinates?.get(j).toString()
+                        val lng = java.lang.Double.valueOf(coord.substring(1, coord.indexOf(",")))!!
+
+                        coord = coord.substring(coord.indexOf(",") + 1, coord.length)
+                        val lat = java.lang.Double.valueOf(coord.substring(0, coord.indexOf(",")))!!
+
+                        val latLng = doubleArrayOf(lat, lng)
+                        coordinates.add(latLng)
+                    }
+
+
+                    val polyline = CustomPolyline(name, description, coordinates)
+                    polylines.add(polyline)
+                }
             }
-
-            val obj = createJsonObject(line)
-            val properties = obj?.getString("properties")
-            val obj2 = JSONObject(properties)
-            val geometry = obj?.getString("geometry")
-            val obj3 = JSONObject(geometry)
-
-
-            val name = obj2.getString("Name")
-            val description = obj2.getString("description")
-            val jsonCoordinates = obj3.getJSONArray("coordinates")
-
-            val coordinates = ArrayList<DoubleArray>()
-
-            for (j in 0 until jsonCoordinates.length()) {
-
-                var coord = jsonCoordinates.get(j).toString()
-                val lng = java.lang.Double.valueOf(coord.substring(1, coord.indexOf(",")))!!
-
-                coord = coord.substring(coord.indexOf(",") + 1, coord.length)
-                val lat = java.lang.Double.valueOf(coord.substring(0, coord.indexOf(",")))!!
-
-                val latLng = doubleArrayOf(lat, lng)
-                coordinates.add(latLng)
-            }
-
-
-            val polyline = CustomPolyline(name, description, coordinates)
-            polylines.add(polyline)
         }
-
-        //    }
 
         return polylines
     }
@@ -97,5 +104,5 @@ fun main(args: Array<String>) {
     val generator = BinaryGenerator()
     val polylines = generator.readFromJsonfilesAndPutInBinaryMaps()
 
-    //writeBinaryFile(polylines)
+    generator.writeBinaryFile(polylines)
 }
