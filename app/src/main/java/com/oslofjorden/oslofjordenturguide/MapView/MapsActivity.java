@@ -425,6 +425,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                             return;
                         }
 
+                        options = mMap.addPolyline(iterator.next());
+
+Polyline polyline = mMap.addPolyline(iterator.next());
+                        polyline.setTag(data);
 
                         //Log.d(TAG, "run: legger til kyststi");
                         try {

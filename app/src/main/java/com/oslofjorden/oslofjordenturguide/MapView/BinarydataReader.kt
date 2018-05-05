@@ -27,6 +27,8 @@ class BinarydataReader(val context: Context, val task: AsyncTask<Void, Int, Void
                 return null
             }
 
+            val polyline = objectInputStream.readObject() as SerializablePolyline
+
 
             val coord = objectInputStream.readObject() as List<DoubleArray>
             val info = objectInputStream.readObject() as Array<String>

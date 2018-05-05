@@ -1,20 +1,26 @@
 package com.oslofjorden.binarygenerator
 
 
+import org.json.JSONArray
 import org.json.JSONObject
 import java.io.*
-import java.util.*
+import java.lang.Double
+import java.util.regex.Pattern
+
 
 class BinaryGenerator {
 
-    fun readFromJsonfilesAndPutInBinaryMaps(): List<CustomPolyline> {
+    fun readFromJsonfilesCreateLists(): Array<java.util.ArrayList<out Serializable>> {
 
-        val polylines = ArrayList<CustomPolyline>()
+        val names = ArrayList<String>()
+        val descriptions = ArrayList<String>()
+        val links = ArrayList<String?>()
+        val coordinatesList = ArrayList<ArrayList<DoubleArray>>()
+
 
         val path = System.getProperty("user.dir")
 
-        File(path + "/binarygenerator/src/main/java/com/oslofjorden/binarygenerator/mapData/")
-                .walk().forEach {
+        File(path + "/binarygenerator/src/main/java/com/oslofjorden/binarygenerator/mapData/").walk().forEach {
 
             if (it.isFile) {
 
@@ -28,56 +34,83 @@ class BinaryGenerator {
                         continue
                     }
 
-                    println(line)
-
 
                     val jsonObject = createJsonObject(line)
 
-                    val properties = jsonObject?.getJSONObject("properties")
-                    val name = properties?.get("Name") as String
-
-
-                    val description = properties.optString("description", "Vi har desverre " +
+                    val propertiesObject = jsonObject?.getJSONObject("properties")
+                    val name = propertiesObject?.get("Name") as String
+                    var description = propertiesObject.optString("description", "Vi har desverre " +
                             "ingen beskrivelse av dette stedet")
 
 
-                    val geometry = jsonObject?.getJSONObject("geometry")
-                    val jsonCoordinates = geometry?.getJSONArray("coordinates")
+                    val geometryObject = jsonObject.getJSONObject("geometry")
+                    val jsonCoordinates = geometryObject.getJSONArray("coordinates")
+                    val coordinates = getCoordinates(jsonCoordinates)
 
-                    val coordinates = ArrayList<DoubleArray>()
-
-                    for (j in 0 until (jsonCoordinates?.length() ?: 0)) {
-
-                        var coord = jsonCoordinates?.get(j).toString()
-                        val lng = java.lang.Double.valueOf(coord.substring(1, coord.indexOf(",")))!!
-
-                        coord = coord.substring(coord.indexOf(",") + 1, coord.length)
-                        val lat = java.lang.Double.valueOf(coord.substring(0, coord.indexOf(",")))!!
-
-                        val latLng = doubleArrayOf(lat, lng)
-                        coordinates.add(latLng)
-                    }
+                    names.add(name)
 
 
-                    val polyline = CustomPolyline(name, description, coordinates)
-                    polylines.add(polyline)
+                    val url = extractUrl(description)
+                    links.add(url)
+
+                    description = extractDescription(description)
+                    descriptions.add(description)
+
+                    coordinatesList.add(coordinates)
+
                 }
             }
         }
 
-        return polylines
+        return arrayOf(names, descriptions, coordinatesList)
+    }
+
+    private fun extractUrl(description: String): String? {
+
+        try {
+            return description.substring(description.indexOf("www"), description.indexOf
+            (".html") + 5)
+        } catch (e: Exception) {
+            return null
+        }
+    }
+
+    private fun extractDescription(description: String): String {
+        var description1 = description
+        try {
+            description1 = description1.substring(0, description1.indexOf("<a ")).trim()
+        } catch (e: Exception) {
+            description1 = description1.trim()
+        }
+        return description1
+    }
+
+    private fun getCoordinates(jsonCoordinates: JSONArray): ArrayList<DoubleArray> {
+        val coordinates = ArrayList<DoubleArray>()
+        for (j in 0 until jsonCoordinates.length()) {
+
+            var coord = jsonCoordinates.get(j).toString()
+            val lng = Double.valueOf(coord.substring(1, coord.indexOf(",")))!!
+
+            coord = coord.substring(coord.indexOf(",") + 1, coord.length)
+            val lat = Double.valueOf(coord.substring(0, coord.indexOf(",")))!!
+
+            val latLng = doubleArrayOf(lat, lng)
+            coordinates.add(latLng)
+        }
+        return coordinates
     }
 
     //Writes objects to the file, two objects at each iteration, so when reading it can be checked if the thread is cancelled
-    fun writeBinaryFile(polylines: List<CustomPolyline>) {
-
+    fun writeBinaryFile(data: Array<java.util.ArrayList<out Serializable>>) {
 
         val fileout = FileOutputStream("polylines_binary_file")
         val out = ObjectOutputStream(fileout)
-        //out.writeObject(binarykyststiInfoMap);
 
-        for (polyline in polylines) {
-            out.writeObject(polyline);
+        for (i in 0..data[0].size - 1) {
+            out.writeObject(data[0].get(i))
+            out.writeObject(data[1].get(i))
+            out.writeObject(data[2].get(i))
         }
 
 
@@ -96,13 +129,28 @@ class BinaryGenerator {
         return obj
     }
 
+    //Pull all links from the body for easy retrieval
+    private fun pullLink(text: String): ArrayList<String> {
+        val links = ArrayList<String>()
+
+        val regex = "www"
+        val p = Pattern.compile(regex)
+        val m = p.matcher(text)
+        while (m.find()) {
+            var urlStr = m.group()
+            println(urlStr)
+            links.add(urlStr)
+        }
+        return links
+    }
+
 }
 
 
 fun main(args: Array<String>) {
 
     val generator = BinaryGenerator()
-    val polylines = generator.readFromJsonfilesAndPutInBinaryMaps()
+    val data = generator.readFromJsonfilesCreateLists()
 
-    generator.writeBinaryFile(polylines)
+    generator.writeBinaryFile(data)
 }
