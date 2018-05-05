@@ -3,6 +3,9 @@ package com.oslofjorden.oslofjordenturguide.MapView
 import android.content.Context
 import android.os.AsyncTask
 import android.util.Log
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.PolylineOptions
+import java.io.EOFException
 import java.io.ObjectInputStream
 
 class BinarydataReader(val context: Context, val task: AsyncTask<Void, Int, Void>) {
@@ -11,36 +14,49 @@ class BinarydataReader(val context: Context, val task: AsyncTask<Void, Int, Void
         val TAG = "TAG"
     }
 
-    fun readBinaryData(resource: Int): Map<List<DoubleArray>, Array<String>>? {
+    fun readBinaryData(resource: Int): ArrayList<PolylineData> {
 
-        var binaryPolylinesMap = HashMap<List<DoubleArray>, Array<String>>()
+        val polylineData = ArrayList<PolylineData>()
 
         val inputStream = context.resources.openRawResource(resource)
         val objectInputStream = ObjectInputStream(inputStream)
 
-        var counter = 0
 
         // todo: get the number of objects
-        while (counter < 400) {
+        while (true) {
             if (task.isCancelled) {
                 Log.d(TAG, "getDataFromFileAndPutInDatastructure: stopp")
-                return null
             }
 
-            val polyline = objectInputStream.readObject() as SerializablePolyline
+
+            try {
+                val name = objectInputStream.readObject() as String
+                val description = objectInputStream.readObject() as String
+                val url = objectInputStream.readObject() as String?
+                val binaryCoordinates = objectInputStream.readObject() as ArrayList<DoubleArray>
 
 
-            val coord = objectInputStream.readObject() as List<DoubleArray>
-            val info = objectInputStream.readObject() as Array<String>
+                val coordinates = convertToLatLngObjects(binaryCoordinates)
 
-            binaryPolylinesMap.put(coord, info)
 
-            counter++
+                val color = SelectPolylineColor.setPolylineColor(description)
+
+                polylineData.add(PolylineData(PolylineOptions().addAll(coordinates).clickable(true).color(color), name, description, url))
+
+            } catch (e: EOFException) {
+                objectInputStream.close()
+                return polylineData
+            }
+
+
         }
+    }
 
-        objectInputStream.close()
-
-
-        return binaryPolylinesMap
+    private fun convertToLatLngObjects(binaryCoordinates: ArrayList<DoubleArray>): ArrayList<LatLng> {
+        val coordinates = ArrayList<LatLng>()
+        for (i in 0 until binaryCoordinates.size) {
+            coordinates.add(LatLng(binaryCoordinates[i][0], binaryCoordinates[i][1]))
+        }
+        return coordinates
     }
 }

@@ -3,9 +3,7 @@ package com.oslofjorden.oslofjordenturguide.MapView;
 
 import android.Manifest;
 import android.app.Activity;
-import android.app.Dialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.SharedPreferences;
@@ -19,7 +17,6 @@ import android.location.LocationManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.customtabs.CustomTabsIntent;
@@ -46,7 +43,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.PendingResult;
 import com.google.android.gms.common.api.Result;
@@ -64,44 +60,30 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
-import com.google.maps.android.clustering.ClusterItem;
 import com.google.maps.android.clustering.ClusterManager;
 import com.google.maps.android.clustering.algo.GridBasedAlgorithm;
 import com.google.maps.android.clustering.algo.PreCachingAlgorithmDecorator;
-import com.google.maps.android.clustering.view.DefaultClusterRenderer;
 import com.oslofjorden.oslofjordenturguide.R;
 import com.oslofjorden.oslofjordenturguide.WebView.CustomTabActivityHelper;
 import com.oslofjorden.oslofjordenturguide.WebView.WebviewFallback;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 
 //TODO: helgeroaferfgene link meld inn - fikset i fil, fix animation of infobar, back faast after removes kyststier
-//Set different markers on different types of items
-//Let user choose what type of info to see
 //Challenge in walking kyststier
 //Infobar material design
 //Menu - hamburgermenu
@@ -154,13 +136,14 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     //Variables that the callback onconnectionfailed needs
 
     // Request code to use when launching the resolution activity
-    private static final int REQUEST_RESOLVE_ERROR = 1001;
-    // Unique tag for the error dialog fragment
-    private static final String DIALOG_ERROR = "dialog_error";
+    public static final int REQUEST_RESOLVE_ERROR = 1001;
+
     // Bool to track whether the app is already resolving an error
     private boolean mResolvingError = false;
 
-    private static final String STATE_RESOLVING_ERROR = "resolving_error";
+    public static final String STATE_RESOLVING_ERROR = "resolving_error";
+    public static final String DIALOG_ERROR = "dialog_error";
+
 
     private final int PERMISSIONS_OK = 1;
 
@@ -204,17 +187,14 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private boolean[] checkedItems;
     private boolean[] defaultChecked;
 
-    private boolean exit;
     private boolean addingPolylines = false;
 
 
     private ImageButton layerButton;
-    private InputStream inputStream;
-    private ObjectInputStream objectInputStream;
-    private Iterator<PolylineOptions> iterator;
-    private Handler addPolylinesHandler;
+
     private boolean haslocationPermission;
     private boolean locationEnabled;
+    private ArrayList<PolylineData> polylineData;
 
 
     @Override
@@ -226,7 +206,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         addedToDataStructure = false;
         infobarUp = false;
-        exit = false;
         polylinesOnMap = new ArrayList<>();
 
 
@@ -324,7 +303,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private void loadCheckedItems(boolean[] checkedList) {
-        mClusterManager.clearItems();
+//        mClusterManager.clearItems();
         markersOnMap.clear();
         //Log.d(TAG, "loadCheckedItems: " + polylinesOnMap.size());
 
@@ -392,82 +371,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private void addPolylines() {
         //Adds the polylines to the map
 
-        addingPolylines = true;
 
-        iterator = polylinesReadyToAdd.iterator();
+        for (int i = 0; i < polylineData.size(); i++) {
 
-        try {
+            Polyline polyline = mMap.addPolyline(polylineData.get(i).getOptions());
 
-            addPolylinesHandler = new Handler();
-            addPolylinesHandler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-
-                    if (stopAsyncTaskIfOnStop()) {
-
-
-                        //if you are loading kyststier and then pressing back - error, only when addinfotomap not running
-
-                        addPolylinesHandler.removeCallbacksAndMessages(null);
-                        Log.d(TAG, "run: stoppet adding av kyststier trådenh");
-
-                        return;
-                    }
-
-
-                    if (iterator.hasNext()) {
-                        if (stopAddingPolylines) {
-                            Log.d(TAG, "run: stopper task");
-
-                            stopAddingPolylines = false;
-                            Log.d(TAG, "run: stopaddingpolylines" + stopAddingPolylines);
-
-                            return;
-                        }
-
-                        options = mMap.addPolyline(iterator.next());
-
-Polyline polyline = mMap.addPolyline(iterator.next());
-                        polyline.setTag(data);
-
-                        //Log.d(TAG, "run: legger til kyststi");
-                        try {
-                            polylinesOnMap.add(mMap.addPolyline(iterator.next()));
-
-                        } catch (Exception e) {
-                            Log.d(TAG, "run: her kjørte allerede en fra før så det er mest sannsynlig concurrentmodificationexception");
-                            e.printStackTrace();
-                        }
-
-                        addPolylinesHandler.postDelayed(this, 1);
-
-
-                    } else {
-                        Log.d(TAG, "run : alle kyststier er lastet inn");
-                        stopAddingPolylines = false;
-                        addingPolylines = false;
-
-
-                        if (checkedItems[0] == true) {
-                            Log.d(TAG, "run: satt addedtodatastructure til true");
-                            addedToDataStructure = true;
-                        }
-
-                        Log.d(TAG, "run: stopaddingpolylines" + stopAddingPolylines);
-
-                        Log.d(TAG, "run: animerer ned");
-                        animateInfobarDown();
-
-
-                    }
-                }
-            }, 100);
-
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            Toast.makeText(getApplicationContext(), "Dette gikk dårlig, kyststier ble ikke lastet inn.", Toast.LENGTH_SHORT).show();
         }
+        animateInfobarDown();
     }
 
     private void removePolylines() {
@@ -575,11 +485,14 @@ Polyline polyline = mMap.addPolyline(iterator.next());
                 addInfoToMap = new AddInfoToMap();
                 addInfoToMap.execute();
 
+                Log.d(TAG, "onResume: jajaj");
 
             }
 
 
         } else {
+
+
             Log.i(TAG, "onResume: Info var lastet inn");
         }
 
@@ -593,7 +506,6 @@ Polyline polyline = mMap.addPolyline(iterator.next());
 
 
         if (addingPolylines) {
-            addPolylinesHandler.removeCallbacksAndMessages(null);
             clearItems();
             addedToDataStructure = false;
         }
@@ -851,37 +763,6 @@ Polyline polyline = mMap.addPolyline(iterator.next());
         defaultChecked[14] = false;
         defaultChecked[15] = false;
         defaultChecked[16] = false;
-    }
-
-
-    private void setKyststiColor(PolylineOptions polylineOptions, String description) {
-        if (description != null) {
-            if (isSykkelvei(description)) {
-                polylineOptions.color(Color.GREEN);
-            } else if (isFerge(description)) {
-                polylineOptions.color(Color.parseColor("#980009"));
-            } else if (isVanskeligKyststi(description)) {
-                polylineOptions.color(Color.RED);
-            } else {
-                polylineOptions.color(Color.BLUE);
-            }
-        }
-
-        if (description == null) {
-            polylineOptions.color(Color.BLUE);
-        }
-    }
-
-    private boolean isSykkelvei(String description) {
-        return description.contains("Sykkel") || description.contains("sykkel");
-    }
-
-    private boolean isFerge(String description) {
-        return (description.contains("Ferge") || description.contains("ferge")) && !description.contains("fergeleie");
-    }
-
-    private boolean isVanskeligKyststi(String description) {
-        return description.contains("Vanskelig") || description.contains("vanskelig");
     }
 
     private void setGoogleMapUISettings() throws SecurityException {
@@ -1459,8 +1340,8 @@ Polyline polyline = mMap.addPolyline(iterator.next());
             //Oslo sentrum
             lastLocation = new LatLng(59.903765, 10.699610);
         }
-        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(lastLocation, 13);
-        mMap.moveCamera(cameraUpdate);
+//        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(lastLocation, 13);
+        //      mMap.moveCamera(cameraUpdate);
 
     }
 
@@ -1478,8 +1359,7 @@ Polyline polyline = mMap.addPolyline(iterator.next());
         mClusterManager = new ClusterManager<MyMarkerOptions>(this, mMap);
         mClusterManager.setAlgorithm(new PreCachingAlgorithmDecorator<MyMarkerOptions>(new GridBasedAlgorithm<MyMarkerOptions>()));
 
-        mClusterManager.setRenderer(new OwnIconRendered(getApplicationContext(), mMap,
-                mClusterManager));
+        mClusterManager.setRenderer(new OwnIconRendered(getApplicationContext(), mMap, mClusterManager));
 
         mMap.setInfoWindowAdapter(mClusterManager.getMarkerManager());
 
@@ -1489,27 +1369,6 @@ Polyline polyline = mMap.addPolyline(iterator.next());
 
 
     }
-
-
-    private void addItems() {
-        //Find out which items to add
-        //Create a list of added markers
-
-        mClusterManager.addItem(new MyMarkerOptions(new MarkerOptions().position(new LatLng(0, 0))));
-
-
-        Log.d(TAG, "addItems: " + markersReadyToAdd.size());
-        for (MarkerOptions marker : markersReadyToAdd) {
-            if (stopAsyncTaskIfOnStop()) return;
-
-            mClusterManager.addItem(new MyMarkerOptions(marker));
-
-
-            markersOnMap.put(new MyMarkerOptions(marker).getPosition(), new MyMarkerOptions(marker));
-
-        }
-    }
-
 
     @Override
     public void onConnectionSuspended(int i) {
@@ -1610,27 +1469,6 @@ Polyline polyline = mMap.addPolyline(iterator.next());
     }
 
 
-    /* A fragment to display an error dialog */
-    public static class ErrorDialogFragment extends DialogFragment {
-        public ErrorDialogFragment() {
-        }
-
-        @Override
-        public Dialog onCreateDialog(Bundle savedInstanceState) {
-            // Get the error code and retrieve the appropriate dialog
-            int errorCode = this.getArguments().getInt(DIALOG_ERROR);
-            return GoogleApiAvailability.getInstance().getErrorDialog(
-                    this.getActivity(), errorCode, REQUEST_RESOLVE_ERROR);
-        }
-
-        @Override
-        public void onDismiss(DialogInterface dialog) {
-            ((MapsActivity) getActivity()).onDialogDismissed();
-        }
-
-    }
-
-
     class AddInfoToMap extends AsyncTask<Void, Integer, Void> {
 
         @Override
@@ -1649,7 +1487,7 @@ Polyline polyline = mMap.addPolyline(iterator.next());
         protected Void doInBackground(Void... params) {
 
             try {
-                getDataFromFileAndPutInDatastructure();
+                getDataFromFilesAndPutInDatastructure();
             } catch (IOException e) {
                 e.printStackTrace();
             } catch (JSONException e) {
@@ -1682,44 +1520,6 @@ Polyline polyline = mMap.addPolyline(iterator.next());
             }
         }
     }
-
-    //Writes objects to the file, two objects at each iteration, so when reading it can be checked if the thread is cancelled
-    private void writeBinaryFile(String filename, Map<List<double[]>, String[]> infoArray) {
-        Log.d(TAG, "onPostExecute: start" + System.currentTimeMillis());
-        long time = System.currentTimeMillis();
-
-        try {
-
-            File myFile = new File(getApplicationContext().getExternalFilesDir("minfil"), filename + ".bin");
-
-            FileOutputStream fileout = new FileOutputStream(myFile);
-            ObjectOutputStream out = new ObjectOutputStream(fileout);
-            //out.writeObject(binarykyststiInfoMap);
-
-            for (List coord : infoArray.keySet()) {
-                Log.d(TAG, "writeBinaryFile: skriver fil");
-                //writes the coordinates
-                out.writeObject(coord);
-
-                //writes the info
-                out.writeObject(infoArray.get(coord));
-            }
-
-
-            out.close();
-
-
-            Log.d(TAG, "onPostExecute: finito");
-
-
-        } catch (IOException e) {
-            Log.d(TAG, "writeBinaryFile: her skjedde det noe tull und er skriving ava fil");
-            e.printStackTrace();
-        }
-
-        Log.d(TAG, "onPostExecute: slutt skriving " + (System.currentTimeMillis() - time));
-    }
-
 
 
     public boolean stopAsyncTaskIfOnStop() {
@@ -1779,42 +1579,15 @@ Polyline polyline = mMap.addPolyline(iterator.next());
         });
     }
 
-    private void getDataFromFileAndPutInDatastructure() throws IOException, JSONException {
-
-        /////  /
-        ////  /
-        ///  /
-        //  /
-        //Choose which way to read files here, readBinaryFiles is the best option and could be alone in its execution
-
-        //If you want to update the data
-        // 1. Uncomment the three methods below and comment out readBinaryFiles() - also uncomment the permission in the manifest
-        // 2. Run
-        // 3. The binary files will be stored at the sd-card where you manually will have to get them out. Stored in com.oslofjorden/data ...
-        // 4. Paste the files into the project, and delete the old ones, update the methods with the correct filenames
-        // 5. Comment out the three methods again and uncomment readBinaryFiles - comment out the permission in the manifest
-
-
-        //readFromJsonfilesAndPutInBinaryMaps();
-        //writeBinaryFile("kyststiinfomap", binarykyststiInfoMap);
-        //writeBinaryFile("polylinesmap", binaryPolylinesMap);
+    private void getDataFromFilesAndPutInDatastructure() throws IOException, JSONException {
 
         BinarydataReader binaryReader = new BinarydataReader(getApplicationContext(), addInfoToMap);
-        Map<List<double[]>, String[]> data = binaryReader.readBinaryData(R.raw.polylinesmap_new);
-        Map<List<double[]>, String[]> data2 = binaryReader.readBinaryData(R.raw.kyststiinfomap_new);
+        polylineData = binaryReader.readBinaryData(R.raw.polylines_binary_file);
 
-        //
-        ///
-        ///
-        ////
-        /////
-
-
-        if (createPolylinesAndPutInInfomap(data)) return;
-
+/*
 
         //Add markers
-        Log.d(TAG, "getDataFromFileAndPutInDatastructure: start markerparsing");
+        Log.d(TAG, "getDataFromFilesAndPutInDatastructure: start markerparsing");
         long time2 = System.currentTimeMillis();
 
         final TextView markerInfo = (TextView) findViewById(R.id.infobar);
@@ -1824,11 +1597,6 @@ Polyline polyline = mMap.addPolyline(iterator.next());
         BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
 
         while (true) {
-            if (stopAsyncTaskIfOnStop()) {
-                Log.d(TAG, "getDataFromFileAndPutInDatastructure: stopp");
-                return;
-            }
-
             String line = reader.readLine();
             if (line == null) {
                 break;
@@ -1864,61 +1632,10 @@ Polyline polyline = mMap.addPolyline(iterator.next());
 
 
             putMarkerInLists(line, options);
-
-        }
-
-        Log.d(TAG, "getDataFromFileAndPutInDatastructure: ferdig parse markres" + (System.currentTimeMillis() - time2));
+*/
 
 
     }
-
-    private boolean createPolylinesAndPutInInfomap(Map<List<double[]>, String[]> data) {
-        //Add the polylines to the map with ready polylines
-        for (List<double[]> coordinatelist : data.keySet()) {
-            if (stopAsyncTaskIfOnStop()) {
-                Log.d(TAG, "getDataFromFileAndPutInDatastructure: stopp");
-                return true;
-            }
-
-            List<LatLng> coordinates = new ArrayList<>();
-            for (double[] coordinatepair : coordinatelist) {
-                coordinates.add(new LatLng(coordinatepair[0], coordinatepair[1]));
-
-                if (stopAsyncTaskIfOnStop()) {
-                    Log.d(TAG, "getDataFromFileAndPutInDatastructure: stopp");
-                    return true;
-                }
-            }
-
-            // todo: create an own polyline class that extends this polylineoptions to be able to
-            // put all the info there, instead of keeping it in a separate messy map.
-
-
-            //Make a new polyline
-            PolylineOptions polyline = new PolylineOptions();
-            polyline.addAll(coordinates);
-            polyline.clickable(true);
-
-
-
-
-
-
-            String desc = binaryPolylinesMap.get(coordinatelist)[1];
-            String name = binaryPolylinesMap.get(coordinatelist)[0];
-
-            setKyststiColor(polyline, desc);
-
-            polylinesReadyToAdd.add(polyline);
-
-
-            String[] descnameArray = {desc, name};
-            kyststiInfoMap.put(coordinates, descnameArray);
-        }
-        return false;
-    }
-
-
 
 
     private void putMarkerInLists(String line, MarkerOptions options) {
@@ -2033,75 +1750,6 @@ Polyline polyline = mMap.addPolyline(iterator.next());
     }
 
 
-    public class MyMarkerOptions implements ClusterItem {
-        private String title;
-        private String description;
-        private LatLng position;
-        private BitmapDescriptor icon;
-
-
-        public MyMarkerOptions(MarkerOptions myMarkerOptions) {
-            this.title = myMarkerOptions.getTitle();
-            this.description = myMarkerOptions.getSnippet();
-            this.position = myMarkerOptions.getPosition();
-            this.icon = myMarkerOptions.getIcon();
-
-        }
-
-        @Override
-        public String getSnippet() {
-            return null;
-        }
-
-        @Override
-        public LatLng getPosition() {
-            return position;
-        }
-
-        public String getDescription() {
-            return description;
-        }
-
-        public String getTitle() {
-            return title;
-        }
-
-
-        public BitmapDescriptor getIcon() {
-            return icon;
-        }
-
-        public void setDescription(String description) {
-            this.description = description;
-        }
-
-        public void setIcon(BitmapDescriptor icon) {
-            this.icon = icon;
-        }
-
-        public void setPosition(LatLng position) {
-            this.position = position;
-        }
-
-        public void setTitle(String title) {
-            this.title = title;
-        }
-    }
-
-    class OwnIconRendered extends DefaultClusterRenderer<MyMarkerOptions> {
-
-        public OwnIconRendered(Context context, GoogleMap map, ClusterManager<MyMarkerOptions> clusterManager) {
-            super(context, map, clusterManager);
-        }
-
-        @Override
-        protected void onBeforeClusterItemRendered(MyMarkerOptions item, MarkerOptions markerOptions) {
-            markerOptions.icon(item.getIcon());
-
-            super.onBeforeClusterItemRendered(item, markerOptions);
-        }
-    }
-
     @Nullable
     private JSONObject createJsonObject(String line) throws JSONException {
         JSONObject obj = null;
@@ -2116,6 +1764,3 @@ Polyline polyline = mMap.addPolyline(iterator.next());
     }
 
 }
-
-
-

@@ -10,7 +10,7 @@ import java.util.regex.Pattern
 
 class BinaryGenerator {
 
-    fun readFromJsonfilesCreateLists(): Array<java.util.ArrayList<out Serializable>> {
+    fun readFromJsonfilesCreateLists(): Array<java.util.ArrayList<out Serializable?>> {
 
         val names = ArrayList<String>()
         val descriptions = ArrayList<String>()
@@ -62,7 +62,7 @@ class BinaryGenerator {
             }
         }
 
-        return arrayOf(names, descriptions, coordinatesList)
+        return arrayOf(names, descriptions, links, coordinatesList)
     }
 
     private fun extractUrl(description: String): String? {
@@ -76,13 +76,11 @@ class BinaryGenerator {
     }
 
     private fun extractDescription(description: String): String {
-        var description1 = description
-        try {
-            description1 = description1.substring(0, description1.indexOf("<a ")).trim()
+        return try {
+            description.substring(0, description.indexOf("<a ")).trim()
         } catch (e: Exception) {
-            description1 = description1.trim()
+            description.trim()
         }
-        return description1
     }
 
     private fun getCoordinates(jsonCoordinates: JSONArray): ArrayList<DoubleArray> {
@@ -104,13 +102,14 @@ class BinaryGenerator {
     //Writes objects to the file, two objects at each iteration, so when reading it can be checked if the thread is cancelled
     fun writeBinaryFile(data: Array<java.util.ArrayList<out Serializable>>) {
 
-        val fileout = FileOutputStream("polylines_binary_file")
+        val fileout = FileOutputStream("polylines_binary_file.bin")
         val out = ObjectOutputStream(fileout)
 
-        for (i in 0..data[0].size - 1) {
+        for (i in 0 until data[0].size) {
             out.writeObject(data[0].get(i))
             out.writeObject(data[1].get(i))
             out.writeObject(data[2].get(i))
+            out.writeObject(data[3].get(i))
         }
 
 
@@ -127,21 +126,6 @@ class BinaryGenerator {
             obj = JSONObject(line)
         }
         return obj
-    }
-
-    //Pull all links from the body for easy retrieval
-    private fun pullLink(text: String): ArrayList<String> {
-        val links = ArrayList<String>()
-
-        val regex = "www"
-        val p = Pattern.compile(regex)
-        val m = p.matcher(text)
-        while (m.find()) {
-            var urlStr = m.group()
-            println(urlStr)
-            links.add(urlStr)
-        }
-        return links
     }
 
 }
