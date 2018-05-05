@@ -4,12 +4,13 @@ package com.oslofjorden.binarygenerator
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.*
-import java.lang.Double
-import java.util.regex.Pattern
 
 
 class BinaryGenerator {
 
+    /**
+     * Reads the xml files and creates lists of items ready for binary file creation
+     */
     fun readFromJsonfilesCreateLists(): Array<java.util.ArrayList<out Serializable?>> {
 
         val names = ArrayList<String>()
@@ -88,10 +89,10 @@ class BinaryGenerator {
         for (j in 0 until jsonCoordinates.length()) {
 
             var coord = jsonCoordinates.get(j).toString()
-            val lng = Double.valueOf(coord.substring(1, coord.indexOf(",")))!!
+            val lng = coord.substring(1, coord.indexOf(",")).toDouble()
 
             coord = coord.substring(coord.indexOf(",") + 1, coord.length)
-            val lat = Double.valueOf(coord.substring(0, coord.indexOf(",")))!!
+            val lat = coord.substring(0, coord.indexOf(",")).toDouble()
 
             val latLng = doubleArrayOf(lat, lng)
             coordinates.add(latLng)

@@ -1,6 +1,5 @@
 <resources>
     <string name="title_activity_maps">Oslofjorden</string>
     <string name="google_app_id">29427722334</string>
-    <string name="google_maps_key">AIzaSyAsjMeWqmQllGX7uDb3qoa8HSB2x6sCpT4</string>
 
 </resources>
