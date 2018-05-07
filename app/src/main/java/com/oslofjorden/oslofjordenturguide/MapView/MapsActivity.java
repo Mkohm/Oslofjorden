@@ -74,7 +74,6 @@ import org.json.JSONException;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -175,7 +174,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private boolean haslocationPermission;
     private boolean locationEnabled;
-    private ArrayList<PolylineData> polylineData;
+    private List<PolylineData> polylineData;
+    private List<MyMarkerOptions> markerData;
 
 
     @Override
@@ -612,8 +612,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private void setOriginalPolylineColor() {
-        String description = ((PolylineData) previousPolylineClicked.getTag()).getDescription();
-        previousPolylineClicked.setColor(SelectPolylineColor.INSTANCE.setPolylineColor(description));
+        // It will be null the first time a polyline is clicked
+        if (previousPolylineClicked != null) {
+
+            String description = ((PolylineData) previousPolylineClicked.getTag()).getDescription();
+            previousPolylineClicked.setColor(SelectPolylineColor.INSTANCE.setPolylineColor(description));
+        }
     }
 
     private void loadLastStateOfApplication() {
@@ -1198,8 +1202,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             //Oslo sentrum
             lastLocation = new LatLng(59.903765, 10.699610);
         }
-//        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(lastLocation, 13);
-        //      mMap.moveCamera(cameraUpdate);
+        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(lastLocation, 13);
+        mMap.moveCamera(cameraUpdate);
 
     }
 
@@ -1365,7 +1369,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                 clickedClusterItem = item;
 
-                setMarkerDescription(item.getTitle(), item.getDescription(), markerInfo);
+             //   setMarkerDescription(item.getTitle(), item., markerInfo);
 
 
                 return false;
@@ -1379,171 +1383,14 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         BinarydataReader binaryReader = new BinarydataReader(getApplicationContext(), addInfoToMap);
         polylineData = binaryReader.readBinaryData(R.raw.polylines_binary_file);
 
-/*
 
-        //Add markers
-        Log.d(TAG, "getDataFromFilesAndPutInDatastructure: start markerparsing");
-        long time2 = System.currentTimeMillis();
+        MarkerReader markerReader = new MarkerReader(getApplicationContext(), addInfoToMap);
+        markerData = markerReader.readMarkers();
 
         final TextView markerInfo = (TextView) findViewById(R.id.infobar);
         setOnClusterItemClickListener(markerInfo);
 
-        InputStream inputStream = getResources().openRawResource(R.raw.interesting_points_oktober2);
-        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-
-        while (true) {
-            String line = reader.readLine();
-            if (line == null) {
-                break;
-            }
-            if (!line.contains("gpxx_WaypointExtension")) {
-                continue;
-            }
-
-            JSONObject obj = createJsonObject(line);
-            String properties = obj.getString("properties");
-
-
-            JSONObject obj2 = new JSONObject(properties);
-
-            String name = obj2.getString("name");
-            String markerTypes = obj2.getString("gpxx_WaypointExtension");
-            String link = obj2.getString("link1_href");
-
-            //Contains the different types of the marker, index 0 is irrelevant, start from index 1
-            String[] markerTypesArray = markerTypes.split("          ");
-
-            for (int i = 0; i < markerTypesArray.length; i++) {
-                //Gets only the part with the relevant information
-                markerTypesArray[i] = markerTypesArray[i].substring(markerTypesArray[i].indexOf(">") + 1, markerTypesArray[i].indexOf("</"));
-            }
-
-
-            //Create the description
-            StringBuilder desc = createDescriptionFromLinkAndMarkerTypes(link, markerTypesArray);
-
-
-            MarkerOptions options = setMarkerOptions(line, name, desc, markerTypesArray);
-
-
-            putMarkerInLists(line, options);
-*/
-
-
     }
-
-
-    private void putMarkerInLists(String line, MarkerOptions options) {
-        if (line.contains("Rampe")) {
-            rampeMarkers.add(new MyMarkerOptions(options));
-        }
-        if (line.contains("Badeplass")) {
-            beachMarkers.add(new MyMarkerOptions(options));
-        }
-        if (line.contains("Kran/Truck")) {
-            kranTruckMarkers.add(new MyMarkerOptions(options));
-        }
-        if (line.contains("Bunkers")) {
-            bunkersMarkers.add(new MyMarkerOptions(options));
-        }
-        if (line.contains("Butikk")) {
-            butikkMarkers.add(new MyMarkerOptions(options));
-        }
-        if (line.contains("Spisested")) {
-            spisestedMarkers.add(new MyMarkerOptions(options));
-        }
-        if (line.contains("Uthavn")) {
-            uthavnMarkers.add(new MyMarkerOptions(options));
-        }
-        if (line.contains("Fyr")) {
-            fyrMarkers.add(new MyMarkerOptions(options));
-        }
-        if (line.contains("Båtbutikk")) {
-            baatbutikkMarkers.add(new MyMarkerOptions(options));
-        }
-        if (line.contains("Marina")) {
-            marinaMarkers.add(new MyMarkerOptions(options));
-        }
-        if (line.contains("Gjestehavn")) {
-            gjestehavnMarkers.add(new MyMarkerOptions(options));
-        }
-        if (line.contains("Parkering transp")) {
-            parkeringTranspMarkers.add(new MyMarkerOptions(options));
-        }
-        if (line.contains("WC")) {
-            WCMarkers.add(new MyMarkerOptions(options));
-        }
-        if (line.contains("Point of Interes")) {
-            pointOfInterestMarkers.add(new MyMarkerOptions(options));
-        }
-        if (line.contains("Campingplass")) {
-            campingplassMarkers.add(new MyMarkerOptions(options));
-        }
-        if (line.contains("Fiskeplass")) {
-            fiskeplassMarkers.add(new MyMarkerOptions(options));
-        }
-    }
-
-    @NonNull
-    private MarkerOptions setMarkerOptions(String line, String name, StringBuilder desc, String[] markerTypes) {
-        List<String> markerTypesArray = Arrays.asList(markerTypes);
-
-        MarkerOptions options = new MarkerOptions();
-        setMarkerPosition(line, options);
-        options.title(name);
-        options.snippet("" + desc);
-
-
-        return options;
-    }
-
-
-    @NonNull
-    private StringBuilder createDescriptionFromLinkAndMarkerTypes(String link, String[] markerTypesArray) {
-
-        //Sets the correct name on the markertype - from the name from the gpx-file to whatever you want
-        for (int i = 0; i < markerTypesArray.length; i++) {
-            String name = markerTypesArray[i];
-
-            if (name.contains("Point of Interes")) {
-                markerTypesArray[i] = "Interessant sted";
-            }
-
-            if (name.contains("Parkering transp")) {
-                markerTypesArray[i] = "Parkering og transport";
-            }
-
-        }
-
-
-        StringBuilder desc = new StringBuilder();
-        desc.append("- ");
-        for (int i = 1; i < markerTypesArray.length; i++) {
-            if (i == markerTypesArray.length - 1) {
-                desc.append(markerTypesArray[i]);
-                break;
-            }
-
-            desc.append(markerTypesArray[i] + ", ");
-        }
-        if (link != null && !link.equals("null")) {
-            desc.append("" + link);
-        }
-        return desc;
-    }
-
-    private void setMarkerPosition(String line, MarkerOptions options) {
-        int indexOfStartCoordinate = line.indexOf("\"coordinates\": [ ") + 17;
-        int indexOfEndCoordinate = line.indexOf(" ] } }");
-        String coordinates = line.substring(indexOfStartCoordinate, indexOfEndCoordinate);
-
-        double longitude = Double.valueOf(coordinates.substring(0, coordinates.indexOf(",")));
-        double latitude = Double.valueOf(coordinates.substring(coordinates.indexOf(",") + 1));
-
-
-        options.position(new LatLng(latitude, longitude));
-    }
-
 
     class AddInfoToMap extends AsyncTask<Void, Integer, Void> {
 
