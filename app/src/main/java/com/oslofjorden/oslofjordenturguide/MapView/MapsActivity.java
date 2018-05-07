@@ -5,55 +5,34 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentSender;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.PorterDuff;
 import android.location.Location;
 import android.location.LocationManager;
-import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.customtabs.CustomTabsIntent;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.text.Html;
-import android.text.SpannableStringBuilder;
-import android.text.method.LinkMovementMethod;
-import android.text.style.ClickableSpan;
-import android.text.style.URLSpan;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.Display;
 import android.view.MenuInflater;
 import android.view.View;
-import android.view.animation.Animation;
-import android.view.animation.TranslateAnimation;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
-import android.widget.TextView;
-import android.widget.Toast;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.PendingResult;
 import com.google.android.gms.common.api.Result;
 import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.location.LocationSettingsRequest;
-import com.google.android.gms.location.LocationSettingsResult;
-import com.google.android.gms.location.LocationSettingsStates;
-import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -61,14 +40,12 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.maps.android.clustering.ClusterManager;
 import com.google.maps.android.clustering.algo.GridBasedAlgorithm;
 import com.google.maps.android.clustering.algo.PreCachingAlgorithmDecorator;
 import com.oslofjorden.oslofjordenturguide.R;
 import com.oslofjorden.oslofjordenturguide.WebView.CustomTabActivityHelper;
-import com.oslofjorden.oslofjordenturguide.WebView.WebviewFallback;
 
 import org.json.JSONException;
 
@@ -76,6 +53,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.stream.Collectors;
 
 
 //TODO: helgeroaferfgene link meld inn - fikset i fil, fix animation of infobar, back faast after removes kyststier
@@ -89,14 +67,13 @@ import java.util.List;
 //lagrer ikke
 
 
-public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleApiClient.OnConnectionFailedListener, GoogleApiClient.ConnectionCallbacks, LocationListener, ResultCallback, CustomTabActivityHelper.ConnectionCallback, NoticeDialogListener {
+public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback, LocationListener, ResultCallback, CustomTabActivityHelper.ConnectionCallback, NoticeDialogListener {
     public static String TAG = "TAG";
     private static boolean stopAddingPolylines = false;
 
-    AddInfoToMap addInfoToMap;
+    protected AddInfoToMap addInfoToMap;
 
     private static GoogleMap mMap;
-    GoogleApiClient mGoogleApiClient;
 
 
     float currentZoom = 13;
@@ -104,10 +81,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     CameraPosition currentCameraPosition;
     LatLng currentMapClickPosition;
 
-    static boolean addedToDataStructure = false;
-
-    MyMarkerOptions clickedClusterItem;
-    public ClusterManager<MyMarkerOptions> mClusterManager;
+    MarkerData clickedClusterItem;
+    public ClusterManager<MarkerData> mClusterManager;
 
 
     private boolean infobarUp = false;
@@ -142,40 +117,19 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private CustomTabActivityHelper customTabActivityHelper;
 
-    private static ArrayList<MyMarkerOptions> beachMarkers = new ArrayList<>();
-    private ArrayList<MyMarkerOptions> rampeMarkers = new ArrayList<>();
-    private ArrayList<MyMarkerOptions> fiskeplassMarkers = new ArrayList<>();
-    private ArrayList<MyMarkerOptions> kranTruckMarkers = new ArrayList<>();
-    private ArrayList<MyMarkerOptions> bunkersMarkers = new ArrayList<>();
-    private ArrayList<MyMarkerOptions> butikkMarkers = new ArrayList<>();
-    private ArrayList<MyMarkerOptions> spisestedMarkers = new ArrayList<>();
-    private ArrayList<MyMarkerOptions> uthavnMarkers = new ArrayList<>();
-    private ArrayList<MyMarkerOptions> fyrMarkers = new ArrayList<>();
-    private ArrayList<MyMarkerOptions> baatbutikkMarkers = new ArrayList<>();
-    private ArrayList<MyMarkerOptions> marinaMarkers = new ArrayList<>();
-    private ArrayList<MyMarkerOptions> gjestehavnMarkers = new ArrayList<>();
-    private ArrayList<MyMarkerOptions> parkeringTranspMarkers = new ArrayList<>();
-    private ArrayList<MyMarkerOptions> WCMarkers = new ArrayList<>();
-    private ArrayList<MyMarkerOptions> pointOfInterestMarkers = new ArrayList<>();
-    private ArrayList<MyMarkerOptions> campingplassMarkers = new ArrayList<>();
-    private ArrayList<ArrayList<MyMarkerOptions>> arrayListOfArrayLists = new ArrayList<>();
-
-
-    private static ArrayList<Polyline> polylinesOnMap;
-    private HashMap<LatLng, MyMarkerOptions> markersOnMap = new HashMap();
+    private static ArrayList<Polyline> polylinesOnMap = new ArrayList<>();
+    private HashMap<LatLng, MarkerData> markersOnMap = new HashMap();
 
     private boolean[] checkedItems;
     private boolean[] defaultChecked;
-
-    private boolean addingPolylines = false;
-
 
     private ImageButton layerButton;
 
     private boolean haslocationPermission;
     private boolean locationEnabled;
     private List<PolylineData> polylineData;
-    private List<MyMarkerOptions> markerData;
+    private List<MarkerData> markerData;
+    BottomSheetController bottomSheetController;
 
 
     @Override
@@ -184,14 +138,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         setContentView(R.layout.activity_maps);
 
         Log.i(TAG, "onCreate: oncreate");
-
-        addedToDataStructure = false;
-        infobarUp = false;
-        polylinesOnMap = new ArrayList<>();
-
-
-        //Add arraylists to arraylist of arraylists //the first element is empty and never used
-        addArrayListsToArraylistOfArrayLists();
         createDefaultCheckedArray();
 
 
@@ -211,15 +157,15 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
-
-        //Create a new instance of GoogleAPIClient
-        createInstanceOfGoogleAPIClient();
-
         //Something with running google play services safaly
         mResolvingError = savedInstanceState != null
                 && savedInstanceState.getBoolean(STATE_RESOLVING_ERROR, false);
 
         setUpToolbar();
+
+        // init bottomsheet controller
+        LinearLayout linearLayout = (LinearLayout) findViewById(R.id.bottom_sheet);
+        bottomSheetController = new BottomSheetController(linearLayout, this);
 
 
         ProgressBar progressBar = (ProgressBar) findViewById(R.id.loading);
@@ -254,27 +200,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
     }
 
-
-    private void addArrayListsToArraylistOfArrayLists() {
-        arrayListOfArrayLists.add(null);
-        arrayListOfArrayLists.add(beachMarkers);
-        arrayListOfArrayLists.add(spisestedMarkers);
-        arrayListOfArrayLists.add(butikkMarkers);
-        arrayListOfArrayLists.add(parkeringTranspMarkers);
-        arrayListOfArrayLists.add(pointOfInterestMarkers);
-        arrayListOfArrayLists.add(fiskeplassMarkers);
-        arrayListOfArrayLists.add(gjestehavnMarkers);
-        arrayListOfArrayLists.add(uthavnMarkers);
-        arrayListOfArrayLists.add(bunkersMarkers);
-        arrayListOfArrayLists.add(marinaMarkers);
-        arrayListOfArrayLists.add(rampeMarkers);
-        arrayListOfArrayLists.add(kranTruckMarkers);
-        arrayListOfArrayLists.add(WCMarkers);
-        arrayListOfArrayLists.add(fyrMarkers);
-        arrayListOfArrayLists.add(baatbutikkMarkers);
-        arrayListOfArrayLists.add(campingplassMarkers);
-    }
-
     @Override
     public void onCreateContextMenu(ContextMenu menu, View v,
                                     ContextMenu.ContextMenuInfo menuInfo) {
@@ -299,7 +224,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                         addPolylines();
                     }
                 } else {
-                    addMarkersToMap(arrayListOfArrayLists.get(i));
+                    MarkerTypes type = MarkerTypes.getTypeFromIndex(i);
+                    addMarkersToMap(type);
                 }
 
             } else {
@@ -316,24 +242,33 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         mMap.animateCamera(c);
     }
 
-    private void addMarkersToMap(ArrayList<MyMarkerOptions> categoryArrayList) {
-        //Add markers to the map
-        for (int i = 0; i < categoryArrayList.size(); i++) {
-            //If the markersonmap add list contains the element, do not add it
+    private void removePolylines() {
+        for (Polyline line : polylinesOnMap) {
+            line.remove();
+        }
+    }
 
-            if (markersOnMap.containsKey(categoryArrayList.get(i).getPosition())) {
-                continue;
-            } else {
+    private void addMarkersToMap(MarkerTypes markerType) {
+        List<MarkerData> toAdd = markerData.stream().filter((marker) -> marker.getMarkerTypes().contains(markerType)).collect(Collectors.toList());
+        mClusterManager.addItems(toAdd);
 
-                //Find the highest priority icon, and then add it to the cluster manager
-                //categoryArrayList.get(i).setIcon();
+        mClusterManager.setOnClusterItemClickListener(new ClusterManager.OnClusterItemClickListener<MarkerData>() {
+            @Override
+            public boolean onClusterItemClick(MarkerData item) {
+                item.getMarkerOptions().visible(false);
 
-                mClusterManager.addItem(categoryArrayList.get(i));
-                markersOnMap.put(categoryArrayList.get(i).getPosition(), categoryArrayList.get(i));
+                bottomSheetController.expandBottomSheet();
+                bottomSheetController.setMarkerContent(item);
 
+                clickedClusterItem = item;
+
+                //   setMarkerDescription(item.getTitle(), item., markerInfo);
+
+
+                return false;
 
             }
-        }
+        });
     }
 
     private void addPolylines() {
@@ -344,25 +279,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             Polyline polyline = mMap.addPolyline(polylineData.get(i).getOptions());
             polyline.setTag(polylineData.get(i));
+            polylinesOnMap.add(polyline);
 
         }
-        animateInfobarDown();
-    }
-
-    private void removePolylines() {
-        Log.d(TAG, "removePolylines: fjerner kyststierh");
-        if (addingPolylines) {
-            stopAddingPolylines = true;
-        }
-
-        Log.d(TAG, "removePolylines: setter variabel stoppinnlasting til true");
-
-        for (Polyline poly : polylinesOnMap) {
-            Log.d(TAG, "removePolylines: ");
-            poly.remove();
-        }
-        polylinesOnMap.clear();
-
     }
 
 
@@ -386,16 +305,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     }
 
-    private void createInstanceOfGoogleAPIClient() {
-        if (mGoogleApiClient == null) {
-            mGoogleApiClient = new GoogleApiClient.Builder(this)
-                    .addConnectionCallbacks(this)
-                    .addOnConnectionFailedListener(this)
-                    .addApi(LocationServices.API)
-                    .build();
-        }
-    }
-
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
@@ -407,27 +316,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     protected void onStart() {
         super.onStart();
 
-        mGoogleApiClient.connect();
-
-        if (!mResolvingError) {  // more about this later
-            mGoogleApiClient.connect();
-        }
-
-
         customTabActivityHelper.bindCustomTabsService(this);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-
-
-        if (mGoogleApiClient.isConnected() && !mRequestingLocationUpdates) {
-            if (locationUpdatesSwitch == true) {
-                startLocationUpdates();
-            }
-
-        }
 
         if (currentCameraPosition != null) {
             mMap.moveCamera(CameraUpdateFactory.newCameraPosition(currentCameraPosition));
@@ -443,27 +337,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     protected void onStop() {
         super.onStop();
 
-        if (addingPolylines) {
-            clearItems();
-            addedToDataStructure = false;
-        }
-
-        try {
-            stopLocationUpdates();
-            mGoogleApiClient.disconnect();
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
         customTabActivityHelper.unbindCustomTabsService(this);
-    }
-
-    @Override
-    public void onBackPressed() {
-
-        super.onBackPressed();
-        this.finish();
     }
 
     @Override
@@ -474,8 +348,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             currentZoom = mMap.getCameraPosition().zoom;
             currentCameraPosition = mMap.getCameraPosition();
 
-
-            stopLocationUpdates();
         } catch (Exception e) {
             e.printStackTrace();
             Log.i(TAG, "onPause: Noe gikk galt under pause");
@@ -483,14 +355,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         }
 
-    }
-
-
-    protected void stopLocationUpdates() {
-        // TODO: error when trying to stop location updates before mgoogleapiclient is connected
-        LocationServices.FusedLocationApi.removeLocationUpdates(
-                mGoogleApiClient, this);
-        mRequestingLocationUpdates = false;
     }
 
 
@@ -503,6 +367,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         if (polylineData != null) {
             loadLastStateOfApplication();
         }
+
+        goToOsloLocation();
 
         //enable zoom buttons, and remove toolbar when clicking on markers
         mMap.getUiSettings().setZoomControlsEnabled(false);
@@ -517,8 +383,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         locationUpdatesSwitch = false;
 
 
-        onOffLocationButton.setOnClickListener(new View.OnClickListener() {
-            @Override
+        //  onOffLocationButton.setOnClickListener(new View.OnClickListener() {
+            /*@Override
             public void onClick(View v) {
                 if (!haslocationPermission) {
                     checkPermission();
@@ -557,14 +423,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 if (locationUpdatesSwitch == true) {
                     startLocationUpdates();
                 } else {
-                    stopLocationUpdates();
+                    // stopLocationUpdates();
 
                 }
 
-            }
-        });
-
-        final TextView kyststiInfo = (TextView) findViewById(R.id.infobar);
+            }*/
+        //   });
 
 
         mMap.setOnPolylineClickListener(new GoogleMap.OnPolylineClickListener() {
@@ -575,11 +439,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                 polyline.setColor(Color.BLACK);
 
-                setKyststiInfoFromDescriptionAndName((PolylineData) polyline.getTag(), kyststiInfo);
 
-                kyststiInfo.setVisibility(View.VISIBLE);
-
-                animateInfobarUp();
+                bottomSheetController.setContent(polyline);
+                bottomSheetController.expandBottomSheet();
 
 
                 previousPolylineClicked = polyline;
@@ -587,28 +449,14 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         });
 
-
         mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override
             public void onMapClick(final LatLng latLng) {
-
                 currentMapClickPosition = latLng;
-
-
-                int maxY = getDeviceMaxY();
-
-
-                //Hvis kyststiinfo er oppe, lukk den
-
-                if (addedToDataStructure) {
-                    animateInfobarDown();
-                }
-
-
+                bottomSheetController.hideBottomSheet();
+                setOriginalPolylineColor();
             }
         });
-
-
     }
 
     private void setOriginalPolylineColor() {
@@ -706,39 +554,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
-    private void animateInfobarUp() {
-        TextView infobar = (TextView) findViewById(R.id.infobar);
-
-
-        if (infobarUp) {
-            return;
-        }
-        infobar.setVisibility(View.VISIBLE);
-        int maxY = getDeviceMaxY();
-        Animation animation = new TranslateAnimation(0, 0, maxY - infobar.getY(), 0);
-        animation.setDuration(500);
-
-        infobar.startAnimation(animation);
-        infobarUp = true;
-    }
-
-    private void animateInfobarDown() {
-        TextView infobar = (TextView) findViewById(R.id.infobar);
-
-        if (infobarUp) {
-            int maxY = getDeviceMaxY();
-            Animation animation = new TranslateAnimation(0, 0, 0, maxY);
-            animation.setDuration(500);
-            infobar.startAnimation(animation);
-
-            infobar.setVisibility(View.INVISIBLE);
-            infobarUp = false;
-        } else {
-            return;
-        }
-
-    }
-
     private int getDeviceMaxY() {
         Display mdisp = getWindowManager().getDefaultDisplay();
         Point mdispSize = new Point();
@@ -828,205 +643,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
 
-    private void setMarkerDescription(String title, String description, TextView txtMarkerDescription) {
-        txtMarkerDescription.setMovementMethod(LinkMovementMethod.getInstance());
-
-        String type = "Marker";
-        String markerTitle = title;
-
-        //Hvis den ikke er tom og er en url så skal link vises
-        if (description != null) {
-            String markerDescription = "";
-            if (description.matches(".{0,}http[s]{0,1}:.{0,}")) {
-
-                setTextViewHTML(txtMarkerDescription, description, type, title);
-
-                //Det er ikke en link, men kanskje noe annet interessant
-            } else {
-                markerDescription = description;
-                txtMarkerDescription.setText(markerTitle + "\n\n" + markerDescription);
-            }
-        } else {
-            txtMarkerDescription.setText(markerTitle);
-        }
-
-
+    private void setBottomsheetContents(Polyline polyline) {
+        bottomSheetController.setContent(polyline);
     }
-
-    private void setKyststiInfoFromDescriptionAndName(PolylineData polylineData, TextView kyststiInfo) {
-        String description = polylineData.getDescription();
-        String title = polylineData.getTitle();
-        String type = "Polyline";
-
-
-        //Fant ingenting, tekst settes til her var det ingenting.
-        if (description == null && title == null) {
-            kyststiInfo.setText("Her var det ingenting, gitt!");
-        } else if (description == null && title != null) {
-            //Setter navnet
-            kyststiInfo.setText(title);
-        } else if (description != null && title == null) {
-
-
-            setTextViewHTML(kyststiInfo, description, type, title);
-
-
-        } else if (description != null && title != null) {
-            setTextViewHTML(kyststiInfo, description, type, title);
-        }
-
-
-    }
-
-    protected void makeLinkClickable(SpannableStringBuilder strBuilder, final URLSpan span) {
-        int start = strBuilder.getSpanStart(span);
-        int end = strBuilder.getSpanEnd(span);
-        int flags = strBuilder.getSpanFlags(span);
-
-        String uriWithDesc = extractUrlFromDescription(span);
-
-        //May launch this link
-        Log.i(TAG, "makeLinkClickable: Gjør link klar for å åpnes." + span.getURL());
-        final Uri uri = Uri.parse(uriWithDesc + "?app=1");
-        customTabActivityHelper.mayLaunchUrl(uri, null, null);
-
-        ClickableSpan clickable = new ClickableSpan() {
-            public void onClick(View view) {
-                // Do something with span.getURL() to handle the link click...
-
-
-                CustomTabsIntent.Builder intentBuilder = new CustomTabsIntent.Builder();
-                intentBuilder.setToolbarColor(getResources().getColor(R.color.colorPrimaryDark)).setShowTitle(true);
-
-
-                intentBuilder.setCloseButtonIcon(BitmapFactory.decodeResource(getResources(), R.drawable.ic_arrow_back));
-                intentBuilder.setStartAnimations(getApplicationContext(), R.anim.slide_in_right, R.anim.slide_out_left);
-                intentBuilder.setExitAnimations(MapsActivity.this, android.R.anim.slide_in_left, android.R.anim.slide_out_right);
-
-
-                //CustomTabsIntent customTabsIntent = new CustomTabsIntent.Builder(customTabActivityHelper.getSession()).build();
-                CustomTabActivityHelper.openCustomTab(MapsActivity.this, intentBuilder.build(), uri, new WebviewFallback());
-            }
-        };
-
-
-        strBuilder.setSpan(clickable, start, end, flags);
-        strBuilder.removeSpan(span);
-    }
-
-    @NonNull
-    private String extractUrlFromDescription(URLSpan span) {
-        String uriWithDesc = span.getURL();
-        uriWithDesc = uriWithDesc.substring(span.getURL().indexOf("http"), span.getURL().length());
-        return uriWithDesc;
-    }
-
-    protected void setTextViewHTML(TextView text, String description, String type, String title) {
-
-
-        if (type.equals("Marker")) {
-            setMarkerInfoText(text, description, title);
-        }
-
-        if (type.equals("Polyline")) {
-            setPolylineInfoText(text, description);
-        }
-
-
-    }
-
-    private void setPolylineInfoText(TextView text, String description) {
-        CharSequence sequence = Html.fromHtml(description);
-        SpannableStringBuilder strBuilder = new SpannableStringBuilder(sequence);
-        URLSpan[] urls = strBuilder.getSpans(0, sequence.length(), URLSpan.class);
-
-        String descriptionWithoutLink;
-        try {
-
-
-            descriptionWithoutLink = description.substring(0, description.indexOf("<a href"));
-            SpannableStringBuilder withCustomLinkLayout = new SpannableStringBuilder("Tomt");
-            URLSpan[] urls2 = null;
-
-
-            //If there is a link in the description
-            if (urls.length != 0) {
-                //Create the desired format of textview
-                String link = "<a href=\"" + urls[0].getURL() + "\"><u>Mer info fra Oslofjorden.com</u></a>";
-                CharSequence formattedText = Html.fromHtml(link);
-                withCustomLinkLayout = new SpannableStringBuilder(formattedText);
-                urls2 = withCustomLinkLayout.getSpans(0, formattedText.length(), URLSpan.class);
-                withCustomLinkLayout.insert(0, descriptionWithoutLink);
-
-                //If the link does not contain www return
-                if (!urls[0].getURL().contains("www")) {
-                    text.setText(description);
-                    return;
-                }
-
-            }
-
-
-            for (URLSpan span : urls2) {
-                makeLinkClickable(withCustomLinkLayout, span);
-            }
-            text.setMovementMethod(LinkMovementMethod.getInstance());
-
-            text.setText(withCustomLinkLayout);
-
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            //Det var ingen link her
-            // descriptionWithoutLink = "Her var det desverre ingen link";
-            text.setText(description);
-        }
-    }
-
-    private void setMarkerInfoText(TextView text, String description, String title) {
-        CharSequence sequence = Html.fromHtml(description);
-        URLSpan[] urls = {new URLSpan(description)};
-        Log.d(TAG, "setMarkerInfoText: " + description);
-
-        //The first part of the description "her finner du: ... .. "
-        String typesOfMarker = description.substring(0, description.indexOf("http"));
-        SpannableStringBuilder withCustomLinkLayout = new SpannableStringBuilder("Tomt");
-        URLSpan[] urls2 = null;
-
-        //If there is a link in the description
-        if (urls.length != 0) {
-            //Create the desired format of textview
-            String link = "<a href=\"" + urls[0].getURL() + "\"><u>Mer info fra Oslofjorden.com</u></a>";
-            CharSequence formattedText = Html.fromHtml(link);
-            withCustomLinkLayout = new SpannableStringBuilder(formattedText);
-            urls2 = withCustomLinkLayout.getSpans(0, formattedText.length(), URLSpan.class);
-            withCustomLinkLayout.insert(0, title + " " + typesOfMarker + "\n\n");
-        }
-
-
-        for (URLSpan span : urls2) {
-            makeLinkClickable(withCustomLinkLayout, span);
-        }
-        text.setMovementMethod(LinkMovementMethod.getInstance());
-
-        text.setText(withCustomLinkLayout);
-        Log.d(TAG, "setMarkerInfoText: ");
-    }
-
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == REQUEST_RESOLVE_ERROR) {
-            mResolvingError = false;
-            if (resultCode == RESULT_OK) {
-                // Make sure the app is not already connected or attempting to connect
-                if (!mGoogleApiClient.isConnecting() &&
-                        !mGoogleApiClient.isConnected()) {
-                    mGoogleApiClient.connect();
-                }
-            }
-        }
-
 
         //The result for request for turn on gps
         switch (requestCode) {
@@ -1048,160 +670,14 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 }
                 break;
         }
-
-
     }
 
-    @Override
-    public void onConnected(Bundle connectionHint) {
-        //Connected to google play services: This is where the magic happens
+    private void goToOsloLocation() throws SecurityException {
 
 
-        //Will find the the last known location only the first time
-        if (!foundLastLocation) {
-            findAndGoToLastKnownLocation();
-            startLocationUpdates();
-            foundLastLocation = true;
+        //Oslo sentrum
+        LatLng lastLocation = new LatLng(59.903765, 10.699610);
 
-        } else {
-            if (locationUpdatesSwitch) {
-                startLocationUpdates();
-            }
-        }
-
-
-    }
-
-
-    protected void startLocationUpdates() {
-        //If the user has the needed permissions
-        if (haslocationPermission) {
-            mLocationRequest = requestLocationUpdates();
-        }
-
-
-    }
-
-    @NonNull
-    private LocationRequest requestLocationUpdates() {
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            String[] permissions = {Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION};
-            ActivityCompat.requestPermissions(this, permissions, 1);
-
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-
-        }
-
-        Log.d(TAG, "requestLocationUpdates: lager ny request om oppdateringer");
-
-        mLocationRequest = new LocationRequest();
-        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-        mLocationRequest.setInterval(5000);
-        mLocationRequest.setFastestInterval(1000);
-
-        LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
-        mRequestingLocationUpdates = true;
-        return mLocationRequest;
-    }
-
-    private void handleUsersWithoutLocationEnabled() {
-
-        LocationRequest settingsRequest = new LocationRequest();
-
-
-        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
-                .addLocationRequest(settingsRequest);
-
-        PendingResult<LocationSettingsResult> result = LocationServices.SettingsApi.checkLocationSettings(mGoogleApiClient, builder.build());
-
-        //Make user add location
-        result.setResultCallback(new ResultCallback<LocationSettingsResult>() {
-            @Override
-            public void onResult(@NonNull LocationSettingsResult locationSettingsResult) {
-                final Status status = locationSettingsResult.getStatus();
-
-                switch (status.getStatusCode()) {
-                    case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
-                        try {
-                            // Show the dialog by calling startResolutionForResult(),
-                            // and check the result in onActivityResult().
-                            status.startResolutionForResult(
-                                    MapsActivity.this,
-                                    REQUEST_CHECK_SETTINGS);
-                        } catch (IntentSender.SendIntentException e) {
-                            // Ignore the error.
-                        }
-                        break;
-                }
-            }
-        });
-    }
-
-    public void settingsrequest() {
-        LocationRequest locationRequest = LocationRequest.create();
-        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-        locationRequest.setInterval(30 * 1000);
-        locationRequest.setFastestInterval(5 * 1000);
-        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
-                .addLocationRequest(locationRequest);
-        builder.setAlwaysShow(true); //this is the key ingredient
-
-        PendingResult<LocationSettingsResult> result =
-                LocationServices.SettingsApi.checkLocationSettings(mGoogleApiClient, builder.build());
-        result.setResultCallback(new ResultCallback<LocationSettingsResult>() {
-            @Override
-            public void onResult(LocationSettingsResult result) {
-                final Status status = result.getStatus();
-                final LocationSettingsStates state = result.getLocationSettingsStates();
-                switch (status.getStatusCode()) {
-                    case LocationSettingsStatusCodes.SUCCESS:
-                        // All location settings are satisfied. The client can initialize location
-                        // requests here.
-                        break;
-                    case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
-                        // Location settings are not satisfied. But could be fixed by showing the user
-                        // a dialog.
-                        try {
-                            // Show the dialog by calling startResolutionForResult(),
-                            // and check the result in onActivityResult().
-                            status.startResolutionForResult(MapsActivity.this, REQUEST_CHECK_SETTINGS);
-                        } catch (IntentSender.SendIntentException e) {
-                            // Ignore the error.
-                        }
-                        break;
-                    case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
-                        // Location settings are not satisfied. However, we have no way to fix the
-                        // settings so we won't show the dialog.
-                        break;
-                }
-            }
-        });
-    }
-
-
-    private void findAndGoToLastKnownLocation() throws SecurityException {
-
-        Location mLastLocation = null;
-        try {
-            mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-        } catch (SecurityException e) {
-            e.printStackTrace();
-        }
-
-
-        LatLng lastLocation;
-        if (mLastLocation != null) {
-            lastLocation = new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude());
-        } else {
-            //Oslo sentrum
-            lastLocation = new LatLng(59.903765, 10.699610);
-        }
         CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(lastLocation, 13);
         mMap.moveCamera(cameraUpdate);
 
@@ -1218,8 +694,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         // (Activity extends context, so we can pass 'this' in the constructor.)
 
 
-        mClusterManager = new ClusterManager<MyMarkerOptions>(this, mMap);
-        mClusterManager.setAlgorithm(new PreCachingAlgorithmDecorator<MyMarkerOptions>(new GridBasedAlgorithm<MyMarkerOptions>()));
+        mClusterManager = new ClusterManager<MarkerData>(this, mMap);
+        mClusterManager.setAlgorithm(new PreCachingAlgorithmDecorator<MarkerData>(new GridBasedAlgorithm<MarkerData>()));
 
         mClusterManager.setRenderer(new OwnIconRendered(getApplicationContext(), mMap, mClusterManager));
 
@@ -1229,38 +705,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         mMap.setOnCameraIdleListener(mClusterManager);
         mMap.setOnMarkerClickListener(mClusterManager);
 
-
-    }
-
-    @Override
-    public void onConnectionSuspended(int i) {
-        // The connection has been interrupted.
-        // Disable any UI components that depend on Google APIs
-        // until onConnected() is called.
-    }
-
-
-    @Override
-    public void onConnectionFailed(@NonNull ConnectionResult result) {
-        // This callback is important for handling errors that
-        // may occur while attempting to connect with Google.
-
-        if (mResolvingError) {
-            // Already attempting to resolve an error.
-            return;
-        } else if (result.hasResolution()) {
-            try {
-                mResolvingError = true;
-                result.startResolutionForResult(this, REQUEST_RESOLVE_ERROR);
-            } catch (IntentSender.SendIntentException e) {
-                // There was an error with the resolution intent. Try again.
-                mGoogleApiClient.connect();
-            }
-        } else {
-            // Show dialog using GoogleApiAvailability.getErrorDialog()
-            showErrorDialog(result.getErrorCode());
-            mResolvingError = true;
-        }
 
     }
 
@@ -1330,17 +774,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         Log.d(TAG, "onDialogNegativeClick: gjør ingenting");
     }
 
-
-    public boolean stopAsyncTaskIfOnStop() {
-        if (addInfoToMap.isCancelled()) {
-            Log.d(TAG, "Stopper task");
-            addedToDataStructure = false;
-
-            return true;
-        }
-        return false;
-    }
-
     private void clearItems() {
 
         if (mMap != null) {
@@ -1358,24 +791,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     }
 
-    private void setOnClusterItemClickListener(final TextView markerInfo) {
-        mClusterManager.setOnClusterItemClickListener(new ClusterManager.OnClusterItemClickListener<MyMarkerOptions>() {
-            @Override
-            public boolean onClusterItemClick(MyMarkerOptions item) {
-                markerInfo.setVisibility(View.VISIBLE);
+    private void setOnClusterItemClickListener() {
 
-                animateInfobarUp();
-
-
-                clickedClusterItem = item;
-
-             //   setMarkerDescription(item.getTitle(), item., markerInfo);
-
-
-                return false;
-
-            }
-        });
     }
 
     private void getDataFromFilesAndPutInDatastructure() throws IOException, JSONException {
@@ -1387,8 +804,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         MarkerReader markerReader = new MarkerReader(getApplicationContext(), addInfoToMap);
         markerData = markerReader.readMarkers();
 
-        final TextView markerInfo = (TextView) findViewById(R.id.infobar);
-        setOnClusterItemClickListener(markerInfo);
+        setOnClusterItemClickListener();
 
     }
 
@@ -1397,13 +813,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         @Override
         protected void onPreExecute() {
 
-            TextView loading = (TextView) findViewById(R.id.infobar);
-            loading.setVisibility(View.VISIBLE);
-
-            loading.setText("Laster inn data...\n\nEtter innlasting kan du velge hva som skal vises med knappen oppe til høyre.");
-
-            animateInfobarUp();
-
+            bottomSheetController.expandBottomSheet();
+            bottomSheetController.setLoadingText();
         }
 
         @Override
@@ -1429,7 +840,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 loadLastStateOfApplication();
             }
 
-            animateInfobarDown();
+
+            bottomSheetController.hideBottomSheet();
+
 
             layerButton.setClickable(true);
             layerButton.setEnabled(true);

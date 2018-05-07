@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/bottom_sheet"
+    android:layout_width="match_parent"
+    android:animateLayoutChanges="true"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@color/gray"
+    app:behavior_hideable="true"
+    android:padding="8dp"
+    app:layout_behavior="android.support.design.widget.BottomSheetBehavior">
+
+    <TextView
+        android:id="@+id/title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:textColor="@android:color/black"
+        android:textSize="16sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/description"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center|start"
+        android:visibility="gone"
+        android:textColor="@android:color/black"
+        android:textSize="14sp" />
+
+    <Button
+        android:layout_width="match_parent"
+        android:id="@+id/url"
+        android:visibility="gone"
+        android:layout_height="wrap_content"
+        android:text="Mer info"/>
+
+</LinearLayout>

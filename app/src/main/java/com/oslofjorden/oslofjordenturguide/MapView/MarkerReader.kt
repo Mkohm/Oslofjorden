@@ -2,6 +2,7 @@ package com.oslofjorden.oslofjordenturguide.MapView
 
 import android.content.Context
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MarkerOptions
 import com.oslofjorden.oslofjordenturguide.R
 import org.json.JSONObject
 import java.io.BufferedReader
@@ -9,9 +10,9 @@ import java.io.InputStreamReader
 
 internal class MarkerReader(val context: Context, val task: MapsActivity.AddInfoToMap) {
 
-    fun readMarkers(): List<MyMarkerOptions> {
+    fun readMarkers(): List<MarkerData> {
 
-        val markerData = ArrayList<MyMarkerOptions>()
+        val markerData = ArrayList<MarkerData>()
 
         val inputStream = context.resources.openRawResource(R.raw.interesting_points_oktober2)
         val reader = BufferedReader(InputStreamReader(inputStream))
@@ -25,11 +26,10 @@ internal class MarkerReader(val context: Context, val task: MapsActivity.AddInfo
             val obj = createJsonObject(line)
             val propertiesObject = obj?.getJSONObject("properties")
 
-            val name = propertiesObject?.getString("name")
+            val name = propertiesObject?.getString("name") ?: "Ikke navngitt sted"
             val markerTypes = propertiesObject?.getString("gpxx_WaypointExtension") ?: ""
             val link = propertiesObject?.getString("link1_href")
 
-            //Contains the different types of the marker, index 0 is irrelevant, start from index 1
             val markerTypesList = Regex("<gpxx:Category>.+?</gpxx:Category>")
                     .findAll(markerTypes).toList().map {
                         when (it.value) {
@@ -57,7 +57,14 @@ internal class MarkerReader(val context: Context, val task: MapsActivity.AddInfo
 
             val position = setMarkerPosition(line)
 
-            //    val marker = MyMarkerOptions(name, position, null, markerTypesList)
+            val markerOption = MarkerOptions()
+            markerOption.title(name)
+            markerOption.position(position)
+
+
+            val marker = MarkerData(markerOption, link, markerTypesList as
+                    List<MarkerTypes>, null)
+            markerData.add(marker)
 
         }
 
@@ -70,8 +77,8 @@ internal class MarkerReader(val context: Context, val task: MapsActivity.AddInfo
         val indexOfEndCoordinate = line.indexOf(" ] } }")
         val coordinates = line.substring(indexOfStartCoordinate, indexOfEndCoordinate)
 
-        val longitude = java.lang.Double.valueOf(coordinates.substring(0, coordinates.indexOf(",")))!!
-        val latitude = java.lang.Double.valueOf(coordinates.substring(coordinates.indexOf(",") + 1))!!
+        val longitude = java.lang.Double.valueOf(coordinates.substring(0, coordinates.indexOf(",")))
+        val latitude = java.lang.Double.valueOf(coordinates.substring(coordinates.indexOf(",") + 1))
 
 
         return LatLng(latitude, longitude)
