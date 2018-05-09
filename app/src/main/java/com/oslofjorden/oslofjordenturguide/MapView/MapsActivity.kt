@@ -1,13 +1,16 @@
 package com.oslofjorden.oslofjordenturguide.MapView
 
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.PorterDuff
 import android.location.Location
 import android.location.LocationManager
 import android.os.AsyncTask
 import android.os.Bundle
+import android.support.v4.app.ActivityCompat
 import android.support.v4.app.DialogFragment
 import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity
@@ -47,7 +50,7 @@ import java.io.IOException
 
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LocationListener,
-        CustomTabActivityHelper.ConnectionCallback, NoticeDialogListener {
+        CustomTabActivityHelper.ConnectionCallback, NoticeDialogListener, ActivityCompat.OnRequestPermissionsResultCallback {
 
 
     private val PERMISSIONS_OK = 1
@@ -67,7 +70,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LocationListener,
     private var dataLoaded = false
     private var mMap: GoogleMap? = null
     private val polylinesOnMap = ArrayList<Polyline>()
-
+    private val LOCATION_PERMISSION_REQUEST_CODE = 1
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -89,6 +92,42 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LocationListener,
 
         initToolbar()
     }
+
+    fun enableMyLocation() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            // Permission to access the location is missing.
+            PermissionUtils.requestPermission(this, LOCATION_PERMISSION_REQUEST_CODE,
+                    Manifest.permission.ACCESS_FINE_LOCATION, true);
+        } else if (mMap != null) {
+            // Access to the location has been granted to the app.
+            mMap?.isMyLocationEnabled = true;
+        }
+    }
+
+
+
+    /**
+     * Is called when the result of the requestPermission() is ready
+     */
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
+        // If the request code is something other than what we requested
+        if (requestCode != LOCATION_PERMISSION_REQUEST_CODE) {
+            return;
+        }
+
+        if (PermissionUtils.isPermissionGranted(permissions, grantResults,
+                        Manifest.permission.ACCESS_FINE_LOCATION)) {
+            // Enable the my location layer if the permission has been granted.
+            enableMyLocation()
+        } else {
+            // Display the missing permission error dialog when the fragments resume.
+        }
+
+    }
+
 
     private fun initMap() {
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
@@ -252,8 +291,16 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LocationListener,
         mMap?.uiSettings?.isCompassEnabled = true
 
 
-        //  onOffLocationButton.setOnClickListener(new View.OnClickListener() {
-        /*@Override
+        onofflocationbutton.isClickable = true
+        onofflocationbutton.setOnClickListener {
+
+            enableMyLocation()
+        }
+
+
+        /*
+        onOffLocationButton.setOnClickListener(new View . OnClickListener () {
+            @Override
             public void onClick(View v) {
                 if (!haslocationPermission) {
                     checkPermission();
@@ -296,8 +343,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LocationListener,
 
                 }
 
-            }*/
-        //   });
+            }
+        });
+
+        */
 
 
         mMap?.setOnPolylineClickListener { polyline ->
@@ -395,8 +444,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LocationListener,
 
     private fun setUpClusterer() {
         mClusterManager = ClusterManager(this, mMap)
-        mClusterManager.setAlgorithm(PreCachingAlgorithmDecorator(GridBasedAlgorithm()))
-        mClusterManager.setRenderer(OwnIconRendered(applicationContext, mMap, mClusterManager))
+        mClusterManager.algorithm = PreCachingAlgorithmDecorator(GridBasedAlgorithm())
+        mClusterManager.renderer = OwnIconRendered(applicationContext, mMap, mClusterManager)
 
 
         mClusterManager.setOnClusterItemClickListener { item ->
