@@ -8,7 +8,7 @@ import com.google.android.gms.maps.model.PolylineOptions
 import java.io.EOFException
 import java.io.ObjectInputStream
 
-class BinarydataReader(val context: Context, val task: AsyncTask<Void, Int, Void>) {
+class BinarydataReader(val context: Context, val task: AsyncTask<Void?, Void?, Void?>) {
 
     companion object {
         val TAG = "TAG"

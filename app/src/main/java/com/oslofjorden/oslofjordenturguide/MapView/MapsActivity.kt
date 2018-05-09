@@ -30,6 +30,7 @@ import com.google.maps.android.clustering.algo.PreCachingAlgorithmDecorator
 import com.oslofjorden.oslofjordenturguide.R
 import com.oslofjorden.oslofjordenturguide.WebView.CustomTabActivityHelper
 import kotlinx.android.synthetic.main.activity_maps.*
+import kotlinx.android.synthetic.main.activity_maps.view.*
 import org.json.JSONException
 import java.io.IOException
 
@@ -75,42 +76,42 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LocationListener,
         // Initialize lateinits
         bottomSheetController = BottomSheetController(findViewById<View>(R.id.bottom_sheet) as LinearLayout, this)
 
-
-        createDefaultCheckedArray()
-
-
         //The first time the user launches the app, this message will be shown
         showInfomessageToUserIfFirstTime()
 
         //Set up custom tabs
         setUpCustomTabs()
 
-
         //Removes the oslofjorden picture
         window.setBackgroundDrawableResource(R.drawable.graybackground)
 
+        initMap()
+
+        initToolbar()
+    }
+
+    private fun initMap() {
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         val mapFragment = supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
+    }
 
+    private fun initLocationButton() {
+        val onOffLocationButton = findViewById<View>(R.id.onofflocationbutton) as ImageButton
+        onOffLocationButton.setImageResource(R.drawable.ic_location_off)
+        locationUpdatesSwitch = false
+    }
 
-        setUpToolbar()
-
-
-        loading.indeterminateDrawable.setColorFilter(ContextCompat.getColor(applicationContext, R.color.white), PorterDuff.Mode.SRC_IN)
-
-
+    private fun initLayersButton() {
         layers.isClickable = false
         layers.isEnabled = false
         layers.setImageResource(R.drawable.ic_layers_gray)
-
 
         layers.setOnClickListener {
             //Show the choose map info dialog
             val mapInfoDialog = ChooseMapInfoDialog()
             mapInfoDialog.show(supportFragmentManager, "test")
         }
-
     }
 
     fun isGPSEnabled(mContext: Context): Boolean {
@@ -188,9 +189,20 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LocationListener,
         customTabActivityHelper.setConnectionCallback(this)
     }
 
-    private fun setUpToolbar() {
+    private fun initToolbar() {
+        setToolbar()
+        initLayersButton()
+        initLocationButton()
+        initLoadingSpinner()
+    }
+
+    private fun initLoadingSpinner() {
+        loading.indeterminateDrawable.setColorFilter(ContextCompat.getColor(applicationContext, R.color.white), PorterDuff.Mode.SRC_IN)
+    }
+
+    private fun setToolbar() {
         setSupportActionBar(my_toolbar)
-        actionBar.title = "Oslofjorden Båt - og Turguide"
+        supportActionBar?.title = "Oslofjorden Båt - og Turguide"
         my_toolbar.setTitleTextColor(Color.WHITE)
     }
 
@@ -238,11 +250,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LocationListener,
         mMap?.uiSettings?.isMapToolbarEnabled = false
         mMap?.uiSettings?.isMyLocationButtonEnabled = false
         mMap?.uiSettings?.isCompassEnabled = true
-
-
-        val onOffLocationButton = findViewById<View>(R.id.onofflocationbutton) as ImageButton
-        onOffLocationButton.setImageResource(R.drawable.ic_location_off)
-        locationUpdatesSwitch = false
 
 
         //  onOffLocationButton.setOnClickListener(new View.OnClickListener() {
@@ -448,7 +455,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LocationListener,
 
     }
 
-    internal inner class AddInfoToMap : AsyncTask<Void, Int, Void>() {
+    internal inner class AddInfoToMap : AsyncTask<Void?, Void?, Void?>() {
 
         override fun onPreExecute() {
 
@@ -456,7 +463,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LocationListener,
             bottomSheetController.setLoadingText()
         }
 
-        override fun doInBackground(vararg params: Void): Void? {
+        override fun doInBackground(vararg params: Void?): Void? {
 
             getDataFromFilesAndPutInDatastructure()
 
@@ -464,7 +471,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LocationListener,
         }
 
 
-        override fun onPostExecute(aVoid: Void) {
+        override fun onPostExecute(aVoid: Void?) {
             super.onPostExecute(aVoid)
 
             if (mMap != null) {
@@ -480,7 +487,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LocationListener,
             layers.isClickable = true
             layers.isEnabled = true
             layers.setImageResource(R.drawable.ic_layers_white_24dp)
-            findViewById<View>(R.id.loading).visibility = View.GONE
+            loading.visibility = View.GONE
 
         }
     }
