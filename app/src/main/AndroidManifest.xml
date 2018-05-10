@@ -46,15 +46,6 @@
         </activity>
 
 
-        <activity
-            android:name=".WebView.WebviewActivity"
-            android:label="Webview"
-            android:theme="@style/Theme.AppCompat.Light"
-
-
-            />
-
-        <service android:name=".KeepAliveService" />
     </application>
 
 </manifest>

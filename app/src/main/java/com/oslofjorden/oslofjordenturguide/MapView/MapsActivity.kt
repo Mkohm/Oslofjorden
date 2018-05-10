@@ -10,6 +10,7 @@ import android.location.Location
 import android.location.LocationManager
 import android.os.AsyncTask
 import android.os.Bundle
+import android.support.design.widget.BottomSheetBehavior
 import android.support.v4.app.ActivityCompat
 import android.support.v4.app.DialogFragment
 import android.support.v4.content.ContextCompat
@@ -31,9 +32,7 @@ import com.google.maps.android.clustering.ClusterManager
 import com.google.maps.android.clustering.algo.GridBasedAlgorithm
 import com.google.maps.android.clustering.algo.PreCachingAlgorithmDecorator
 import com.oslofjorden.oslofjordenturguide.R
-import com.oslofjorden.oslofjordenturguide.WebView.CustomTabActivityHelper
 import kotlinx.android.synthetic.main.activity_maps.*
-import kotlinx.android.synthetic.main.activity_maps.view.*
 import org.json.JSONException
 import java.io.IOException
 
@@ -49,8 +48,7 @@ import java.io.IOException
 //lagrer ikke
 
 
-class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LocationListener,
-        CustomTabActivityHelper.ConnectionCallback, NoticeDialogListener, ActivityCompat.OnRequestPermissionsResultCallback {
+class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LocationListener, NoticeDialogListener, ActivityCompat.OnRequestPermissionsResultCallback {
 
 
     private val PERMISSIONS_OK = 1
@@ -63,7 +61,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LocationListener,
     private var addInfoToMap: AddInfoToMap = AddInfoToMap()
     private lateinit var mClusterManager: ClusterManager<MarkerData>
     private var previousPolylineClicked: Polyline? = null
-    private var customTabActivityHelper: CustomTabActivityHelper = CustomTabActivityHelper()
     private var defaultCheckedItems: BooleanArray = createDefaultCheckedArray()
     private var polylineData: List<PolylineData> = ArrayList()
     private var markerData: List<MarkerData>? = null
@@ -81,9 +78,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LocationListener,
 
         //The first time the user launches the app, this message will be shown
         showInfomessageToUserIfFirstTime()
-
-        //Set up custom tabs
-        setUpCustomTabs()
 
         //Removes the oslofjorden picture
         window.setBackgroundDrawableResource(R.drawable.graybackground)
@@ -104,7 +98,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LocationListener,
             mMap?.isMyLocationEnabled = true;
         }
     }
-
 
 
     /**
@@ -224,9 +217,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LocationListener,
         }
     }
 
-    private fun setUpCustomTabs() {
-        customTabActivityHelper.setConnectionCallback(this)
-    }
 
     private fun initToolbar() {
         setToolbar()
@@ -245,16 +235,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LocationListener,
         my_toolbar.setTitleTextColor(Color.WHITE)
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        customTabActivityHelper.setConnectionCallback(null)
-    }
-
-    override fun onStart() {
-        super.onStart()
-
-        customTabActivityHelper.bindCustomTabsService(this)
-    }
 
     override fun onResume() {
         super.onResume()
@@ -263,13 +243,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LocationListener,
             addInfoToMap = AddInfoToMap()
             addInfoToMap.execute()
         }
-    }
-
-
-    override fun onStop() {
-        super.onStop()
-
-        customTabActivityHelper.unbindCustomTabsService(this)
     }
 
     override fun onPause() {
@@ -356,7 +329,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LocationListener,
             polyline.color = Color.BLACK
 
 
-            bottomSheetController.setContent(polyline)
+            bottomSheetController.setPolylineContent(polyline)
             bottomSheetController.expandBottomSheet()
 
 
@@ -370,8 +343,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LocationListener,
     }
 
     private fun setOriginalPolylineColor() {
-        val description = (previousPolylineClicked?.tag as PolylineData).description
-        previousPolylineClicked?.color = SelectPolylineColor.setPolylineColor(description)
+        val description = (previousPolylineClicked?.tag as PolylineData?)?.description
+        previousPolylineClicked?.color = SelectPolylineColor.setPolylineColor(description ?: "")
     }
 
     private fun loadLastStateOfApplication() {
@@ -470,14 +443,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LocationListener,
         mMap?.animateCamera(cameraUpdate)
     }
 
-    override fun onCustomTabsConnected() {
-
-    }
-
-    override fun onCustomTabsDisconnected() {
-
-    }
-
     override fun onDialogPositiveClick(dialog: DialogFragment, checkedItems: BooleanArray) {
         loadCheckedItems(checkedItems)
     }
@@ -508,7 +473,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LocationListener,
 
         override fun onPreExecute() {
 
-            bottomSheetController.expandBottomSheet()
+         //   bottomSheetController.expandBottomSheet()
             bottomSheetController.setLoadingText()
         }
 
@@ -530,7 +495,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LocationListener,
             dataLoaded = true
 
 
-            bottomSheetController.hideBottomSheet()
+            bottomSheetController.finishLoading()
 
 
             layers.isClickable = true
@@ -542,11 +507,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LocationListener,
     }
 
     companion object {
-        // Request code to use when launching the resolution activity
-        val REQUEST_RESOLVE_ERROR = 1001
-        val STATE_RESOLVING_ERROR = "resolving_error"
-        val DIALOG_ERROR = "dialog_error"
-        protected val REQUEST_CHECK_SETTINGS = 0x1
         var TAG = "TAG"
     }
 }

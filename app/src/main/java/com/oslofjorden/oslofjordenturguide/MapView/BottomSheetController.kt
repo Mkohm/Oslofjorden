@@ -9,8 +9,6 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import com.google.android.gms.maps.model.Polyline
 import com.oslofjorden.oslofjordenturguide.R
-import com.oslofjorden.oslofjordenturguide.WebView.CustomTabActivityHelper
-import com.oslofjorden.oslofjordenturguide.WebView.WebviewFallback
 
 
 class BottomSheetController(val view: LinearLayout, val activity: MapsActivity) {
@@ -18,13 +16,10 @@ class BottomSheetController(val view: LinearLayout, val activity: MapsActivity) 
 
     private val customTabsIntent: CustomTabsIntent = CustomTabsIntent.Builder()
             .addDefaultShareMenuItem()
-            .setToolbarColor(activity.getResources().getColor(R.color.colorPrimary))
+            .setToolbarColor(activity.resources.getColor(R.color.colorPrimary))
             .setShowTitle(true)
             .build()
 
-    fun collapseBottomSheet() {
-        behavior.state = BottomSheetBehavior.STATE_COLLAPSED
-    }
 
     fun expandBottomSheet() {
         behavior.state = BottomSheetBehavior.STATE_EXPANDED
@@ -37,9 +32,29 @@ class BottomSheetController(val view: LinearLayout, val activity: MapsActivity) 
     fun setLoadingText() {
         val titleTextview = view.findViewById<TextView>(R.id.title)
         titleTextview.text = "Oslofjorden laster inn - vennligst vent.."
+
+        val descriptionTextview = view.findViewById<TextView>(R.id.description)
+        descriptionTextview.visibility = View.GONE
+
+        val button = view.findViewById<Button>(R.id.url)
+        button.visibility = View.GONE
     }
 
-    fun setContent(polyline: Polyline) {
+    fun finishLoading() {
+        behavior.state = BottomSheetBehavior.STATE_HIDDEN
+
+
+        // Enable the views that was disabled during loading
+        val descriptionTextview = view.findViewById<TextView>(R.id.description)
+        descriptionTextview.visibility = View.VISIBLE
+
+        val button = view.findViewById<Button>(R.id.url)
+        button.visibility = View.VISIBLE
+    }
+
+
+
+    fun setPolylineContent(polyline: Polyline) {
         val titleTextview = view.findViewById<TextView>(R.id.title)
         val descriptionTextview = view.findViewById<TextView>(R.id.description)
         val button = view.findViewById<Button>(R.id.url)
@@ -48,11 +63,8 @@ class BottomSheetController(val view: LinearLayout, val activity: MapsActivity) 
         val description = (polyline.tag as PolylineData).description
         val url = (polyline.tag as PolylineData).url
 
-        if (url == null) {
-            button.visibility = View.INVISIBLE
-        } else {
-            button.visibility = View.VISIBLE
-        }
+        // Do not show the button if there is no link
+        setVisibility(url, button)
 
         titleTextview.text = title
         descriptionTextview.text = description
@@ -60,6 +72,10 @@ class BottomSheetController(val view: LinearLayout, val activity: MapsActivity) 
 
         button.setOnClickListener {
             // open link with custom tabs
+            val url = "https://paul.kinlan.me/"
+            val builder = CustomTabsIntent.Builder()
+            val customTabsIntent = builder.build()
+            customTabsIntent.launchUrl(activity, Uri.parse(url))
         }
 
 
@@ -74,20 +90,18 @@ class BottomSheetController(val view: LinearLayout, val activity: MapsActivity) 
         val markertypes = item.markerTypes
         val url = item.link
 
-        if (url == null) {
-            button.visibility = View.INVISIBLE
-        } else {
-            button.visibility = View.VISIBLE
-        }
+        setVisibility(url, button)
 
         titleTextview.text = title
         titleTextview.visibility = View.VISIBLE
 
         val builder = StringBuilder()
         for (i in 0 until markertypes.size) {
-            if (i != markertypes.size - 1) {
+            if (i != markertypes.size-1) {
+                builder.append(markertypes[i].toString())
+            } else {
 
-                builder.append(markertypes.get(i).toString() + ", ")
+                builder.append(markertypes[i].toString() + ", ")
             }
         }
 
@@ -97,7 +111,14 @@ class BottomSheetController(val view: LinearLayout, val activity: MapsActivity) 
 
         button.setOnClickListener {
             // open link with custom tabs
-            CustomTabActivityHelper.openCustomTab(activity, customTabsIntent, Uri.parse(url), WebviewFallback())
+        }
+    }
+
+    private fun setVisibility(url: String?, button: Button) {
+        if (url == null) {
+            button.visibility = View.GONE
+        } else {
+            button.visibility = View.VISIBLE
         }
     }
 
