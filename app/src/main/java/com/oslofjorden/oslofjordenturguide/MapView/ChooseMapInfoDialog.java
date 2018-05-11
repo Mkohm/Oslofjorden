@@ -16,21 +16,18 @@ public class ChooseMapInfoDialog extends DialogFragment {
 
     // Use this instance of the interface to deliver action events
     NoticeDialogListener mListener;
-    
+
     public static String TAG = "TAG";
-    
 
 
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
 
 
-
         createMapInfoArray();
         createDefaultCheckedArray();
 
         final boolean[] uselist = getUsersCheckListFromSharedPref();
-
 
 
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
@@ -75,7 +72,6 @@ public class ChooseMapInfoDialog extends DialogFragment {
                 });
 
 
-
         return builder.create();
     }
 
@@ -96,7 +92,7 @@ public class ChooseMapInfoDialog extends DialogFragment {
 
     private boolean[] getUsersCheckListFromSharedPref() {
         final boolean[] uselist;
-        if (loadArray("userChecks", getActivity().getApplicationContext()).length == 0){
+        if (loadArray("userChecks", getActivity().getApplicationContext()).length == 0) {
             Log.d("TAG", "onCreateDialog: null");
             //Ingenting er blitt lagret
             uselist = defaultChecked;
@@ -145,10 +141,8 @@ public class ChooseMapInfoDialog extends DialogFragment {
         mapInfo[10] = "Marinaer";
 
 
-
         mapInfo[11] = "Båtramper";
         mapInfo[12] = "Kran/Truck";
-
 
 
         mapInfo[13] = "Toaletter";
@@ -162,9 +156,9 @@ public class ChooseMapInfoDialog extends DialogFragment {
     public boolean saveArray(boolean[] array, String arrayName, Context mContext) {
         SharedPreferences prefs = mContext.getSharedPreferences(arrayName, 0);
         SharedPreferences.Editor editor = prefs.edit();
-        editor.putInt(arrayName +"_17", array.length);
+        editor.putInt(arrayName + "_17", array.length);
 
-        for(int i=0;i<array.length;i++) {
+        for (int i = 0; i < array.length; i++) {
             editor.putBoolean(arrayName + "_" + i, array[i]);
         }
         return editor.commit();
@@ -175,14 +169,12 @@ public class ChooseMapInfoDialog extends DialogFragment {
 
         int size = prefs.getInt(arrayName + "_17", 0);
         boolean[] array = new boolean[size];
-        for(int i=0;i<size;i++) {
+        for (int i = 0; i < size; i++) {
             Log.d(TAG, "loadArray: " + i + " checked: " + prefs.getBoolean(arrayName + "_" + i, false));
             array[i] = prefs.getBoolean(arrayName + "_" + i, false);
         }
         return array;
     }
-
-
 
 
 }

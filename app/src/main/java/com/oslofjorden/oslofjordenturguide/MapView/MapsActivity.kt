@@ -7,10 +7,10 @@ import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.PorterDuff
 import android.location.Location
+import android.location.LocationListener
 import android.location.LocationManager
 import android.os.AsyncTask
 import android.os.Bundle
-import android.support.design.widget.BottomSheetBehavior
 import android.support.v4.app.ActivityCompat
 import android.support.v4.app.DialogFragment
 import android.support.v4.content.ContextCompat
@@ -20,7 +20,6 @@ import android.view.ContextMenu
 import android.view.View
 import android.widget.ImageButton
 import android.widget.LinearLayout
-import com.google.android.gms.location.LocationListener
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -33,8 +32,6 @@ import com.google.maps.android.clustering.algo.GridBasedAlgorithm
 import com.google.maps.android.clustering.algo.PreCachingAlgorithmDecorator
 import com.oslofjorden.oslofjordenturguide.R
 import kotlinx.android.synthetic.main.activity_maps.*
-import org.json.JSONException
-import java.io.IOException
 
 
 //TODO: helgeroaferfgene link meld inn - fikset i fil, fix animation of infobar, back faast after removes kyststier
@@ -48,15 +45,14 @@ import java.io.IOException
 //lagrer ikke
 
 
-class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LocationListener, NoticeDialogListener, ActivityCompat.OnRequestPermissionsResultCallback {
-
+class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
+        NoticeDialogListener, ActivityCompat.OnRequestPermissionsResultCallback, LocationListener {
 
     private val PERMISSIONS_OK = 1
     private var currentPosition: LatLng = LatLng(59.903765, 10.699610) // Oslo
     private var currentCameraPosition: CameraPosition? = null
     private lateinit var clickedClusterItem: MarkerData
 
-    private var locationUpdatesSwitch = true
     private lateinit var bottomSheetController: BottomSheetController
     private var addInfoToMap: AddInfoToMap = AddInfoToMap()
     private lateinit var mClusterManager: ClusterManager<MarkerData>
@@ -68,6 +64,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LocationListener, 
     private var mMap: GoogleMap? = null
     private val polylinesOnMap = ArrayList<Polyline>()
     private val LOCATION_PERMISSION_REQUEST_CODE = 1
+
+    private val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+    private var locationTrackingEnabled = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -85,7 +84,19 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LocationListener, 
         initMap()
 
         initToolbar()
+
+
+        onofflocationbutton.isClickable = true
+        onofflocationbutton.setOnClickListener {
+            if (locationTrackingEnabled) {
+                enableMyLocation()
+            } else {
+                disableMyLocation()
+            }
+        }
+
     }
+
 
     fun enableMyLocation() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
@@ -96,6 +107,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LocationListener, 
         } else if (mMap != null) {
             // Access to the location has been granted to the app.
             mMap?.isMyLocationEnabled = true;
+            locationTrackingEnabled = true
+
+            onofflocationbutton.setOnClickListener {
+                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0L, 0F, this)
+            }
+
         }
     }
 
@@ -131,7 +148,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LocationListener, 
     private fun initLocationButton() {
         val onOffLocationButton = findViewById<View>(R.id.onofflocationbutton) as ImageButton
         onOffLocationButton.setImageResource(R.drawable.ic_location_off)
-        locationUpdatesSwitch = false
     }
 
     private fun initLayersButton() {
@@ -144,11 +160,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LocationListener, 
             val mapInfoDialog = ChooseMapInfoDialog()
             mapInfoDialog.show(supportFragmentManager, "test")
         }
-    }
-
-    fun isGPSEnabled(mContext: Context): Boolean {
-        val locationManager = mContext.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-        return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
     }
 
     override fun onCreateContextMenu(menu: ContextMenu, v: View,
@@ -264,12 +275,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LocationListener, 
         mMap?.uiSettings?.isCompassEnabled = true
 
 
-        onofflocationbutton.isClickable = true
-        onofflocationbutton.setOnClickListener {
-
-            enableMyLocation()
-        }
-
 
         /*
         onOffLocationButton.setOnClickListener(new View . OnClickListener () {
@@ -340,6 +345,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LocationListener, 
             bottomSheetController.hideBottomSheet()
             setOriginalPolylineColor()
         }
+    }
+
+    private fun disableMyLocation() {
+        locationManager.removeUpdates(this)
+        locationTrackingEnabled = false
     }
 
     private fun setOriginalPolylineColor() {
@@ -437,12 +447,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LocationListener, 
         mMap?.setOnMarkerClickListener(mClusterManager)
     }
 
-
-    override fun onLocationChanged(location: Location) {
-        val cameraUpdate = CameraUpdateFactory.newLatLng(LatLng(location.latitude, location.longitude))
-        mMap?.animateCamera(cameraUpdate)
-    }
-
     override fun onDialogPositiveClick(dialog: DialogFragment, checkedItems: BooleanArray) {
         loadCheckedItems(checkedItems)
     }
@@ -455,7 +459,22 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LocationListener, 
 
     }
 
-    @Throws(IOException::class, JSONException::class)
+
+    override fun onLocationChanged(location: Location) {
+        val cameraUpdate = CameraUpdateFactory.newLatLng(LatLng(location.latitude, location.longitude))
+        mMap?.animateCamera(cameraUpdate)
+
+    }
+
+    override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {
+    }
+
+    override fun onProviderEnabled(provider: String?) {
+    }
+
+    override fun onProviderDisabled(provider: String?) {
+    }
+
     private fun getDataFromFilesAndPutInDatastructure() {
 
         val binaryReader = BinarydataReader(applicationContext, addInfoToMap)
@@ -473,7 +492,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LocationListener, 
 
         override fun onPreExecute() {
 
-         //   bottomSheetController.expandBottomSheet()
+            //   bottomSheetController.expandBottomSheet()
             bottomSheetController.setLoadingText()
         }
 
@@ -508,5 +527,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LocationListener, 
 
     companion object {
         var TAG = "TAG"
+
     }
+
 }
