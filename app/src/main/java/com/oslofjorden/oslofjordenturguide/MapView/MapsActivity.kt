@@ -33,7 +33,7 @@ import com.google.maps.android.clustering.algo.GridBasedAlgorithm
 import com.google.maps.android.clustering.algo.PreCachingAlgorithmDecorator
 import com.oslofjorden.oslofjordenturguide.R
 
-
+// todo: make loading of the
 //TODO: helgeroaferfgene link meld inn - fikset i fil, fix animation of infobar, back faast after removes kyststier
 //Challenge in walking kyststier
 //Infobar material design
@@ -89,6 +89,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
 
         myLocationListener = MyLocationListener(this, lifecycle, OnLocationChangedListener { it ->
             // update ui
+            val cameraUpdate = CameraUpdateFactory.newLatLng(LatLng(it.latitude, it.longitude))
+            mMap?.animateCamera(cameraUpdate)
         })
 
 
@@ -104,8 +106,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
         }
 
     }
-
-
 
 
     fun enableMyLocation() {
@@ -415,21 +415,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
 
     }
 
-
-    override fun onLocationChanged(location: Location) {
-        val cameraUpdate = CameraUpdateFactory.newLatLng(LatLng(location.latitude, location.longitude))
-        mMap?.animateCamera(cameraUpdate)
-
-    }
-
-    override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {
-    }
-
-    override fun onProviderEnabled(provider: String?) {
-    }
-
-    override fun onProviderDisabled(provider: String?) {
-    }
 
     private fun getDataFromFilesAndPutInDatastructure() {
 
