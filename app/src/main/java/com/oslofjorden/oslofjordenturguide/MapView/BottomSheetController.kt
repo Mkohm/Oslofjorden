@@ -72,13 +72,16 @@ class BottomSheetController(val view: LinearLayout, val activity: MapsActivity) 
 
         button.setOnClickListener {
             // open link with custom tabs
-            val url = "https://paul.kinlan.me/"
-            val builder = CustomTabsIntent.Builder()
-            val customTabsIntent = builder.build()
-            customTabsIntent.launchUrl(activity, Uri.parse(url))
+            openCustomTab(url)
         }
 
 
+    }
+
+    private fun openCustomTab(url: String?) {
+        val builder = CustomTabsIntent.Builder()
+        val customTabsIntent = builder.build()
+        customTabsIntent.launchUrl(activity, Uri.parse(url))
     }
 
     fun setMarkerContent(item: MarkerData) {
@@ -103,6 +106,7 @@ class BottomSheetController(val view: LinearLayout, val activity: MapsActivity) 
 
         button.setOnClickListener {
             // open link with custom tabs
+            openCustomTab(url)
         }
     }
 

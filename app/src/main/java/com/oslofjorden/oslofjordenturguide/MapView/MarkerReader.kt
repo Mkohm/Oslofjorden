@@ -7,6 +7,7 @@ import com.oslofjorden.oslofjordenturguide.R
 import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.InputStreamReader
+import java.io.Reader
 
 internal class MarkerReader(val context: Context, val task: MapsActivity.AddInfoToMap) {
 
@@ -15,7 +16,7 @@ internal class MarkerReader(val context: Context, val task: MapsActivity.AddInfo
         val markerData = ArrayList<MarkerData>()
 
         val inputStream = context.resources.openRawResource(R.raw.interesting_points_oktober2)
-        val reader = BufferedReader(InputStreamReader(inputStream))
+        val reader = BufferedReader(InputStreamReader(inputStream) as Reader)
 
         while (true) {
             val line = reader.readLine() ?: break
@@ -26,12 +27,19 @@ internal class MarkerReader(val context: Context, val task: MapsActivity.AddInfo
             val obj = createJsonObject(line)
             val propertiesObject = obj?.getJSONObject("properties")
 
-            val name = propertiesObject?.getString("name") ?: "Ikke navngitt sted"
-            val markerTypes = propertiesObject?.getString("gpxx_WaypointExtension") ?: ""
-            val link = propertiesObject?.getString("link1_href")
+            val name = propertiesObject?.getString("name")
+            val markerTypes = propertiesObject?.getString("gpxx_WaypointExtension")
+
+            var link = propertiesObject?.getString("link1_href")
+            if (link == "null") {
+                link = null
+            }
+
+            // Only add this suffix if the link is not null
+            link = link?.let { it + "?app=1" }
 
             val markerTypesList = Regex("<gpxx:Category>.+?</gpxx:Category>")
-                    .findAll(markerTypes).toList().map {
+                    .findAll(markerTypes!!).toList().map {
                         when (it.value) {
                             "<gpxx:Category>Badeplass</gpxx:Category>" -> MarkerTypes.BEACH
                             "<gpxx:Category>Butikk</gpxx:Category>" -> MarkerTypes.STORE

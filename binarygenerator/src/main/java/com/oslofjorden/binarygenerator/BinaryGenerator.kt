@@ -69,8 +69,9 @@ class BinaryGenerator {
     private fun extractUrl(description: String): String? {
 
         try {
-            return description.substring(description.indexOf("www"), description.indexOf
-            (".html") + 5)
+            // todo: This is a little simple but will work good enough
+            return "http://" + description.substring(description.indexOf("www"), description.indexOf
+            (".html") + 5) + "?app=1"
         } catch (e: Exception) {
             return null
         }
