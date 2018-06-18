@@ -183,11 +183,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
                 //Kyststier behandles spesielt
                 if (i == 0) {
 
-                    //Bare legg til om det ikke var der fra før
-                    if (polylinesOnMap.size == 0) {
-                        Log.d(TAG, "loadCheckedItems: laster inn kyststier ")
-                        addPolylines()
-                    }
+                    addPolylines()
+
                 } else {
                     val type = MarkerTypes.getTypeFromIndex(i)
                     addMarkersToMap(type)
@@ -195,9 +192,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
 
             } else {
                 if (i == 0) {
-                    if (polylinesOnMap.size != 0) {
-                        removePolylines()
-                    }
+
+                    removePolylines()
                 }
             }
         }
