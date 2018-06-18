@@ -2,6 +2,7 @@ package com.oslofjorden.oslofjordenturguide.MapView
 
 
 import android.Manifest
+import android.arch.lifecycle.LifecycleOwner
 import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Color
@@ -20,15 +21,13 @@ import android.view.ContextMenu
 import android.view.View
 import android.widget.ImageButton
 import android.widget.LinearLayout
-import com.google.android.gms.maps.CameraUpdateFactory
-import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.*
 import kotlinx.android.synthetic.main.activity_maps.*
 import kotlinx.android.synthetic.main.activity_maps.view.*
-import com.google.android.gms.maps.OnMapReadyCallback
-import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Polyline
+import com.google.android.gms.maps.LocationSource.OnLocationChangedListener
 import com.google.maps.android.clustering.ClusterManager
 import com.google.maps.android.clustering.algo.GridBasedAlgorithm
 import com.google.maps.android.clustering.algo.PreCachingAlgorithmDecorator
@@ -47,7 +46,7 @@ import com.oslofjorden.oslofjordenturguide.R
 
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
-        NoticeDialogListener, ActivityCompat.OnRequestPermissionsResultCallback, LocationListener {
+        NoticeDialogListener, ActivityCompat.OnRequestPermissionsResultCallback, LifecycleOwner {
 
     private val PERMISSIONS_OK = 1
     private var currentPosition: LatLng = LatLng(59.903765, 10.699610) // Oslo
@@ -65,6 +64,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
     private var mMap: GoogleMap? = null
     private val polylinesOnMap = ArrayList<Polyline>()
     private val LOCATION_PERMISSION_REQUEST_CODE = 1
+    private lateinit var myLocationListener: MyLocationListener
 
     private var locationTrackingEnabled = false
     private lateinit var locationManager: LocationManager
@@ -87,6 +87,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
 
         initToolbar()
 
+        myLocationListener = MyLocationListener(this, lifecycle, OnLocationChangedListener { it ->
+            // update ui
+        })
+
+
 
         onofflocationbutton.isClickable = true
         onofflocationbutton.setOnClickListener {
@@ -101,6 +106,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
     }
 
 
+
+
     fun enableMyLocation() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
@@ -112,9 +119,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
             mMap?.isMyLocationEnabled = true
             locationTrackingEnabled = true
             onofflocationbutton.setImageResource(R.drawable.ic_location_on)
-
-
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0L, 0F, this)
 
 
         }
