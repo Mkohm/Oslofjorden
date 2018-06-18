@@ -61,9 +61,7 @@ internal class MarkerReader(val context: Context, val task: MapsActivity.AddInfo
             markerOption.title(name)
             markerOption.position(position)
 
-
-            val marker = MarkerData(markerOption, link, markerTypesList as
-                    List<MarkerTypes>, null)
+            val marker = MarkerData(markerOption, link, markerTypesList as List<MarkerTypes>, null)
             markerData.add(marker)
 
         }

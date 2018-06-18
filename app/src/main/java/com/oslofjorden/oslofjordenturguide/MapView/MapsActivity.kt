@@ -22,6 +22,8 @@ import android.widget.ImageButton
 import android.widget.LinearLayout
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
+import kotlinx.android.synthetic.main.activity_maps.*
+import kotlinx.android.synthetic.main.activity_maps.view.*
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.CameraPosition
@@ -31,7 +33,6 @@ import com.google.maps.android.clustering.ClusterManager
 import com.google.maps.android.clustering.algo.GridBasedAlgorithm
 import com.google.maps.android.clustering.algo.PreCachingAlgorithmDecorator
 import com.oslofjorden.oslofjordenturguide.R
-import kotlinx.android.synthetic.main.activity_maps.*
 
 
 //TODO: helgeroaferfgene link meld inn - fikset i fil, fix animation of infobar, back faast after removes kyststier
@@ -65,8 +66,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
     private val polylinesOnMap = ArrayList<Polyline>()
     private val LOCATION_PERMISSION_REQUEST_CODE = 1
 
-    private val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
     private var locationTrackingEnabled = false
+    private lateinit var locationManager: LocationManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -74,6 +75,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
 
         // Initialize lateinits
         bottomSheetController = BottomSheetController(findViewById<View>(R.id.bottom_sheet) as LinearLayout, this)
+        locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
         //The first time the user launches the app, this message will be shown
         showInfomessageToUserIfFirstTime()
@@ -88,10 +90,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
 
         onofflocationbutton.isClickable = true
         onofflocationbutton.setOnClickListener {
-            if (locationTrackingEnabled) {
+            if (!locationTrackingEnabled) {
                 enableMyLocation()
             } else {
                 disableMyLocation()
+                onofflocationbutton.setImageResource(R.drawable.ic_location_off)
             }
         }
 
@@ -103,15 +106,16 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
                 != PackageManager.PERMISSION_GRANTED) {
             // Permission to access the location is missing.
             PermissionUtils.requestPermission(this, LOCATION_PERMISSION_REQUEST_CODE,
-                    Manifest.permission.ACCESS_FINE_LOCATION, true);
+                    Manifest.permission.ACCESS_FINE_LOCATION, true)
         } else if (mMap != null) {
             // Access to the location has been granted to the app.
-            mMap?.isMyLocationEnabled = true;
+            mMap?.isMyLocationEnabled = true
             locationTrackingEnabled = true
+            onofflocationbutton.setImageResource(R.drawable.ic_location_on)
 
-            onofflocationbutton.setOnClickListener {
-                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0L, 0F, this)
-            }
+
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0L, 0F, this)
+
 
         }
     }
@@ -125,7 +129,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
 
         // If the request code is something other than what we requested
         if (requestCode != LOCATION_PERMISSION_REQUEST_CODE) {
-            return;
+            return
         }
 
         if (PermissionUtils.isPermissionGranted(permissions, grantResults,
@@ -174,7 +178,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
 
         for (i in checkedList.indices) {
             //Load items if the checkbox was checked
-            if (checkedList[i] == true) {
+            if (checkedList[i]) {
 
                 //Kyststier behandles spesielt
                 if (i == 0) {
@@ -273,58 +277,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
         mMap?.uiSettings?.isMapToolbarEnabled = false
         mMap?.uiSettings?.isMyLocationButtonEnabled = false
         mMap?.uiSettings?.isCompassEnabled = true
-
-
-
-        /*
-        onOffLocationButton.setOnClickListener(new View . OnClickListener () {
-            @Override
-            public void onClick(View v) {
-                if (!haslocationPermission) {
-                    checkPermission();
-
-                }
-
-
-                //Hvis location er enabled skal man kunne flicke swithchen akkurat sånn man vil
-                if (locationEnabled) {
-
-                    if (locationUpdatesSwitch == true) {
-
-                        onOffLocationButton.setImageResource(R.drawable.ic_location_off);
-                        Toast.makeText(getApplicationContext(), "Oppdatering av posisjon - av", Toast.LENGTH_SHORT).show();
-                        locationUpdatesSwitch = false;
-
-                    } else if (locationUpdatesSwitch == false) {
-
-
-                        onOffLocationButton.setImageResource(R.drawable.ic_location_on);
-                        Toast.makeText(getApplicationContext(), "Oppdatering av posisjon - på", Toast.LENGTH_SHORT).show();
-                        locationUpdatesSwitch = true;
-
-                    }
-
-
-                }
-                //Hvis location er på skal man få flicket switchen hvis det har skjedd en endring altså location er blitt skrudd på, dette må settingsrequest handle selv siden det er et callback som blir kallt
-                else if (!locationEnabled) {
-                    Log.d(TAG, "onClick: gps ikke på");
-                    settingsrequest();
-
-                }
-
-
-                if (locationUpdatesSwitch == true) {
-                    startLocationUpdates();
-                } else {
-                    // stopLocationUpdates();
-
-                }
-
-            }
-        });
-
-        */
 
 
         mMap?.setOnPolylineClickListener { polyline ->
@@ -434,10 +386,14 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
         mClusterManager.setOnClusterItemClickListener { item ->
             clickedClusterItem = item
 
-            bottomSheetController.expandBottomSheet()
             bottomSheetController.setMarkerContent(item)
+            bottomSheetController.expandBottomSheet()
 
-            false
+            // Navigate to the center of the marker when clicking on it
+            mMap?.animateCamera(CameraUpdateFactory.newLatLng(item.position))
+
+            // Do not show the window that usually appears when clicking on a marker
+            true
         }
 
         mMap?.setInfoWindowAdapter(mClusterManager.markerManager)

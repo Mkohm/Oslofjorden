@@ -95,23 +95,28 @@ class BottomSheetController(val view: LinearLayout, val activity: MapsActivity) 
         titleTextview.text = title
         titleTextview.visibility = View.VISIBLE
 
-        val builder = StringBuilder()
-        for (i in 0 until markertypes.size) {
-            if (i != markertypes.size-1) {
-                builder.append(markertypes[i].toString())
-            } else {
+        val description = buildDescription(markertypes)
 
-                builder.append(markertypes[i].toString() + ", ")
-            }
-        }
-
-        descriptionTextview.text = builder
+        descriptionTextview.text = description
 
 
 
         button.setOnClickListener {
             // open link with custom tabs
         }
+    }
+
+    private fun buildDescription(markertypes: List<MarkerTypes>): StringBuilder {
+        val builder = StringBuilder()
+        for (i in 0 until markertypes.size) {
+            if (i == markertypes.size - 1) {
+                builder.append(markertypes[i].toString())
+            } else {
+
+                builder.append(markertypes[i].toString() + ", ")
+            }
+        }
+        return builder
     }
 
     private fun setVisibility(url: String?, button: Button) {
