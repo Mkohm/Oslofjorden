@@ -20,9 +20,8 @@ import com.google.android.gms.maps.LocationSource.OnLocationChangedListener
 import com.oslofjorden.oslofjordenturguide.R
 import kotlinx.android.synthetic.main.activity_maps.*
 
-class MyLocationListener(val context: Context, val mMap: GoogleMap?, val onOffLocationButton: ImageButton, val lifecycle: Lifecycle, val callback: OnLocationChangedListener) : LifecycleObserver, LocationListener, ActivityCompat.OnRequestPermissionsResultCallback {
+class MyLocationListener(private val context: Context, private val activity: AppCompatActivity, private val mMap: GoogleMap?, private val onOffLocationButton: ImageButton, private val lifecycle: Lifecycle, private val callback: OnLocationChangedListener) : LifecycleObserver, LocationListener {
 
-    private val LOCATION_PERMISSION_REQUEST_CODE = 1
 
     override fun onStatusChanged(p0: String?, p1: Int, p2: Bundle?) {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
@@ -55,37 +54,9 @@ class MyLocationListener(val context: Context, val mMap: GoogleMap?, val onOffLo
 
     fun enableMyLocation() {
         if (lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) {
-
-            if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
-                    != PackageManager.PERMISSION_GRANTED) {
-                // Permission to access the location is missing.
-                PermissionUtils.requestPermission(context as AppCompatActivity, LOCATION_PERMISSION_REQUEST_CODE,
-                        Manifest.permission.ACCESS_FINE_LOCATION, true)
-            } else {
-
-                enabled = true
-                onOffLocationButton.setImageResource(R.drawable.ic_location_on)
-                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0L, 0F, this)
-                mMap?.isMyLocationEnabled = true
-            }
-
-        }
-
-    }
-
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-
-        // If the request code is something other than what we requested
-        if (requestCode != LOCATION_PERMISSION_REQUEST_CODE) {
-            return
-        }
-
-        if (PermissionUtils.isPermissionGranted(permissions, grantResults,
-                        Manifest.permission.ACCESS_FINE_LOCATION)) {
-            // Enable the my location layer if the permission has been granted.
-            enableMyLocation()
-        } else {
-            // Display the missing permission error dialog when the fragments resume.
+            enabled = true
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0L, 0F, this)
+            mMap?.isMyLocationEnabled = true
         }
     }
 

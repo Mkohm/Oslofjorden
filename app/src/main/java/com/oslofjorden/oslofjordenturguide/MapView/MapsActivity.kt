@@ -7,8 +7,6 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.PorterDuff
-import android.location.Location
-import android.location.LocationListener
 import android.location.LocationManager
 import android.os.AsyncTask
 import android.os.Bundle
@@ -23,7 +21,6 @@ import android.widget.ImageButton
 import android.widget.LinearLayout
 import com.google.android.gms.maps.*
 import kotlinx.android.synthetic.main.activity_maps.*
-import kotlinx.android.synthetic.main.activity_maps.view.*
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Polyline
@@ -46,7 +43,10 @@ import com.oslofjorden.oslofjordenturguide.R
 
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
-        NoticeDialogListener, LifecycleOwner {
+        NoticeDialogListener, LifecycleOwner, ActivityCompat.OnRequestPermissionsResultCallback {
+
+
+    private val LOCATION_PERMISSION_REQUEST_CODE = 1
 
     private var currentPosition: LatLng = LatLng(59.903765, 10.699610) // Oslo
     private var currentCameraPosition: CameraPosition? = null
@@ -84,17 +84,51 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
 
         initToolbar()
 
-
-
         onofflocationbutton.isClickable = true
         onofflocationbutton.setOnClickListener {
+
+            if (!hasPermission()) {
+                requestPermission()
+                return@setOnClickListener
+            }
+
             if (!myLocationListener.enabled) {
                 myLocationListener.enableMyLocation()
+                onofflocationbutton.setImageResource(R.drawable.ic_location_on)
             } else {
                 myLocationListener.disableMyLocation()
+                onofflocationbutton.setImageResource(R.drawable.ic_location_off)
             }
         }
 
+    }
+
+    private fun requestPermission() {
+        PermissionUtils.requestPermission(this, LOCATION_PERMISSION_REQUEST_CODE,
+                Manifest.permission.ACCESS_FINE_LOCATION, true)
+    }
+
+    private fun hasPermission(): Boolean {
+        return ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+    }
+
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+
+
+        // If the request code is something other than what we requested
+        if (requestCode != LOCATION_PERMISSION_REQUEST_CODE) {
+            return
+        }
+
+        if (PermissionUtils.isPermissionGranted(permissions, grantResults,
+                        Manifest.permission.ACCESS_FINE_LOCATION)) {
+            // Enable the my location layer if the permission has been granted.
+            myLocationListener.enableMyLocation()
+            onofflocationbutton.setImageResource(R.drawable.ic_location_on)
+        } else {
+            // Display the missing permission error dialog when the fragments resume.
+        }
     }
 
 
@@ -220,7 +254,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
 
-        myLocationListener = MyLocationListener(this, mMap, onofflocationbutton, lifecycle, OnLocationChangedListener { it ->
+        myLocationListener = MyLocationListener(this, this, mMap, onofflocationbutton, lifecycle, OnLocationChangedListener { it ->
             // update ui
             val cameraUpdate = CameraUpdateFactory.newLatLng(LatLng(it.latitude, it.longitude))
             mMap?.animateCamera(cameraUpdate)
