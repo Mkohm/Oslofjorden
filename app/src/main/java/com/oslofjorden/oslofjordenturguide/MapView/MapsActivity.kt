@@ -30,10 +30,7 @@ import com.google.maps.android.clustering.algo.GridBasedAlgorithm
 import com.google.maps.android.clustering.algo.PreCachingAlgorithmDecorator
 import com.oslofjorden.oslofjordenturguide.R
 
-// todo: make loading of the
-//TODO: helgeroaferfgene link meld inn - fikset i fil, fix animation of infobar, back faast after removes kyststier
 //Challenge in walking kyststier
-//Infobar material design
 //Menu - hamburgermenu
 //Rapporter feil/tur/hvasomhelst
 //instillinger oppdateringshastighet ++
@@ -43,7 +40,7 @@ import com.oslofjorden.oslofjordenturguide.R
 
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
-        NoticeDialogListener, LifecycleOwner, ActivityCompat.OnRequestPermissionsResultCallback {
+        NoticeDialogListener, LifecycleOwner, ActivityCompat.OnRequestPermissionsResultCallback, AppPurchasedListener {
 
 
     private val LOCATION_PERMISSION_REQUEST_CODE = 1
@@ -101,6 +98,16 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
             }
         }
 
+        buyButton.setOnClickListener {
+            // Add this activity to listen for success of purchase
+            val purchasedListener = InAppPurchaseHandler(this)
+            purchasedListener.purchase()
+        }
+
+    }
+
+    override fun onPurchaseSuccess() {
+        adLayout.visibility = View.GONE
     }
 
     private fun requestPermission() {

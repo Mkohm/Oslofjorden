@@ -83,6 +83,7 @@
 
                 <Button
                     android:layout_weight="0"
+                    android:id="@+id/buyButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     style="@style/Base.Widget.AppCompat.Button.Colored"
