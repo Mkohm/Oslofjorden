@@ -46,9 +46,8 @@ import com.oslofjorden.oslofjordenturguide.R
 
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
-        NoticeDialogListener, ActivityCompat.OnRequestPermissionsResultCallback, LifecycleOwner {
+        NoticeDialogListener, LifecycleOwner {
 
-    private val PERMISSIONS_OK = 1
     private var currentPosition: LatLng = LatLng(59.903765, 10.699610) // Oslo
     private var currentCameraPosition: CameraPosition? = null
     private lateinit var clickedClusterItem: MarkerData
@@ -63,10 +62,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
     private var dataLoaded = false
     private var mMap: GoogleMap? = null
     private val polylinesOnMap = ArrayList<Polyline>()
-    private val LOCATION_PERMISSION_REQUEST_CODE = 1
     private lateinit var myLocationListener: MyLocationListener
 
-    private var locationTrackingEnabled = false
     private lateinit var locationManager: LocationManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -87,61 +84,15 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
 
         initToolbar()
 
-        myLocationListener = MyLocationListener(this, lifecycle, OnLocationChangedListener { it ->
-            // update ui
-            val cameraUpdate = CameraUpdateFactory.newLatLng(LatLng(it.latitude, it.longitude))
-            mMap?.animateCamera(cameraUpdate)
-        })
-
 
 
         onofflocationbutton.isClickable = true
         onofflocationbutton.setOnClickListener {
-            if (!locationTrackingEnabled) {
-                enableMyLocation()
+            if (!myLocationListener.enabled) {
+                myLocationListener.enableMyLocation()
             } else {
-                disableMyLocation()
-                onofflocationbutton.setImageResource(R.drawable.ic_location_off)
+                myLocationListener.disableMyLocation()
             }
-        }
-
-    }
-
-
-    fun enableMyLocation() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
-            // Permission to access the location is missing.
-            PermissionUtils.requestPermission(this, LOCATION_PERMISSION_REQUEST_CODE,
-                    Manifest.permission.ACCESS_FINE_LOCATION, true)
-        } else if (mMap != null) {
-            // Access to the location has been granted to the app.
-            mMap?.isMyLocationEnabled = true
-            locationTrackingEnabled = true
-            onofflocationbutton.setImageResource(R.drawable.ic_location_on)
-
-
-        }
-    }
-
-
-    /**
-     * Is called when the result of the requestPermission() is ready
-     */
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-
-        // If the request code is something other than what we requested
-        if (requestCode != LOCATION_PERMISSION_REQUEST_CODE) {
-            return
-        }
-
-        if (PermissionUtils.isPermissionGranted(permissions, grantResults,
-                        Manifest.permission.ACCESS_FINE_LOCATION)) {
-            // Enable the my location layer if the permission has been granted.
-            enableMyLocation()
-        } else {
-            // Display the missing permission error dialog when the fragments resume.
         }
 
     }
@@ -268,6 +219,16 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
 
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
+
+        myLocationListener = MyLocationListener(this, mMap, onofflocationbutton, lifecycle, OnLocationChangedListener { it ->
+            // update ui
+            val cameraUpdate = CameraUpdateFactory.newLatLng(LatLng(it.latitude, it.longitude))
+            mMap?.animateCamera(cameraUpdate)
+        })
+
+
+
+
         setUpClusterer()
 
         goToInitialLocation()
@@ -299,10 +260,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
         }
     }
 
-    private fun disableMyLocation() {
-        locationManager.removeUpdates(this)
-        locationTrackingEnabled = false
-    }
 
     private fun setOriginalPolylineColor() {
         val description = (previousPolylineClicked?.tag as PolylineData?)?.description
