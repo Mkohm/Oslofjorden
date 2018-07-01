@@ -8,8 +8,7 @@ import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
 import com.google.android.gms.maps.model.Polyline
-import com.oslofjorden.oslofjordenturguide.R
-
+import com.oslofjorden.R
 
 class BottomSheetController(val view: LinearLayout, val activity: MapsActivity) {
     private val behavior: BottomSheetBehavior<LinearLayout> = BottomSheetBehavior.from(view)

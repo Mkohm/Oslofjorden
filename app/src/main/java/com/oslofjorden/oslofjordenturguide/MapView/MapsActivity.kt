@@ -28,7 +28,7 @@ import com.google.android.gms.maps.LocationSource.OnLocationChangedListener
 import com.google.maps.android.clustering.ClusterManager
 import com.google.maps.android.clustering.algo.GridBasedAlgorithm
 import com.google.maps.android.clustering.algo.PreCachingAlgorithmDecorator
-import com.oslofjorden.oslofjordenturguide.R
+import com.oslofjorden.R
 
 //Challenge in walking kyststier
 //Menu - hamburgermenu
@@ -77,7 +77,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
         //Removes the oslofjorden picture
         window.setBackgroundDrawableResource(R.drawable.graybackground)
 
+        val purchasedListener = InAppPurchaseHandler(this, this, this)
+
         initMap()
+
+        AdHandler(this)
 
         initToolbar()
 
@@ -100,7 +104,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
 
         buyButton.setOnClickListener {
             // Add this activity to listen for success of purchase
-            val purchasedListener = InAppPurchaseHandler(this)
+            // todo: lol fix this
             purchasedListener.purchase()
         }
 
@@ -331,24 +335,14 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
 
     private fun createDefaultCheckedArray(): BooleanArray {
         val defaultChecked = BooleanArray(17)
-        defaultChecked[0] = true
-        defaultChecked[1] = true
-        defaultChecked[2] = true
-        defaultChecked[3] = true
-        defaultChecked[4] = true
-        defaultChecked[5] = true
-        defaultChecked[6] = true
 
-        defaultChecked[7] = false
-        defaultChecked[8] = false
-        defaultChecked[9] = false
-        defaultChecked[10] = false
-        defaultChecked[11] = false
-        defaultChecked[12] = false
-        defaultChecked[13] = false
-        defaultChecked[14] = false
-        defaultChecked[15] = false
-        defaultChecked[16] = false
+        for (i in 0 until 6) {
+            defaultChecked[i] = true
+        }
+
+        for (i in 7 until 17) {
+            defaultChecked[i] = false
+        }
 
         return defaultChecked
     }

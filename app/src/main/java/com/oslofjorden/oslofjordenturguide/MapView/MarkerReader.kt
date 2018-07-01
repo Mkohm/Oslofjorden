@@ -3,7 +3,9 @@ package com.oslofjorden.oslofjordenturguide.MapView
 import android.content.Context
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
-import com.oslofjorden.oslofjordenturguide.R
+import com.oslofjorden.R
+
+
 import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.InputStreamReader
@@ -15,7 +17,7 @@ internal class MarkerReader(val context: Context, val task: MapsActivity.AddInfo
 
         val markerData = ArrayList<MarkerData>()
 
-        val inputStream = context.resources.openRawResource(R.raw.interesting_points_oktober2)
+        val inputStream = context.resources.openRawResource(R.raw.interesting_points_may2018)
         val reader = BufferedReader(InputStreamReader(inputStream) as Reader)
 
         while (true) {

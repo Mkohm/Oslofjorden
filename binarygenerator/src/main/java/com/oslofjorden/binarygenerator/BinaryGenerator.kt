@@ -9,7 +9,7 @@ import java.io.*
 class BinaryGenerator {
 
     /**
-     * Reads the xml files and creates lists of items ready for binary file creation
+     * Reads the geo-json files and creates lists of items ready for binary file creation
      */
     fun readFromJsonfilesCreateLists(): Array<java.util.ArrayList<out Serializable?>> {
 
@@ -92,8 +92,7 @@ class BinaryGenerator {
             var coord = jsonCoordinates.get(j).toString()
             val lng = coord.substring(1, coord.indexOf(",")).toDouble()
 
-            coord = coord.substring(coord.indexOf(",") + 1, coord.length)
-            val lat = coord.substring(0, coord.indexOf(",")).toDouble()
+            val lat = coord.substring(coord.indexOf(",")+1, coord.length-1).toDouble()
 
             val latLng = doubleArrayOf(lat, lng)
             coordinates.add(latLng)

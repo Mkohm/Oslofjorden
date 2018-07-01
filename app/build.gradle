@@ -4,14 +4,23 @@ apply plugin: 'kotlin-android'
 
 apply plugin: 'kotlin-android-extensions'
 
+
+/**
+ * Use the number of seconds/10 since Jan 1 2016 as the versionCode.
+ * This lets us upload a new build at most every 10 seconds for the
+ * next 680 years.
+ */
+def vcode = (int) (((new Date().getTime() / 1000) - 1451606400) / 10)
+
+
 android {
     compileSdkVersion 27
     defaultConfig {
-        applicationId "com.oslofjorden.oslofjordenturguide"
+        applicationId "com.oslofjorden"
         minSdkVersion 15
         targetSdkVersion 27
-        versionCode 1
-        versionName "1.0"
+        versionCode vcode
+        versionName "2.0." + vcode
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
@@ -34,6 +43,7 @@ dependencies {
     implementation 'com.android.support.constraint:constraint-layout:1.1.0'
 
 
+    implementation 'com.android.billingclient:billing:1.1'
     implementation 'com.google.android.gms:play-services-location:15.0.1'
     implementation 'com.google.android.gms:play-services-maps:15.0.1'
     implementation 'com.google.maps.android:android-maps-utils:0.5'

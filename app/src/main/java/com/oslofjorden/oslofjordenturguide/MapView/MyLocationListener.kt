@@ -17,7 +17,7 @@ import android.support.v7.app.AppCompatActivity
 import android.widget.ImageButton
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.LocationSource.OnLocationChangedListener
-import com.oslofjorden.oslofjordenturguide.R
+import com.oslofjorden.R
 import kotlinx.android.synthetic.main.activity_maps.*
 
 class MyLocationListener(private val context: Context, private val activity: AppCompatActivity, private val mMap: GoogleMap?, private val onOffLocationButton: ImageButton, private val lifecycle: Lifecycle, private val callback: OnLocationChangedListener) : LifecycleObserver, LocationListener {
