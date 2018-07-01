@@ -1,12 +1,12 @@
 <android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:ads="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    xmlns:ads="http://schemas.android.com/apk/res-auto">
+    android:layout_height="match_parent">
 
-    <LinearLayout
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:layout_height="match_parent">
 
 
         <android.support.v7.widget.Toolbar xmlns:android="http://schemas.android.com/apk/res/android"
@@ -55,61 +55,70 @@
 
         </android.support.v7.widget.Toolbar>
 
-        <RelativeLayout
-            android:id="@+id/adLayout"
-
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@color/gray"
-            android:orientation="vertical">
-
-
-
-
-
-            <LinearLayout
-                android:id="@+id/buyLayout"
-                android:layout_width="wrap_content"
-                android:layout_margin="8dp"
-                android:weightSum="1"
-                android:layout_height="wrap_content">
-
-                <TextView
-                    android:id="@+id/buyText"
-                    android:layout_weight="1"
-                    android:layout_gravity="center_vertical"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Vi setter pris på om du vil støtte oslofjorden.com og dermed fjerne reklamen." />
-
-                <Button
-                    android:layout_weight="0"
-                    android:id="@+id/buyButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    style="@style/Base.Widget.AppCompat.Button.Colored"
-                    android:layout_marginStart="8dp"
-                    android:text="Kjøp"/>
-
-            </LinearLayout>
-            <com.google.android.gms.ads.AdView
-                android:id="@+id/adView"
-                ads:adSize="BANNER"
-                ads:adUnitId="ca-app-pub-3940256099942544~3347511713"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
-
-        </RelativeLayout>
 
         <fragment xmlns:android="http://schemas.android.com/apk/res/android"
             xmlns:tools="http://schemas.android.com/tools"
             android:id="@+id/map"
             android:name="com.google.android.gms.maps.SupportMapFragment"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_below="@id/my_toolbar"
             tools:context=".MapsActivity" />
 
-    </LinearLayout>
+
+        <RelativeLayout
+            android:id="@+id/adLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/my_toolbar"
+            android:clickable="true"
+            android:background="@color/gray">
+
+            <LinearLayout
+                android:id="@+id/buyLayout"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_marginLeft="8dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginEnd="8dp"
+                android:layout_marginRight="8dp"
+                android:weightSum="1"
+                android:layout_marginBottom="8dp"
+                android:orientation="horizontal">
+
+                <TextView
+
+                    android:layout_weight="1"
+                    android:id="@+id/buyText"
+                    android:layout_gravity="center_vertical"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Vi setter pris på om du vil støtte oslofjorden.com og dermed fjerne reklamen."
+                    tools:text="Vi setter pris på om du vil støtte oslofjorden.com og dermed fjerne reklamen." />
+
+                <Button
+                    android:id="@+id/buyButton"
+                    style="@style/Base.Widget.AppCompat.Button.Colored"
+                    android:layout_width="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_height="wrap_content"
+                    android:text="Kjøp"
+                    tools:text="Kjøp" />
+
+
+            </LinearLayout>
+
+            <com.google.android.gms.ads.AdView
+                android:id="@+id/adView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/buyLayout"
+                ads:adSize="BANNER"
+                ads:adUnitId="ca-app-pub-8816231201193091/8419082785" />
+        </RelativeLayout>
+
+    </RelativeLayout>
 
     <include layout="@layout/bottomsheet" />
 
