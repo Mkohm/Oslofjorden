@@ -1,0 +1,2 @@
+json_key_file("/Users/mariuskohmann/Code/Personal/OslofjordenTurguideDocuments/api-5388861494304229736-82067-0f7145871b9b.json") # Path to the json secret file - Follow https://docs.fastlane.tools/actions/supply/#setup to get one
+package_name("com.oslofjorden") # e.g. com.krausefx.app

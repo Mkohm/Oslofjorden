@@ -1,0 +1,19 @@
+Appen inneholder informasjon om kyststier, badeplasser, spisesteder, butikker, parkering og transport, POI, fiskeplasser, gjestehavner, uthavner, bunkers - steder å fylle bensin, marinaer og båtramper, kran/truck, toaletter, fyr, båtbutikker og campingplasser. Avhengig av ditt bruksområde kan du enkelt velge hva som skal vises på kartet.
+
+Bruk den på tur for å finne frem på kyststien, eller bruk den ombord i båten for å finne en badeplass i nærheten, et sted å kjøpe mat, eller en flott uthavn. Trenger du bensin ser du lett hvor nærmeste pumpe befinner seg. 
+
+Rundt Oslofjorden er det milevis med flotte kyststier, turveier og hundrevis av innbydende badeplasser. 
+
+Appen har kyststier hele kystlinjen fra Sverige til Telemark og går gjennom blant annet:
+Oslo, Akershus, Bærum, Asker, Oppegård, Ås, Nesodden, Frogn, Vestby, Buskerud, Røyken, Hurum, Drammen, Vestfold, Svelvik, Sande, Holmestrand, Re, Horten, Tønsberg, Nøtterøy, Tjøme, Stokke, Sandefjord, Larvik, Østfold, Moss, Rygge, Råde, Fredrikstad, Sarpsborg og Halden.
+
+Kyststien er vanligvis godt merket, men på turveier og stier kan det kan være krevende å finne frem, løsningen er å trykke på knappen i appen som gjør at kartet følger din posisjon på kyststien. 
+
+Hvis du lar applikasjonen benytte GPSen når du er på tur vil den vise en markør der du er på kartet. Når du beveger deg vil markøren bevege seg og man kan se hvor man er i forhold til annen tilgjengelig informasjon i nærheten. Hvis man klikker på kyststier eller en markør får man opp litt informasjon og mulighet til å gå få ytterligere informasjon fra www.oslofjorden.com.
+
+Planlegg turen:
+Zoom inn og ut på kartet, klikk på de ulike kyststiene og markørene, finn ut hvor turen skal gå. 
+
+Det anbefales å bruke Google Chrome som nettleser for best opplevelse, men vil fint fungere i andre nettlesere også.
+
+Oslofjorden Turguide er under utvikling og forslag og tilbakemeldinger tas imot med stor takk. Utviklerteamet kan nåes på mail: appdev@oslofjorden.com

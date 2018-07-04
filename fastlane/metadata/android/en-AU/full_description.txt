@@ -1,0 +1,11 @@
+Around the Oslofjord there is miles of beautiful coastal paths, and hundreds of beaches. The coastal path is usually marked good, but in some places it can be hard to find the correct way.
+
+If you let the application use your device's GPS when you are out walking, it will show you your current position on the map, and all the coastal paths and beaches in the area. If you click on any of the coastal paths or markers, you will be given a bit more information, and with the opportunity to find more info on www.oslofjorden.com (unfortunately only in norwegian at the moment). 
+
+Plan your trip:
+Zoom in and out on the map, click the various coastal paths and markers and find out where your next trip will go.
+
+We recommend using Google Chrome as web browser for the best experience, but will also work fine in other browsers. 
+
+The app is under heavy development and feedback is greatly appreciated. 
+You can email the development-team: appdev@oslofjorden.com

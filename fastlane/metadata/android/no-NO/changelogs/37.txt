@@ -1,0 +1,6 @@
+- Masse ny info tilgjengelig, trykk på knapp øverst til høyre for å velge hva som skal vises
+- Innlasting av data går nå omtrent dobbelt så fort som tidligere
+- Nye beskrivelser på kyststier og markører
+- Nye markører i blant annet Trondheim
+- Bugfixer - Skal nå fungere bedre på mobiler med Android Marshmallow (6)
+- Åpning av linker fungerer bedre på Samsung-enheter
