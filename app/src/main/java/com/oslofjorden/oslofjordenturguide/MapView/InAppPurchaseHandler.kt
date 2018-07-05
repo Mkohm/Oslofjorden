@@ -66,7 +66,15 @@ class InAppPurchaseHandler(private val inAppPurchasedListener: AppPurchasedListe
     fun purchase() {
         // implement purchase shit
 
+
+        // Store in sharedpreferences that the user has bought removeads
+        val sharedPref = activity.getPreferences(Context.MODE_PRIVATE)
+        val editor = sharedPref.edit()
+        editor.putBoolean("userHasBoughtRemoveAds", true)
+        editor.commit()
+
         inAppPurchasedListener.onPurchaseSuccess()
+
     }
 
 

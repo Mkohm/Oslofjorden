@@ -17,7 +17,7 @@ internal class MarkerReader(val context: Context, val task: MapsActivity.AddInfo
 
         val markerData = ArrayList<MarkerData>()
 
-        val inputStream = context.resources.openRawResource(R.raw.interesting_points_may2018)
+        val inputStream = context.resources.openRawResource(R.raw.points)
         val reader = BufferedReader(InputStreamReader(inputStream) as Reader)
 
         while (true) {
