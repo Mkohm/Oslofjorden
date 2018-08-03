@@ -51,8 +51,6 @@ class BottomSheetController(val view: LinearLayout, val activity: MapsActivity) 
         button.visibility = View.VISIBLE
     }
 
-
-
     fun setPolylineContent(polyline: Polyline) {
         val titleTextview = view.findViewById<TextView>(R.id.title)
         val descriptionTextview = view.findViewById<TextView>(R.id.description)
@@ -100,8 +98,6 @@ class BottomSheetController(val view: LinearLayout, val activity: MapsActivity) 
         val description = buildDescription(markertypes)
 
         descriptionTextview.text = description
-
-
 
         button.setOnClickListener {
             // open link with custom tabs

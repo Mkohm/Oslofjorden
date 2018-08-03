@@ -424,8 +424,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
     internal inner class AddInfoToMap : AsyncTask<Void?, Void?, Void?>() {
 
         override fun onPreExecute() {
-
-            //   bottomSheetController.expandBottomSheet()
             bottomSheetController.setLoadingText()
         }
 
@@ -445,10 +443,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
             }
 
             dataLoaded = true
-
-
             bottomSheetController.finishLoading()
-
 
             layers.isClickable = true
             layers.isEnabled = true
