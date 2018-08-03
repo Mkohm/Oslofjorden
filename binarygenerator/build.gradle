@@ -9,6 +9,8 @@ dependencies {
     implementation 'com.google.android.gms:play-services-maps:15.0.0'
     implementation 'com.google.maps.android:android-maps-utils:0.5'
 
+    implementation 'org.jsoup:jsoup:1.8.1'
+
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
 }
@@ -16,7 +18,7 @@ dependencies {
 sourceCompatibility = "1.7"
 targetCompatibility = "1.7"
 buildscript {
-    ext.kotlin_version = '1.2.41'
+    ext.kotlin_version = '1.2.50'
     repositories {
         google()
         mavenCentral()
