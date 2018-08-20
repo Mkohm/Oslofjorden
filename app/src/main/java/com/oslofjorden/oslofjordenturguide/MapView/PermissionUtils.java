@@ -38,8 +38,8 @@ public abstract class PermissionUtils {
      * Requests the fine location permission. If a rationale with an additional explanation should
      * be shown to the user, displays a dialog that triggers the request.
      */
-    public static void requestPermission(AppCompatActivity activity, int requestId,
-                                         String permission, boolean finishActivity) {
+    public static void requestPermission(AppCompatActivity activity, int requestId, String permission,
+                                         boolean finishActivity) {
 
 
         // Location permission has not been granted yet, request it.
@@ -52,8 +52,7 @@ public abstract class PermissionUtils {
      *
      * @see android.support.v4.app.ActivityCompat.OnRequestPermissionsResultCallback
      */
-    public static boolean isPermissionGranted(String[] grantPermissions, int[] grantResults,
-                                              String permission) {
+    public static boolean isPermissionGranted(String[] grantPermissions, int[] grantResults, String permission) {
         for (int i = 0; i < grantPermissions.length; i++) {
             if (permission.equals(grantPermissions[i])) {
                 return grantResults[i] == PackageManager.PERMISSION_GRANTED;

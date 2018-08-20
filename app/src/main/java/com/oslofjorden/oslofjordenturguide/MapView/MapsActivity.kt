@@ -103,9 +103,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
         }
 
         buyButton.setOnClickListener {
-            // Add this activity to listen for success of purchase
             // todo: lol fix this
-            purchasedListener.purchase()
+            purchasedListener.queryPurchases()
         }
 
     }

@@ -22,11 +22,11 @@ android {
             storePassword 'key45!-osloapp'
         }
     }
-    compileSdkVersion 27
+    compileSdkVersion 28
     defaultConfig {
         applicationId "com.oslofjorden"
         minSdkVersion 15
-        targetSdkVersion 27
+        targetSdkVersion 28
         versionCode vcode
         versionName "2.0." + vcode
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"

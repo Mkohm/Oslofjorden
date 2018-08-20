@@ -2,9 +2,10 @@ package com.oslofjorden.oslofjordenturguide.MapView
 
 import android.content.Context
 import com.android.billingclient.api.*
+import kotlinx.android.synthetic.main.activity_maps.*
 
-// Handles the purchase of the in app purchase.
-// Starts a connection to google play to initiate the app purchase and will receive a callback when a purchase is completed.
+// Handles the purchaseOk of the in app purchaseOk.
+// Starts a connection to google play to initiate the app purchaseOk and will receive a callback when a purchaseOk is completed.
 // It will then notify the Mapsactivity that is listening for this class.
 class InAppPurchaseHandler(private val inAppPurchasedListener: AppPurchasedListener, val context: Context, val activity: MapsActivity) : PurchasesUpdatedListener {
     lateinit private var billingClient: BillingClient
@@ -28,9 +29,8 @@ class InAppPurchaseHandler(private val inAppPurchasedListener: AppPurchasedListe
                 object : BillingClientStateListener {
                     override fun onBillingSetupFinished(@BillingClient.BillingResponse billingResponseCode: Int) {
                         if (billingResponseCode == BillingClient.BillingResponse.OK) {
-                            // The billing client is ready. You can query purchases here.
-
-                            queryPurchases()
+                            // The billing client is ready. We will now enable the buy button
+                            activity.buyButton.isEnabled = true
                         } else {
                             val a = 1
                         }
@@ -45,26 +45,23 @@ class InAppPurchaseHandler(private val inAppPurchasedListener: AppPurchasedListe
 
     }
 
-    private fun queryPurchases() {
+    fun queryPurchases() {
         val skuList = ArrayList<String>()
         skuList.add("com.oslofjorden.removeads")
 
         val params = SkuDetailsParams.newBuilder()
         params.setSkusList(skuList).setType(BillingClient.SkuType.INAPP)
-        billingClient.querySkuDetailsAsync(params.build(), { responseCode, skuDetailsList ->
+        billingClient.querySkuDetailsAsync(params.build()) { responseCode, skuDetailsList ->
             // Process the result.
-
-
-            val flowParams = BillingFlowParams.newBuilder()
-                    .setSku("com.oslofjorden.removeads")
-                    .setType(BillingClient.SkuType.INAPP) // SkuType.SUB for subscription
-                    .build()
+            val flowParams = BillingFlowParams.newBuilder().setSku("com.oslofjorden.removeads").setType(BillingClient.SkuType.INAPP).build()
             val responseCode = billingClient.launchBillingFlow(activity, flowParams)
-        })
+
+
+        }
     }
 
-    fun purchase() {
-        // implement purchase shit
+    fun purchaseOk() {
+        // implement purchaseOk shit
 
 
         // Store in sharedpreferences that the user has bought removeads
