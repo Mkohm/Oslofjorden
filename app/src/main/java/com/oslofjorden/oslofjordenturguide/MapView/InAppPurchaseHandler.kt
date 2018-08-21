@@ -16,32 +16,31 @@ class InAppPurchaseHandler(private val inAppPurchasedListener: AppPurchasedListe
 
 
     override fun onPurchasesUpdated(responseCode: Int, purchases: MutableList<Purchase>?) {
-        val a = 1
+        when (responseCode) {
+            BillingClient.BillingResponse.ITEM_ALREADY_OWNED -> purchaseOk()
+            BillingClient.BillingResponse.OK -> purchaseOk()
+        }
     }
-
-
-
 
 
     fun startGooglePlayConnection() {
         billingClient = BillingClient.newBuilder(context).setListener(this).build()
-        billingClient.startConnection(
-                object : BillingClientStateListener {
-                    override fun onBillingSetupFinished(@BillingClient.BillingResponse billingResponseCode: Int) {
-                        if (billingResponseCode == BillingClient.BillingResponse.OK) {
-                            // The billing client is ready. We will now enable the buy button
-                            activity.buyButton.isEnabled = true
-                        } else {
-                            val a = 1
-                        }
-                    }
+        billingClient.startConnection(object : BillingClientStateListener {
+            override fun onBillingSetupFinished(@BillingClient.BillingResponse billingResponseCode: Int) {
+                if (billingResponseCode == BillingClient.BillingResponse.OK) {
+                    // The billing client is ready. We will now enable the buy button
+                    activity.buyButton.isEnabled = true
+                } else {
+                    val a = 1
+                }
+            }
 
-                    override fun onBillingServiceDisconnected() {
-                        // Try to restart the connection on the next request to
-                        // Google Play by calling the startConnection() method.
-                        billingClient.startConnection(this)
-                    }
-                })
+            override fun onBillingServiceDisconnected() {
+                // Try to restart the connection on the next request to
+                // Google Play by calling the startConnection() method.
+                billingClient.startConnection(this)
+            }
+        })
 
     }
 
@@ -55,15 +54,10 @@ class InAppPurchaseHandler(private val inAppPurchasedListener: AppPurchasedListe
             // Process the result.
             val flowParams = BillingFlowParams.newBuilder().setSku("com.oslofjorden.removeads").setType(BillingClient.SkuType.INAPP).build()
             val responseCode = billingClient.launchBillingFlow(activity, flowParams)
-
-
         }
     }
 
     fun purchaseOk() {
-        // implement purchaseOk shit
-
-
         // Store in sharedpreferences that the user has bought removeads
         val sharedPref = activity.getPreferences(Context.MODE_PRIVATE)
         val editor = sharedPref.edit()

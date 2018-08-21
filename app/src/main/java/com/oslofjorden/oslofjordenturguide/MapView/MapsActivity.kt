@@ -103,7 +103,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
         }
 
         buyButton.setOnClickListener {
-            // todo: lol fix this
             purchasedListener.queryPurchases()
         }
 

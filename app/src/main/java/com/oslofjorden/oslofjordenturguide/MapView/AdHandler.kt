@@ -2,21 +2,17 @@ package com.oslofjorden.oslofjordenturguide.MapView
 
 import android.content.Context
 import android.support.v7.app.AppCompatActivity
-import android.util.AttributeSet
 import android.view.View
-import android.widget.Button
+import android.view.ViewGroup
+import android.widget.RelativeLayout
+import android.widget.RelativeLayout.BELOW
+import android.widget.RelativeLayout.CENTER_IN_PARENT
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
 import com.oslofjorden.BuildConfig
-import kotlinx.android.synthetic.main.activity_maps.*
-import android.widget.RelativeLayout
-import android.view.ViewGroup
-import android.util.Xml
-import android.widget.RelativeLayout.BELOW
-import android.widget.RelativeLayout.CENTER_IN_PARENT
 import com.oslofjorden.R
-import org.xmlpull.v1.XmlPullParser
+import kotlinx.android.synthetic.main.activity_maps.*
 
 
 class AdHandler(activity: AppCompatActivity) {
@@ -30,7 +26,13 @@ class AdHandler(activity: AppCompatActivity) {
 
         if (!userHasBoughtRemoveAds) {
             createAd(activity)
+        } else {
+            removeAdLayout(activity)
         }
+    }
+
+    private fun removeAdLayout(activity: AppCompatActivity) {
+        activity.buyLayout.visibility = View.GONE
     }
 
     private fun createAd(activity: AppCompatActivity) {

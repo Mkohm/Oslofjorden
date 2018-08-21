@@ -1,4 +1,4 @@
-package com.oslofjorden.binarygenerator
+package com.oslofjorden.binarygenerator.generators
 
 
 import org.json.JSONArray
