@@ -17,6 +17,10 @@ default_platform(:android)
 
 platform :android do
 
+  before_all do
+    ENV["SLACK_URL"] = "https://hooks.slack.com/services/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"
+  end
+
   lane :beta do
 
         gradle(task: 'clean')
@@ -28,6 +32,8 @@ platform :android do
         supply(
           track: 'beta'
         )
+
+        slack(message: 'Successfully distributed a new beta build')
       end
 
   lane :internal do
@@ -41,5 +47,7 @@ platform :android do
           supply(
             track: 'internal'
           )
+
+          slack(message: 'Successfully distributed a new internal-tester build')
         end
 end
