@@ -1,1 +1,1 @@
-include ':app', ':binarygenerator'
+include ':app', ':binaryFileGenerator'

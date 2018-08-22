@@ -1,4 +1,4 @@
-package com.oslofjorden.binarygenerator.generators
+package com.oslofjorden.binaryfilegenerator
 
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
@@ -19,13 +19,14 @@ class BinaryGeneratorFromKml {
 
 
         val path = System.getProperty("user.dir")
-        val reader = BufferedReader(InputStreamReader(File(path + "/binarygenerator/src/main/java/com/oslofjorden/binarygenerator/mapData/turer_oslofjorden.kml").inputStream()))
+        val reader = BufferedReader(InputStreamReader(File(path +
+                "/binaryFileGenerator/src/main/res/mapData" +
+                "/turer_oslofjorden.kml").inputStream()))
         val text = reader.readText()
 
         val doc = Jsoup.parse(text)
 
         val element = doc.select("Placemark")
-
 
         for (placemark in element) {
             val title = placemark.select("name").text()
