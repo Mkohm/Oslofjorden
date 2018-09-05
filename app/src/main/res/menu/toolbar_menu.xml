@@ -6,7 +6,7 @@
     <group android:checkableBehavior="all">
         <item
             android:id="@+id/kyststier"
-            android:title="Kyststier"
+            android:title="@string/kyststier"
             app:showAsAction="always"
             android:checkable="true"
 
@@ -16,23 +16,22 @@
 
         <item
             android:id="@+id/badeplasser"
-            android:title="Badeplasser"
-            app:showAsAction="always"
-            android:icon="@drawable/swimming">
+            android:title="@string/badeplasser"
+            app:showAsAction="always">
 
 
         </item>
 
         <item
             android:id="@+id/baatramper"
-            android:title="Båtramper"
+            android:title="@string/b_tramper"
             app:showAsAction="always">
 
         </item>
 
         <item
             android:id="@+id/butikk"
-            android:title="Butikk"
+            android:title="@string/butikk"
             app:showAsAction="never"
 
             >
@@ -41,14 +40,14 @@
 
         <item
             android:id="@+id/spisested"
-            android:title="Spisesteder"
+            android:title="@string/spisesteder"
             app:showAsAction="never">
 
         </item>
 
         <item
             android:id="@+id/fyr"
-            android:title="Fyr"
+            android:title="@string/fyr"
             app:showAsAction="never">
 
         </item>
