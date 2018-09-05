@@ -37,7 +37,7 @@
 
                 android:background="@android:color/transparent"
                 android:clickable="false"
-                android:contentDescription="bilde"
+                android:contentDescription="@string/velg_info_knapp"
                 android:paddingRight="8dp"
                 android:src="@drawable/ic_layers_white_24dp" />
 
@@ -49,7 +49,7 @@
                 android:adjustViewBounds="false"
 
                 android:background="@android:color/transparent"
-                android:contentDescription="bilde"
+                android:contentDescription="@string/skru_p_posisjon"
                 android:paddingRight="8dp"
                 android:src="@drawable/ic_location_off" />
 
@@ -95,7 +95,7 @@
                     android:layout_gravity="center_vertical"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Vi setter pris på om du vil støtte oslofjorden.com og dermed fjerne reklamen."
+                    android:text="@string/vi_setter_pris_p_om_du_vil_st_tte_oslofjorden_com_og_dermed_fjerne_reklamen"
                     tools:text="Vi setter pris på om du vil støtte oslofjorden.com og dermed fjerne reklamen." />
 
                 <Button
@@ -105,7 +105,7 @@
                     android:layout_width="wrap_content"
                     android:layout_marginStart="8dp"
                     android:layout_height="wrap_content"
-                    android:text="Kjøp"
+                    android:text="@string/kj_p"
                     tools:text="Kjøp"
                     android:layout_marginLeft="8dp" />
 
