@@ -30,8 +30,6 @@ class InAppPurchaseHandler(private val inAppPurchasedListener: AppPurchasedListe
                 if (billingResponseCode == BillingClient.BillingResponse.OK) {
                     // The billing client is ready. We will now enable the buy button
                     activity.buyButton.isEnabled = true
-                } else {
-                    val a = 1
                 }
             }
 
