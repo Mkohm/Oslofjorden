@@ -22,11 +22,11 @@ android {
             storePassword 'key45!-osloapp'
         }
     }
-    compileSdkVersion 28
+    compileSdkVersion 27
     defaultConfig {
         applicationId "com.oslofjorden"
         minSdkVersion 15
-        targetSdkVersion 28
+        targetSdkVersion 27
         versionCode vcode
         versionName "2.0." + vcode
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
@@ -55,7 +55,7 @@ dependencies {
     implementation 'com.google.android.gms:play-services-maps:15.0.1'
     implementation 'com.google.maps.android:android-maps-utils:0.5'
     testImplementation 'junit:junit:4.12'
-    implementation 'com.google.android.material:material:1.0.0-alpha1'
+    implementation 'com.android.support:design:27.1.1'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
     implementation 'com.google.android.gms:play-services-ads:15.0.1'
