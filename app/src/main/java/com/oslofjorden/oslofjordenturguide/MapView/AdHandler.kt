@@ -46,7 +46,7 @@ class AdHandler(activity: AppCompatActivity) {
         val params = RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
         params.addRule(BELOW, R.id.buyLayout)
         params.addRule(CENTER_IN_PARENT, R.id.buyLayout)
-        adView.setLayoutParams(params)
+        adView.layoutParams = params
 
         activity.adLayout.addView(adView)
         val adRequest = AdRequest.Builder().build()

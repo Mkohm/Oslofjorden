@@ -8,7 +8,7 @@ import kotlinx.android.synthetic.main.activity_maps.*
 // Starts a connection to google play to initiate the app purchaseOk and will receive a callback when a purchaseOk is completed.
 // It will then notify the Mapsactivity that is listening for this class.
 class InAppPurchaseHandler(private val inAppPurchasedListener: AppPurchasedListener, val context: Context, val activity: MapsActivity) : PurchasesUpdatedListener {
-    lateinit private var billingClient: BillingClient
+    private lateinit var billingClient: BillingClient
 
     init {
         startGooglePlayConnection()

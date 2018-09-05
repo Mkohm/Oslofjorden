@@ -13,11 +13,7 @@ import com.oslofjorden.R
 class BottomSheetController(val view: LinearLayout, val activity: MapsActivity) {
     private val behavior: BottomSheetBehavior<LinearLayout> = BottomSheetBehavior.from(view)
 
-    private val customTabsIntent: CustomTabsIntent = CustomTabsIntent.Builder()
-            .addDefaultShareMenuItem()
-            .setToolbarColor(activity.resources.getColor(R.color.colorPrimary))
-            .setShowTitle(true)
-            .build()
+    private val customTabsIntent: CustomTabsIntent = CustomTabsIntent.Builder().addDefaultShareMenuItem().setToolbarColor(activity.resources.getColor(R.color.colorPrimary)).setShowTitle(true).build()
 
 
     fun expandBottomSheet() {

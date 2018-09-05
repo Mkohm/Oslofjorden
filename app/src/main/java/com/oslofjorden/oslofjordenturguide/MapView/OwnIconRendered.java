@@ -9,7 +9,8 @@ import com.google.maps.android.clustering.view.DefaultClusterRenderer;
 
 class OwnIconRendered extends DefaultClusterRenderer<MarkerData> {
 
-    public OwnIconRendered(Context context, GoogleMap map, ClusterManager<MarkerData> clusterManager) {
+    public OwnIconRendered(Context context, GoogleMap map,
+                           ClusterManager<MarkerData> clusterManager) {
         super(context, map, clusterManager);
     }
 

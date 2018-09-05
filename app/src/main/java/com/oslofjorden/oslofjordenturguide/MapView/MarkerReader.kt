@@ -40,30 +40,29 @@ internal class MarkerReader(val context: Context, val task: MapsActivity.AddInfo
             // Only add this suffix if the link is not null
             link = link?.let { it + "?app=1" }
 
-            val markerTypesList = Regex("<gpxx:Category>.+?</gpxx:Category>")
-                    .findAll(markerTypes!!).toList().map {
-                        when (it.value) {
-                            "<gpxx:Category>Badeplass</gpxx:Category>" -> MarkerTypes.BEACH
-                            "<gpxx:Category>Butikk</gpxx:Category>" -> MarkerTypes.STORE
-                            "<gpxx:Category>Spisested</gpxx:Category>" -> MarkerTypes.RESTAURANT
-                            "<gpxx:Category>Parkering transp</gpxx:Category>" -> MarkerTypes.PARKING_TRANSPORT
-                            "<gpxx:Category>Rampe</gpxx:Category>" -> MarkerTypes.RAMP
-                            "<gpxx:Category>Gjestehavn</gpxx:Category>" -> MarkerTypes.GUEST_HARBOR
-                            "<gpxx:Category>Uthavn</gpxx:Category>" -> MarkerTypes.OUT_HARBOR
-                            "<gpxx:Category>WC</gpxx:Category>" -> MarkerTypes.TOILETT
-                            "<gpxx:Category>Point of Interes</gpxx:Category>" -> MarkerTypes.BEACH
-                            "<gpxx:Category>Fiskeplass</gpxx:Category>" -> MarkerTypes.FISHING_SPOT
-                            "<gpxx:Category>Campingplass</gpxx:Category>" -> MarkerTypes.CAMPING
-                            "<gpxx:Category>Bunkers</gpxx:Category>" -> MarkerTypes.PETROL_STATION
-                            "<gpxx:Category>Fyr</gpxx:Category>" -> MarkerTypes.LIGHTHOUSE
-                            "<gpxx:Category>Kran/Truck</gpxx:Category>" -> MarkerTypes.CRANE
-                            "<gpxx:Category>Båtbutikk</gpxx:Category>" -> MarkerTypes.BOAT_STORE
-                            "<gpxx:Category>Marina</gpxx:Category>" -> MarkerTypes.MARINA
-                            else -> {
-                                "SHOULD NOT HAPPEN"
-                            }
-                        }
+            val markerTypesList = Regex("<gpxx:Category>.+?</gpxx:Category>").findAll(markerTypes!!).toList().map {
+                when (it.value) {
+                    "<gpxx:Category>Badeplass</gpxx:Category>" -> MarkerTypes.BEACH
+                    "<gpxx:Category>Butikk</gpxx:Category>" -> MarkerTypes.STORE
+                    "<gpxx:Category>Spisested</gpxx:Category>" -> MarkerTypes.RESTAURANT
+                    "<gpxx:Category>Parkering transp</gpxx:Category>" -> MarkerTypes.PARKING_TRANSPORT
+                    "<gpxx:Category>Rampe</gpxx:Category>" -> MarkerTypes.RAMP
+                    "<gpxx:Category>Gjestehavn</gpxx:Category>" -> MarkerTypes.GUEST_HARBOR
+                    "<gpxx:Category>Uthavn</gpxx:Category>" -> MarkerTypes.OUT_HARBOR
+                    "<gpxx:Category>WC</gpxx:Category>" -> MarkerTypes.TOILETT
+                    "<gpxx:Category>Point of Interes</gpxx:Category>" -> MarkerTypes.BEACH
+                    "<gpxx:Category>Fiskeplass</gpxx:Category>" -> MarkerTypes.FISHING_SPOT
+                    "<gpxx:Category>Campingplass</gpxx:Category>" -> MarkerTypes.CAMPING
+                    "<gpxx:Category>Bunkers</gpxx:Category>" -> MarkerTypes.PETROL_STATION
+                    "<gpxx:Category>Fyr</gpxx:Category>" -> MarkerTypes.LIGHTHOUSE
+                    "<gpxx:Category>Kran/Truck</gpxx:Category>" -> MarkerTypes.CRANE
+                    "<gpxx:Category>Båtbutikk</gpxx:Category>" -> MarkerTypes.BOAT_STORE
+                    "<gpxx:Category>Marina</gpxx:Category>" -> MarkerTypes.MARINA
+                    else -> {
+                        "SHOULD NOT HAPPEN"
                     }
+                }
+            }
 
             val position = setMarkerPosition(line)
 

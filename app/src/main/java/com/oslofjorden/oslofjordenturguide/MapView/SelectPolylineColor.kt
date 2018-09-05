@@ -27,7 +27,7 @@ object SelectPolylineColor {
             isFerge(description) -> Color.parseColor("#980009")
             isVanskeligKyststi(description) -> Color.RED
 
-        // Det er en tursti
+            // Det er en tursti
             else -> Color.GREEN
         }
     }

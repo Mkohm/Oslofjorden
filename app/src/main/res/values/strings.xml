@@ -1,8 +1,5 @@
 <resources>
     <string name="title_activity_maps">Oslofjorden</string>
     <string name="google_app_id">29427722334</string>
-    <string name="permission_rationale_location">Vi må ha tilgang til din posisjon for å vise din posisjon</string>
-    <string name="permission_required_toast">Vi trenger posisjon</string>
-    <string name="location_permission_denied">Vi fikk ikke tilgang til din posisjon</string>
 
 </resources>

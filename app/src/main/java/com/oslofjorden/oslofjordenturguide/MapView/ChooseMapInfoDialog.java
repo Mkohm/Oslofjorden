@@ -37,16 +37,15 @@ public class ChooseMapInfoDialog extends DialogFragment {
                 // and the listener through which to receive callbacks when items are selected
                 .setMultiChoiceItems(mapInfo, uselist,
                         new DialogInterface.OnMultiChoiceClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which,
-                                                boolean isChecked) {
-                                if (isChecked) {
-                                    Log.d(TAG, "onClick: " + which + isChecked);
-                                    uselist[which] = isChecked;
+                    @Override
+                    public void onClick(DialogInterface dialog, int which, boolean isChecked) {
+                        if (isChecked) {
+                            Log.d(TAG, "onClick: " + which + isChecked);
+                            uselist[which] = isChecked;
 
-                                }
-                            }
-                        })
+                        }
+                    }
+                })
                 // Set the action buttons
                 .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
                     @Override
@@ -61,15 +60,14 @@ public class ChooseMapInfoDialog extends DialogFragment {
                         mListener.onDialogPositiveClick(ChooseMapInfoDialog.this, uselist);
 
                     }
-                })
-                .setNegativeButton("Avbryt", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int id) {
-                        Log.d("TAG", "onClick: Avbrøt");
-                        mListener.onDialogNegativeClick(ChooseMapInfoDialog.this);
+                }).setNegativeButton("Avbryt", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int id) {
+                Log.d("TAG", "onClick: Avbrøt");
+                mListener.onDialogNegativeClick(ChooseMapInfoDialog.this);
 
-                    }
-                });
+            }
+        });
 
 
         return builder.create();
@@ -85,8 +83,8 @@ public class ChooseMapInfoDialog extends DialogFragment {
             mListener = (NoticeDialogListener) activity;
         } catch (ClassCastException e) {
             // The activity doesn't implement the interface, throw exception
-            throw new ClassCastException(activity.toString()
-                    + " must implement NoticeDialogListener");
+            throw new ClassCastException(activity.toString() + " must implement " +
+                    "NoticeDialogListener");
         }
     }
 
@@ -170,7 +168,8 @@ public class ChooseMapInfoDialog extends DialogFragment {
         int size = prefs.getInt(arrayName + "_17", 0);
         boolean[] array = new boolean[size];
         for (int i = 0; i < size; i++) {
-            Log.d(TAG, "loadArray: " + i + " checked: " + prefs.getBoolean(arrayName + "_" + i, false));
+            Log.d(TAG, "loadArray: " + i + " checked: " + prefs.getBoolean(arrayName + "_" + i,
+                    false));
             array[i] = prefs.getBoolean(arrayName + "_" + i, false);
         }
         return array;

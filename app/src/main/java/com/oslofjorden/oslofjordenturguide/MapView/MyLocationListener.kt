@@ -1,24 +1,18 @@
 package com.oslofjorden.oslofjordenturguide.MapView
 
-import android.Manifest
 import android.arch.lifecycle.Lifecycle
 import android.arch.lifecycle.LifecycleObserver
 import android.arch.lifecycle.OnLifecycleEvent
 import android.content.Context
-import android.content.pm.PackageManager
 import android.location.Location
 import android.location.LocationListener
-
 import android.location.LocationManager
 import android.os.Bundle
-import android.support.v4.app.ActivityCompat
-import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity
 import android.widget.ImageButton
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.LocationSource.OnLocationChangedListener
 import com.oslofjorden.R
-import kotlinx.android.synthetic.main.activity_maps.*
 
 class MyLocationListener(private val context: Context, private val activity: AppCompatActivity, private val mMap: GoogleMap?, private val onOffLocationButton: ImageButton, private val lifecycle: Lifecycle, private val callback: OnLocationChangedListener) : LifecycleObserver, LocationListener {
 

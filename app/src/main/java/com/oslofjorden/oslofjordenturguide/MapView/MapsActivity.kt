@@ -19,28 +19,21 @@ import android.view.ContextMenu
 import android.view.View
 import android.widget.ImageButton
 import android.widget.LinearLayout
-import com.google.android.gms.maps.*
-import kotlinx.android.synthetic.main.activity_maps.*
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.LocationSource.OnLocationChangedListener
+import com.google.android.gms.maps.OnMapReadyCallback
+import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Polyline
-import com.google.android.gms.maps.LocationSource.OnLocationChangedListener
 import com.google.maps.android.clustering.ClusterManager
 import com.google.maps.android.clustering.algo.GridBasedAlgorithm
 import com.google.maps.android.clustering.algo.PreCachingAlgorithmDecorator
 import com.oslofjorden.R
+import kotlinx.android.synthetic.main.activity_maps.*
 
-//Challenge in walking kyststier
-//Menu - hamburgermenu
-//Rapporter feil/tur/hvasomhelst
-//instillinger oppdateringshastighet ++
-//I nærheten
-//Database implementation and search
-//lagrer ikke
-
-
-class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
-        NoticeDialogListener, LifecycleOwner, ActivityCompat.OnRequestPermissionsResultCallback, AppPurchasedListener {
+class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListener, LifecycleOwner, ActivityCompat.OnRequestPermissionsResultCallback, AppPurchasedListener {
 
 
     private val LOCATION_PERMISSION_REQUEST_CODE = 1
@@ -113,8 +106,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
     }
 
     private fun requestPermission() {
-        PermissionUtils.requestPermission(this, LOCATION_PERMISSION_REQUEST_CODE,
-                Manifest.permission.ACCESS_FINE_LOCATION, true)
+        PermissionUtils.requestPermission(this, LOCATION_PERMISSION_REQUEST_CODE, Manifest.permission.ACCESS_FINE_LOCATION, true)
     }
 
     private fun hasPermission(): Boolean {
@@ -130,8 +122,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
             return
         }
 
-        if (PermissionUtils.isPermissionGranted(permissions, grantResults,
-                        Manifest.permission.ACCESS_FINE_LOCATION)) {
+        if (PermissionUtils.isPermissionGranted(permissions, grantResults, Manifest.permission.ACCESS_FINE_LOCATION)) {
             // Enable the my location layer if the permission has been granted.
             myLocationListener.enableMyLocation()
             onofflocationbutton.setImageResource(R.drawable.ic_location_on)
@@ -164,8 +155,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
         }
     }
 
-    override fun onCreateContextMenu(menu: ContextMenu, v: View,
-                                     menuInfo: ContextMenu.ContextMenuInfo) {
+    override fun onCreateContextMenu(menu: ContextMenu, v: View, menuInfo: ContextMenu.ContextMenuInfo) {
         super.onCreateContextMenu(menu, v, menuInfo)
         val inflater = menuInflater
         inflater.inflate(R.menu.toolbar_menu, menu)
