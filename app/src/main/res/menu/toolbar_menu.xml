@@ -6,7 +6,7 @@
     <group android:checkableBehavior="all">
         <item
             android:id="@+id/kyststier"
-            android:title="Kyststier"
+            android:title="@string/kyststier"
             app:showAsAction="always"
             android:checkable="true"
 
@@ -16,23 +16,22 @@
 
         <item
             android:id="@+id/badeplasser"
-            android:title="Badeplasser"
-            app:showAsAction="always"
-            android:icon="@drawable/swimming">
+            android:title="@string/badeplasser"
+            app:showAsAction="always">
 
 
         </item>
 
         <item
             android:id="@+id/baatramper"
-            android:title="Båtramper"
+            android:title="@string/b_tramper"
             app:showAsAction="always">
 
         </item>
 
         <item
             android:id="@+id/butikk"
-            android:title="Butikk"
+            android:title="@string/butikk"
             app:showAsAction="never"
 
             >
@@ -41,46 +40,46 @@
 
         <item
             android:id="@+id/spisested"
-            android:title="Spisesteder"
+            android:title="@string/spisesteder"
             app:showAsAction="never">
 
         </item>
 
         <item
             android:id="@+id/fyr"
-            android:title="Fyr"
+            android:title="@string/fyr"
             app:showAsAction="never">
 
         </item>
 
         <item
             android:id="@+id/bunkers"
-            android:title="Bunkers"
+            android:title="@string/bunkers"
             app:showAsAction="never">
 
         </item>
 
         <item
             android:id="@+id/marina"
-            android:title="Marinaer"
+            android:title="@string/marinaer"
             app:showAsAction="never">
 
         </item>
         <item
             android:id="@+id/gjestehavn"
-            android:title="Gjestehavner"
+            android:title="@string/gjestehavner"
             app:showAsAction="never">
 
         </item>
         <item
             android:id="@+id/parkeringTrans"
-            android:title="Parkering/Transport"
+            android:title="@string/parkering_transport"
             app:showAsAction="never">
 
         </item>
         <item
             android:id="@+id/poi"
-            android:title="Point of interest"
+            android:title="@string/point_of_interest"
             app:showAsAction="never">
 
         </item>
@@ -88,7 +87,7 @@
 
         <item
             android:id="@+id/uthavn"
-            android:title="Uthavner"
+            android:title="@string/uthavner"
             app:showAsAction="never">
 
         </item>
@@ -96,39 +95,39 @@
 
         <item
             android:id="@+id/mer"
-            android:title="Mer.."
+            android:title="@string/mer"
             android:checkable="false">
 
             <menu>
                 <group android:checkableBehavior="all">
                     <item
                         android:id="@+id/kranTruck"
-                        android:title="Kran/Truck"
+                        android:title="@string/kran_truck"
                         app:showAsAction="never">
 
                     </item>
                     <item
                         android:id="@+id/baatbutikk"
-                        android:title="Båtbutikker"
+                        android:title="@string/b_tbutikker"
                         app:showAsAction="never">
 
                     </item>
                     <item
                         android:id="@+id/campingplass"
-                        android:title="Campingplasser"
+                        android:title="@string/campingplasser"
                         app:showAsAction="never">
 
                     </item>
                     <item
                         android:id="@+id/wc"
-                        android:title="WC"
+                        android:title="@string/wc"
                         app:showAsAction="never">
 
                     </item>
 
                     <item
                         android:id="@+id/fiskeplasser"
-                        android:title="Fiskeplasser"
+                        android:title="@string/fiskeplasser"
                         app:showAsAction="never">
 
                     </item>

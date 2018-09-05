@@ -1,5 +1,28 @@
 <resources>
     <string name="title_activity_maps">Oslofjorden</string>
     <string name="google_app_id">29427722334</string>
+    <string name="kyststier">Kyststier</string>
+    <string name="badeplasser">Badeplasser</string>
+    <string name="b_tramper">Båtramper</string>
+    <string name="butikk">Butikk</string>
+    <string name="spisesteder">Spisesteder</string>
+    <string name="fyr">Fyr</string>
+    <string name="bunkers">Bunkers</string>
+    <string name="marinaer">Marinaer</string>
+    <string name="gjestehavner">Gjestehavner</string>
+    <string name="parkering_transport">Parkering/Transport</string>
+    <string name="point_of_interest">Point of interest</string>
+    <string name="uthavner">Uthavner</string>
+    <string name="kran_truck">Kran/Truck</string>
+    <string name="b_tbutikker">Båtbutikker</string>
+    <string name="campingplasser">Campingplasser</string>
+    <string name="wc">WC</string>
+    <string name="fiskeplasser">Fiskeplasser</string>
+    <string name="mer">Mer..</string>
+    <string name="mer_info">Mer info</string>
+    <string name="velg_info_knapp">Velg info knapp</string>
+    <string name="skru_p_posisjon">Skru på posisjon</string>
+    <string name="vi_setter_pris_p_om_du_vil_st_tte_oslofjorden_com_og_dermed_fjerne_reklamen">Vi setter pris på om du vil støtte oslofjorden.com og dermed fjerne reklamen.</string>
+    <string name="kj_p">Kjøp</string>
 
 </resources>
