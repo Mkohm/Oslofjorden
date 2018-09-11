@@ -8,30 +8,22 @@ import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Bundle
-import android.support.v7.app.AppCompatActivity
 import android.widget.ImageButton
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.LocationSource.OnLocationChangedListener
 import com.oslofjorden.R
 
-class MyLocationListener(private val context: Context, private val activity: AppCompatActivity, private val mMap: GoogleMap?, private val onOffLocationButton: ImageButton, private val lifecycle: Lifecycle, private val callback: OnLocationChangedListener) : LifecycleObserver, LocationListener {
+class MyLocationListener(context: Context, private val mMap: GoogleMap?, private val
+onOffLocationButton: ImageButton, private val lifecycle: Lifecycle, private val callback: OnLocationChangedListener) : LifecycleObserver, LocationListener {
 
 
-    override fun onStatusChanged(p0: String?, p1: Int, p2: Bundle?) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
+    override fun onStatusChanged(p0: String?, p1: Int, p2: Bundle?) {}
 
-    override fun onProviderEnabled(p0: String?) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
+    override fun onProviderEnabled(p0: String?) {}
 
-    override fun onProviderDisabled(p0: String?) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
+    override fun onProviderDisabled(p0: String?) {}
 
-    override fun onLocationChanged(p0: Location?) {
-        callback.onLocationChanged(p0)
-    }
+    override fun onLocationChanged(p0: Location?) = callback.onLocationChanged(p0)
 
     var enabled = false
     private val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
@@ -50,6 +42,7 @@ class MyLocationListener(private val context: Context, private val activity: App
         if (lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) {
             enabled = true
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0L, 0F, this)
+            onOffLocationButton.setImageResource(R.drawable.ic_location_on)
             mMap?.isMyLocationEnabled = true
         }
     }
@@ -57,10 +50,8 @@ class MyLocationListener(private val context: Context, private val activity: App
 
     @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
     fun stop() {
-        // disconnect if connected
         disableMyLocation()
     }
-
 
     fun disableMyLocation() {
         locationManager.removeUpdates(this)

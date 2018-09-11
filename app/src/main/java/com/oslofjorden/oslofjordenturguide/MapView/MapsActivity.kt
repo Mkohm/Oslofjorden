@@ -61,7 +61,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
         //The first time the user launches the app, this message will be shown
         showInfomessageToUserIfFirstTime()
 
-        //Removes the oslofjorden picture
+        //Removes the oslofjorden picture that is used as splash screen
         window.setBackgroundDrawableResource(R.drawable.graybackground)
 
         val purchasedListener = InAppPurchaseHandler(this, this, this)
@@ -82,10 +82,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
 
             if (!myLocationListener.enabled) {
                 myLocationListener.enableMyLocation()
-                onofflocationbutton.setImageResource(R.drawable.ic_location_on)
             } else {
                 myLocationListener.disableMyLocation()
-                onofflocationbutton.setImageResource(R.drawable.ic_location_off)
             }
         }
 
@@ -245,7 +243,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
 
-        myLocationListener = MyLocationListener(this, this, mMap, onofflocationbutton, lifecycle, OnLocationChangedListener { it ->
+        myLocationListener = MyLocationListener(this, mMap, onofflocationbutton, lifecycle, OnLocationChangedListener { it ->
             // update ui
             val cameraUpdate = CameraUpdateFactory.newLatLng(LatLng(it.latitude, it.longitude))
             mMap?.animateCamera(cameraUpdate)
