@@ -7,7 +7,6 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.PorterDuff
-import android.location.LocationManager
 import android.os.AsyncTask
 import android.os.Bundle
 import android.support.v4.app.ActivityCompat
@@ -37,11 +36,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
 
 
     private val LOCATION_PERMISSION_REQUEST_CODE = 1
-
     private var currentPosition: LatLng = LatLng(59.903765, 10.699610) // Oslo
     private var currentCameraPosition: CameraPosition? = null
     private lateinit var clickedClusterItem: MarkerData
-
     private lateinit var bottomSheetController: BottomSheetController
     private var addInfoToMap: AddInfoToMap = AddInfoToMap()
     private lateinit var mClusterManager: ClusterManager<MarkerData>
@@ -54,15 +51,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
     private val polylinesOnMap = ArrayList<Polyline>()
     private lateinit var myLocationListener: MyLocationListener
 
-    private lateinit var locationManager: LocationManager
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_maps)
 
         // Initialize lateinits
         bottomSheetController = BottomSheetController(findViewById<View>(R.id.bottom_sheet) as LinearLayout, this)
-        locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
         //The first time the user launches the app, this message will be shown
         showInfomessageToUserIfFirstTime()
@@ -115,8 +109,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
 
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-
-
         // If the request code is something other than what we requested
         if (requestCode != LOCATION_PERMISSION_REQUEST_CODE) {
             return
