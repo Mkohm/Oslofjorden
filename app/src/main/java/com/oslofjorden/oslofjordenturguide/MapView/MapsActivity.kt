@@ -32,6 +32,8 @@ import com.google.maps.android.clustering.ClusterManager
 import com.google.maps.android.clustering.algo.GridBasedAlgorithm
 import com.google.maps.android.clustering.algo.PreCachingAlgorithmDecorator
 import com.oslofjorden.R
+import com.oslofjorden.oslofjordenturguide.MapView.model.MarkerData
+import com.oslofjorden.oslofjordenturguide.MapView.model.PolylineData
 import com.oslofjorden.oslofjordenturguide.viewmodels.MapsActivityViewModel
 import kotlinx.android.synthetic.main.activity_maps.*
 
@@ -60,9 +62,16 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
 
         val viewModel = ViewModelProviders.of(this).get(MapsActivityViewModel(application)::class
                 .java)
+
         viewModel.markers.observe(this, Observer { markers ->
             // Update UI when the marker changes
             markerData = markers
+        })
+
+        viewModel.polylines.observe(this, Observer { polylines ->
+            polylineData = polylines!!
+
+            // update map with polylines as they come here
         })
 
         // Initialize lateinits
@@ -399,10 +408,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
 
 
     private fun getDataFromFilesAndPutInDatastructure() {
-
-        val binaryReader = BinarydataReader(applicationContext, addInfoToMap)
-        polylineData = binaryReader.readBinaryData(R.raw.polylines_binary_file)
-
 
         setOnClusterItemClickListener()
 

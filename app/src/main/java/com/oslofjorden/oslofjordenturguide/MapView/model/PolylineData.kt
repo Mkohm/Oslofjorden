@@ -1,4 +1,4 @@
-package com.oslofjorden.oslofjordenturguide.MapView
+package com.oslofjorden.oslofjordenturguide.MapView.model
 
 import com.google.android.gms.maps.model.PolylineOptions
 

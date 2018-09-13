@@ -1,18 +1,29 @@
-package com.oslofjorden.oslofjordenturguide.MapView
+package com.oslofjorden.oslofjordenturguide.MapView.data
 
+import android.arch.lifecycle.MutableLiveData
 import android.content.Context
-import android.os.AsyncTask
-import android.util.Log
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.PolylineOptions
+import com.oslofjorden.R
+import com.oslofjorden.oslofjordenturguide.MapView.model.PolylineData
+import com.oslofjorden.oslofjordenturguide.MapView.SelectPolylineColor
+import org.jetbrains.anko.doAsync
+import org.jetbrains.anko.uiThread
 import java.io.EOFException
 import java.io.ObjectInputStream
 
-class BinarydataReader(val context: Context, val task: AsyncTask<Void?, Void?, Void?>) {
+class PolylineReader(val context: Context) : PolylineDataAccessObject {
+    override fun readPolylines(polylines: MutableLiveData<List<PolylineData>>) {
+        doAsync {
 
-    companion object {
-        val TAG = "TAG"
+            val result = readBinaryData(R.raw.polylines_binary_file)
+
+            uiThread {
+                polylines.postValue(result)
+            }
+        }
     }
+
 
     fun readBinaryData(resource: Int): ArrayList<PolylineData> {
 
@@ -22,12 +33,7 @@ class BinarydataReader(val context: Context, val task: AsyncTask<Void?, Void?, V
         val objectInputStream = ObjectInputStream(inputStream)
 
 
-        // todo: get the number of objects
         while (true) {
-            if (task.isCancelled) {
-                Log.d(TAG, "getDataFromFileAndPutInDatastructure: stopp")
-            }
-
 
             try {
                 val name = objectInputStream.readObject() as String
@@ -47,9 +53,8 @@ class BinarydataReader(val context: Context, val task: AsyncTask<Void?, Void?, V
                 objectInputStream.close()
                 return polylineData
             }
-
-
         }
+
     }
 
     private fun convertToLatLngObjects(binaryCoordinates: ArrayList<DoubleArray>): ArrayList<LatLng> {

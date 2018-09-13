@@ -1,9 +1,10 @@
-package com.oslofjorden.oslofjordenturguide.MapView
+package com.oslofjorden.oslofjordenturguide.MapView.model
 
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.maps.android.clustering.ClusterItem
+import com.oslofjorden.oslofjordenturguide.MapView.MarkerTypes
 
 class MarkerData(val markerOptions: MarkerOptions, val link: String?, val markerTypes: List<MarkerTypes>, val icon: BitmapDescriptor?) : ClusterItem {
     override fun getTitle(): String {

@@ -1,12 +1,11 @@
 package com.oslofjorden.oslofjordenturguide.MapView.data
 
-import android.app.Application
 import android.arch.lifecycle.MutableLiveData
 import android.content.Context
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.oslofjorden.R
-import com.oslofjorden.oslofjordenturguide.MapView.MarkerData
+import com.oslofjorden.oslofjordenturguide.MapView.model.MarkerData
 import com.oslofjorden.oslofjordenturguide.MapView.MarkerTypes
 import org.jetbrains.anko.doAsync
 import org.jetbrains.anko.uiThread
@@ -17,21 +16,18 @@ import java.io.Reader
 
 
 class MarkerReader(val context: Context) : MarkerDataAccessObject {
-    override fun readMarkers(users: MutableLiveData<List<MarkerData>>) {
+    override fun readMarkers(markers: MutableLiveData<List<MarkerData>>) {
         doAsync {
 
             val result = read(context)
 
-
             uiThread {
 
                 // Update the livedata with the loaded markers
-                users.postValue(result)
+                markers.postValue(result)
 
             }
         }
-
-
     }
 
 
