@@ -3,6 +3,8 @@ package com.oslofjorden.oslofjordenturguide.MapView
 
 import android.Manifest
 import android.arch.lifecycle.LifecycleOwner
+import android.arch.lifecycle.Observer
+import android.arch.lifecycle.ViewModelProviders
 import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Color
@@ -30,6 +32,7 @@ import com.google.maps.android.clustering.ClusterManager
 import com.google.maps.android.clustering.algo.GridBasedAlgorithm
 import com.google.maps.android.clustering.algo.PreCachingAlgorithmDecorator
 import com.oslofjorden.R
+import com.oslofjorden.oslofjordenturguide.viewmodels.MapsActivityViewModel
 import kotlinx.android.synthetic.main.activity_maps.*
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListener, LifecycleOwner, ActivityCompat.OnRequestPermissionsResultCallback, AppPurchasedListener {
@@ -54,6 +57,13 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_maps)
+
+        val viewModel = ViewModelProviders.of(this).get(MapsActivityViewModel(application)::class
+                .java)
+        viewModel.markers.observe(this, Observer { markers ->
+            // Update UI when the marker changes
+            markerData = markers
+        })
 
         // Initialize lateinits
         bottomSheetController = BottomSheetController(findViewById<View>(R.id.bottom_sheet) as LinearLayout, this)
@@ -189,7 +199,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
 
     private fun addMarkersToMap(markerType: MarkerTypes) {
         val toAdd = markerData?.filter { marker -> marker.markerTypes.contains(markerType) }
-        mClusterManager.addItems(toAdd)
+        toAdd?.let {
+            mClusterManager.addItems(toAdd)
+        }
     }
 
     private fun addPolylines() {
@@ -391,9 +403,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
         val binaryReader = BinarydataReader(applicationContext, addInfoToMap)
         polylineData = binaryReader.readBinaryData(R.raw.polylines_binary_file)
 
-
-        val markerReader = MarkerReader(applicationContext, addInfoToMap)
-        markerData = markerReader.readMarkers()
 
         setOnClusterItemClickListener()
 

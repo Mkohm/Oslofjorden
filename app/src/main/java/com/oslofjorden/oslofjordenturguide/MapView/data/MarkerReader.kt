@@ -1,20 +1,53 @@
-package com.oslofjorden.oslofjordenturguide.MapView
+package com.oslofjorden.oslofjordenturguide.MapView.data
 
+import android.app.Application
+import android.arch.lifecycle.MutableLiveData
 import android.content.Context
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.oslofjorden.R
-
-
+import com.oslofjorden.oslofjordenturguide.MapView.MarkerData
+import com.oslofjorden.oslofjordenturguide.MapView.MarkerTypes
+import org.jetbrains.anko.doAsync
+import org.jetbrains.anko.uiThread
 import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.io.Reader
 
-internal class MarkerReader(val context: Context, val task: MapsActivity.AddInfoToMap) {
 
-    fun readMarkers(): List<MarkerData> {
+class MarkerReader(val context: Context) : MarkerDataAccessObject {
+    override fun readMarkers(users: MutableLiveData<List<MarkerData>>) {
+        doAsync {
 
+            val result = read(context)
+
+
+            uiThread {
+
+                // Update the livedata with the loaded markers
+                users.postValue(result)
+
+            }
+        }
+
+
+    }
+
+
+    fun setMarkerPosition(line: String): LatLng {
+        val indexOfStartCoordinate = line.indexOf("\"coordinates\": [ ") + 17
+        val indexOfEndCoordinate = line.indexOf(" ] } }")
+        val coordinates = line.substring(indexOfStartCoordinate, indexOfEndCoordinate)
+
+        val longitude = java.lang.Double.valueOf(coordinates.substring(0, coordinates.indexOf(",")))
+        val latitude = java.lang.Double.valueOf(coordinates.substring(coordinates.indexOf(",") + 1))
+
+
+        return LatLng(latitude, longitude)
+    }
+
+    fun read(context: Context): ArrayList<MarkerData> {
         val markerData = ArrayList<MarkerData>()
 
         val inputStream = context.resources.openRawResource(R.raw.points)
@@ -73,22 +106,10 @@ internal class MarkerReader(val context: Context, val task: MapsActivity.AddInfo
             val marker = MarkerData(markerOption, link, markerTypesList as List<MarkerTypes>, null)
             markerData.add(marker)
 
+
         }
 
         return markerData
-    }
-
-
-    fun setMarkerPosition(line: String): LatLng {
-        val indexOfStartCoordinate = line.indexOf("\"coordinates\": [ ") + 17
-        val indexOfEndCoordinate = line.indexOf(" ] } }")
-        val coordinates = line.substring(indexOfStartCoordinate, indexOfEndCoordinate)
-
-        val longitude = java.lang.Double.valueOf(coordinates.substring(0, coordinates.indexOf(",")))
-        val latitude = java.lang.Double.valueOf(coordinates.substring(coordinates.indexOf(",") + 1))
-
-
-        return LatLng(latitude, longitude)
     }
 
     fun createJsonObject(line: String): JSONObject? {
@@ -102,5 +123,5 @@ internal class MarkerReader(val context: Context, val task: MapsActivity.AddInfo
         }
         return obj
     }
-}
 
+}
