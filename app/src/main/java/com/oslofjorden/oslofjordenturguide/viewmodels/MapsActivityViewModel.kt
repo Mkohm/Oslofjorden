@@ -3,16 +3,16 @@ package com.oslofjorden.oslofjordenturguide.viewmodels
 import android.app.Application
 import android.arch.lifecycle.AndroidViewModel
 import android.arch.lifecycle.MutableLiveData
-import com.oslofjorden.oslofjordenturguide.MapView.data.PolylineReader
-import com.oslofjorden.oslofjordenturguide.MapView.model.MarkerData
-import com.oslofjorden.oslofjordenturguide.MapView.model.PolylineData
 import com.oslofjorden.oslofjordenturguide.MapView.data.MarkerDataRepository
 import com.oslofjorden.oslofjordenturguide.MapView.data.MarkerReader
+import com.oslofjorden.oslofjordenturguide.MapView.data.PolylineReader
 import com.oslofjorden.oslofjordenturguide.MapView.data.PolylineRepository
+import com.oslofjorden.oslofjordenturguide.MapView.model.MarkerData
+import com.oslofjorden.oslofjordenturguide.MapView.model.PolylineData
 
 class MapsActivityViewModel(application: Application) : AndroidViewModel(Application()) {
-    val markerDataRepository = MarkerDataRepository(MarkerReader(application.applicationContext))
-    val polylineRepository = PolylineRepository(PolylineReader(application.applicationContext))
+    private val markerDataRepository = MarkerDataRepository(MarkerReader(application.applicationContext))
+    private val polylineRepository = PolylineRepository(PolylineReader(application.applicationContext))
 
 
     val markers = MutableLiveData<List<MarkerData>>()

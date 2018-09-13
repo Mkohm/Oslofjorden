@@ -60,8 +60,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_maps)
 
-        val viewModel = ViewModelProviders.of(this).get(MapsActivityViewModel(application)::class
-                .java)
+        val viewModel = ViewModelProviders.of(this).get(MapsActivityViewModel(application)::class.java)
 
         viewModel.markers.observe(this, Observer { markers ->
             // Update UI when the marker changes
@@ -69,10 +68,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
         })
 
         viewModel.polylines.observe(this, Observer { polylines ->
+            // todo: what?
             polylineData = polylines!!
 
-            // update map with polylines as they come here
         })
+
 
         // Initialize lateinits
         bottomSheetController = BottomSheetController(findViewById<View>(R.id.bottom_sheet) as LinearLayout, this)

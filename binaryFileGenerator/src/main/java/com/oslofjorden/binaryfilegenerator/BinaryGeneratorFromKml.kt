@@ -19,9 +19,7 @@ class BinaryGeneratorFromKml {
 
 
         val path = System.getProperty("user.dir")
-        val reader = BufferedReader(InputStreamReader(File(path +
-                "/binaryFileGenerator/src/main/res/mapData" +
-                "/turer_oslofjorden.kml").inputStream()))
+        val reader = BufferedReader(InputStreamReader(File(path + "/binaryFileGenerator/src/main/res/mapData" + "/turer_oslofjorden.kml").inputStream()))
         val text = reader.readText()
 
         val doc = Jsoup.parse(text)
@@ -33,6 +31,7 @@ class BinaryGeneratorFromKml {
             val description = placemark.select("description").text()
             val color = getColor(placemark)
             val coordinates = getCoordinates(placemark)
+            println(coordinates)
             println()
         }
 
@@ -47,24 +46,30 @@ class BinaryGeneratorFromKml {
 
     }
 
-    fun getCoordinates(placemark: Element) {
+    fun getCoordinates(placemark: Element): List<List<Double>> {
         val coordinateString = placemark.select("LineString").select("coordinates").text()
-        val coordinatePairs =  coordinateString.split(" ")
-        println(coordinatePairs)
 
-        //coordinatePairs.fold()
-
-       // coordinatePairs.reduceRight {
-         //return it.split(",")
+        val result = ArrayList<ArrayList<Double>>()
 
 
+        val coordinatePairs = coordinateString.split(" ")
 
-     //   }
+        for (coordinatePair in coordinatePairs) {
 
-        val regex = """(\d*\.\d*),(\d*\.\d*)""".toRegex()
-        val result = regex.find(coordinateString)?.groupValues
+            val coordinates = coordinatePair.split(",")
 
-        return
+            val latitude = coordinates[0].toDouble()
+            val longitude = coordinates[1].toDouble()
+
+            val finalList = ArrayList<Double>()
+            finalList.add(latitude)
+            finalList.add(longitude)
+
+            result.add(finalList)
+        }
+
+
+        return result
     }
 
 }
