@@ -9,7 +9,6 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.PorterDuff
-import android.os.AsyncTask
 import android.os.Bundle
 import android.support.v4.app.ActivityCompat
 import android.support.v4.app.DialogFragment
@@ -45,13 +44,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
     private var currentCameraPosition: CameraPosition? = null
     private lateinit var clickedClusterItem: MarkerData
     private lateinit var bottomSheetController: BottomSheetController
-    private var addInfoToMap: AddInfoToMap = AddInfoToMap()
     private lateinit var mClusterManager: ClusterManager<MarkerData>
     private var previousPolylineClicked: Polyline? = null
-    private var defaultCheckedItems: BooleanArray = createDefaultCheckedArray()
     private var polylineData: List<PolylineData> = ArrayList()
     private var markerData: List<MarkerData>? = null
-    private var dataLoaded = false
     private var mMap: GoogleMap? = null
     private val polylinesOnMap = ArrayList<Polyline>()
     private lateinit var myLocationListener: MyLocationListener
@@ -62,20 +58,27 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
 
         val viewModel = ViewModelProviders.of(this).get(MapsActivityViewModel(application)::class.java)
 
+        initBottomSheetController()
+
         viewModel.markers.observe(this, Observer { markers ->
             // Update UI when the marker changes
             markerData = markers
+
+            updateUI()
         })
 
         viewModel.polylines.observe(this, Observer { polylines ->
             // todo: what?
             polylineData = polylines!!
 
+            updateUI()
         })
 
 
-        // Initialize lateinits
-        bottomSheetController = BottomSheetController(findViewById<View>(R.id.bottom_sheet) as LinearLayout, this)
+        //        layers.isClickable = true
+        //        layers.isEnabled = true
+        //       layers.setImageResource(R.drawable.ic_layers_white_24dp)
+        //      loading.visibility = View.GONE
 
         //The first time the user launches the app, this message will be shown
         showInfomessageToUserIfFirstTime()
@@ -109,6 +112,17 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
         buyButton.setOnClickListener {
             purchasedListener.queryPurchases()
         }
+
+    }
+
+    fun initBottomSheetController() {
+        bottomSheetController = BottomSheetController(findViewById<View>(R.id.bottom_sheet) as LinearLayout, this)
+        bottomSheetController.setLoadingText()
+        bottomSheetController.expandBottomSheet()
+    }
+
+    fun updateUI() {
+        loadLastStateOfApplication()
 
     }
 
@@ -194,12 +208,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
                 }
             }
         }
-
-        //Show them by moving the map a bit
-
-        // todo : remove this workaround
-        val c = CameraUpdateFactory.zoomBy(0.001f)
-        mMap?.animateCamera(c)
     }
 
     private fun removePolylines() {
@@ -207,23 +215,20 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
     }
 
     private fun addMarkersToMap(markerType: MarkerTypes) {
-        val toAdd = markerData?.filter { marker -> marker.markerTypes.contains(markerType) }
-        toAdd?.let {
-            mClusterManager.addItems(toAdd)
+        val markersToAdd = markerData?.filter { marker -> marker.markerTypes.contains(markerType) }
+        markersToAdd?.let {
+            mClusterManager.addItems(markersToAdd)
         }
     }
 
     private fun addPolylines() {
-        //Adds the polylines to the map
-
         for (i in polylineData.indices) {
 
             val polyline = mMap?.addPolyline(polylineData[i].options)
             polyline?.tag = polylineData[i]
 
-            // Only add it to the list if the polyline was not null
+            // Store the polylines currently on the map to be able to remove them later
             polyline?.let { polylinesOnMap.add(it) }
-
         }
     }
 
@@ -246,15 +251,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
     }
 
 
-    override fun onResume() {
-        super.onResume()
-
-        if (!dataLoaded) {
-            addInfoToMap = AddInfoToMap()
-            addInfoToMap.execute()
-        }
-    }
-
+    // todo: remove?
     override fun onPause() {
         super.onPause()
 
@@ -269,9 +266,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
             val cameraUpdate = CameraUpdateFactory.newLatLng(LatLng(it.latitude, it.longitude))
             mMap?.animateCamera(cameraUpdate)
         })
-
-
-
 
         setUpClusterer()
 
@@ -312,7 +306,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
 
     private fun loadLastStateOfApplication() {
         if (loadArray("userChecks", applicationContext).isEmpty()) {
-            //Fant ingen checks på sharedpref
+            // Did not find any checked items in shared preferences
+            val defaultCheckedItems = createDefaultCheckedArray()
             loadCheckedItems(defaultCheckedItems)
         } else {
             val checkedItems = loadArray("userChecks", applicationContext)
@@ -402,48 +397,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
         Log.d(TAG, "onDialogNegativeClick: gjør ingenting")
     }
 
-    private fun setOnClusterItemClickListener() {
-
-    }
-
-
-    private fun getDataFromFilesAndPutInDatastructure() {
-
-        setOnClusterItemClickListener()
-
-    }
-
-    internal inner class AddInfoToMap : AsyncTask<Void?, Void?, Void?>() {
-
-        override fun onPreExecute() {
-            bottomSheetController.setLoadingText()
-        }
-
-        override fun doInBackground(vararg params: Void?): Void? {
-
-            getDataFromFilesAndPutInDatastructure()
-
-            return null
-        }
-
-
-        override fun onPostExecute(aVoid: Void?) {
-            super.onPostExecute(aVoid)
-
-            if (mMap != null) {
-                loadLastStateOfApplication()
-            }
-
-            dataLoaded = true
-            bottomSheetController.finishLoading()
-
-            layers.isClickable = true
-            layers.isEnabled = true
-            layers.setImageResource(R.drawable.ic_layers_white_24dp)
-            loading.visibility = View.GONE
-
-        }
-    }
 
     companion object {
         var TAG = "TAG"
