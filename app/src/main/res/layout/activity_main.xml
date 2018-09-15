@@ -1,0 +1,132 @@
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+
+    <data>
+
+        <import type="com.oslofjorden.oslofjordenturguide.viewmodels.MapsActivityViewModel" />
+
+        <import type="android.view.View" />
+
+        <variable
+            name="viewmodel"
+            type="com.oslofjorden.oslofjordenturguide.viewmodels.MapsActivityViewModel" />
+    </data>
+
+    <android.support.design.widget.CoordinatorLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+
+            <android.support.v7.widget.Toolbar xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:app="http://schemas.android.com/apk/res-auto"
+                android:id="@+id/my_toolbar"
+                android:layout_width="match_parent"
+
+                android:layout_height="?attr/actionBarSize"
+                android:layout_gravity="end|top"
+                android:background="?attr/colorPrimaryDark"
+                android:theme="@style/ThemeOverlay.AppCompat.ActionBar"
+                app:popupTheme="@style/ThemeOverlay.AppCompat.Light">
+
+
+                <ProgressBar
+                    android:id="@+id/loading"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:indeterminate="true" />
+
+                <ImageButton
+                    android:id="@+id/layersButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="end"
+                    android:adjustViewBounds="false"
+                    android:background="@android:color/transparent"
+                    android:clickable="@{viewmodel.layersButtonEnabled}"
+                    android:contentDescription="@string/velg_info_knapp"
+                    android:paddingRight="8dp"
+                    android:src="@{viewmodel.layersButtonEnabled ? @drawable/ic_layers_white_24dp : @drawable/ic_layers_gray}" />
+
+                <ImageButton
+                    android:id="@+id/onofflocationbutton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="end"
+                    android:adjustViewBounds="false"
+                    android:background="@android:color/transparent"
+                    android:contentDescription="@string/skru_p_posisjon"
+                    android:paddingRight="8dp"
+                    android:src="@drawable/ic_location_off" />
+
+            </android.support.v7.widget.Toolbar>
+
+
+            <fragment xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:tools="http://schemas.android.com/tools"
+                android:id="@+id/map"
+                android:name="com.google.android.gms.maps.SupportMapFragment"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_below="@id/my_toolbar"
+                tools:context=".MapsActivity" />
+
+
+            <RelativeLayout
+                android:id="@+id/adLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/my_toolbar"
+                android:background="@color/gray"
+                android:clickable="true"
+                android:focusable="true">
+
+                <LinearLayout
+                    android:id="@+id/buyLayout"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginLeft="8dp"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginEnd="8dp"
+                    android:layout_marginRight="8dp"
+                    android:layout_marginBottom="8dp"
+                    android:orientation="horizontal"
+                    android:weightSum="1">
+
+                    <TextView
+
+                        android:id="@+id/buyText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_vertical"
+                        android:layout_weight="1"
+                        android:text="@string/vi_setter_pris_p_om_du_vil_st_tte_oslofjorden_com_og_dermed_fjerne_reklamen"
+                        tools:text="Vi setter pris på om du vil støtte oslofjorden.com og dermed fjerne reklamen." />
+
+                    <Button
+                        android:id="@+id/buyButton"
+                        style="@style/Base.Widget.AppCompat.Button.Colored"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:layout_marginLeft="8dp"
+                        android:enabled="false"
+                        android:text="@string/kj_p"
+                        tools:text="Kjøp" />
+
+
+                </LinearLayout>
+
+            </RelativeLayout>
+
+        </RelativeLayout>
+
+        <include layout="@layout/bottomsheet" />
+
+    </android.support.design.widget.CoordinatorLayout>
+</layout>

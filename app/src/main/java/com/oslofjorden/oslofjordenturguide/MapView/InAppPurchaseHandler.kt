@@ -2,7 +2,7 @@ package com.oslofjorden.oslofjordenturguide.MapView
 
 import android.content.Context
 import com.android.billingclient.api.*
-import kotlinx.android.synthetic.main.activity_maps.*
+import kotlinx.android.synthetic.main.activity_main.*
 
 // Handles the purchaseOk of the in app purchaseOk.
 // Starts a connection to google play to initiate the app purchaseOk and will receive a callback when a purchaseOk is completed.

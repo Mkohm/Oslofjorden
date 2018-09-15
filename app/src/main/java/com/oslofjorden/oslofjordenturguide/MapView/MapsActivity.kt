@@ -7,6 +7,7 @@ import android.arch.lifecycle.Observer
 import android.arch.lifecycle.ViewModelProviders
 import android.content.Context
 import android.content.pm.PackageManager
+import android.databinding.DataBindingUtil
 import android.graphics.Color
 import android.graphics.PorterDuff
 import android.os.Bundle
@@ -18,7 +19,6 @@ import android.util.Log
 import android.view.ContextMenu
 import android.view.View
 import android.widget.ImageButton
-import android.widget.LinearLayout
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.LocationSource.OnLocationChangedListener
@@ -31,10 +31,12 @@ import com.google.maps.android.clustering.ClusterManager
 import com.google.maps.android.clustering.algo.GridBasedAlgorithm
 import com.google.maps.android.clustering.algo.PreCachingAlgorithmDecorator
 import com.oslofjorden.R
+import com.oslofjorden.databinding.ActivityMainBinding
 import com.oslofjorden.oslofjordenturguide.MapView.model.MarkerData
 import com.oslofjorden.oslofjordenturguide.MapView.model.PolylineData
 import com.oslofjorden.oslofjordenturguide.viewmodels.MapsActivityViewModel
-import kotlinx.android.synthetic.main.activity_maps.*
+import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.bottomsheet.*
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListener, LifecycleOwner, ActivityCompat.OnRequestPermissionsResultCallback, AppPurchasedListener {
 
@@ -54,11 +56,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_maps)
 
         val viewModel = ViewModelProviders.of(this).get(MapsActivityViewModel(application)::class.java)
 
-        initBottomSheetController()
 
         viewModel.markers.observe(this, Observer { markers ->
             // Update UI when the marker changes
@@ -71,9 +71,20 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
             // todo: what?
             polylineData = polylines!!
 
+            viewModel.enableLayersButton()
+
             updateUI()
         })
 
+
+        // Inflate view and obtain an instance of the binding class.
+        val binding: ActivityMainBinding = DataBindingUtil.setContentView(this, R.layout.activity_main)
+
+        // Assign the component to a property in the binding class.
+        binding.setLifecycleOwner(this)
+        binding.viewmodel = viewModel
+
+        initBottomSheetController()
 
         //        layers.isClickable = true
         //        layers.isEnabled = true
@@ -116,7 +127,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
     }
 
     fun initBottomSheetController() {
-        bottomSheetController = BottomSheetController(findViewById<View>(R.id.bottom_sheet) as LinearLayout, this)
+        bottomSheetController = BottomSheetController(bottom_sheet, this)
         bottomSheetController.setLoadingText()
         bottomSheetController.expandBottomSheet()
     }
@@ -167,11 +178,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
     }
 
     private fun initLayersButton() {
-        layers.isClickable = false
-        layers.isEnabled = false
-        layers.setImageResource(R.drawable.ic_layers_gray)
+        layersButton.isClickable = false
+        layersButton.isEnabled = false
+        layersButton.setImageResource(R.drawable.ic_layers_gray)
 
-        layers.setOnClickListener {
+        layersButton.setOnClickListener {
             //Show the choose map info dialog
             val mapInfoDialog = ChooseMapInfoDialog()
             mapInfoDialog.show(supportFragmentManager, "test")

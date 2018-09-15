@@ -12,7 +12,7 @@ import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
 import com.oslofjorden.BuildConfig
 import com.oslofjorden.R
-import kotlinx.android.synthetic.main.activity_maps.*
+import kotlinx.android.synthetic.main.activity_main.*
 
 
 class AdHandler(activity: AppCompatActivity) {

@@ -3,6 +3,7 @@ package com.oslofjorden.oslofjordenturguide.viewmodels
 import android.app.Application
 import android.arch.lifecycle.AndroidViewModel
 import android.arch.lifecycle.MutableLiveData
+import android.widget.ImageButton
 import com.oslofjorden.oslofjordenturguide.MapView.data.MarkerDataRepository
 import com.oslofjorden.oslofjordenturguide.MapView.data.MarkerReader
 import com.oslofjorden.oslofjordenturguide.MapView.data.PolylineReader
@@ -17,11 +18,12 @@ class MapsActivityViewModel(application: Application) : AndroidViewModel(Applica
 
     val markers = MutableLiveData<List<MarkerData>>()
     val polylines = MutableLiveData<List<PolylineData>>()
-
+    val layersButtonEnabled = MutableLiveData<Boolean>()
 
     init {
         loadMarkers()
         loadPolylines()
+        layersButtonEnabled.value = false
     }
 
     private fun loadMarkers() {
@@ -30,6 +32,14 @@ class MapsActivityViewModel(application: Application) : AndroidViewModel(Applica
 
     private fun loadPolylines() {
         return polylineRepository.getPolylines(polylines)
+    }
+
+    fun disableLayersButton() {
+        layersButtonEnabled.value = false
+    }
+
+    fun enableLayersButton() {
+        layersButtonEnabled.value = true
     }
 }
 
