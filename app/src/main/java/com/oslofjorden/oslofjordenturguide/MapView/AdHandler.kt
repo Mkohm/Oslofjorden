@@ -20,19 +20,18 @@ class AdHandler(activity: AppCompatActivity) {
     private val prodID = "ca-app-pub-8816231201193091/8419082785"
 
     init {
-        val sharedPref = activity.getPreferences(Context.MODE_PRIVATE)
-        val userHasBoughtRemoveAds = sharedPref.getBoolean("userHasBoughtRemoveAds", false)
+        val userHasBoughtRemoveAds = hasBoughtInAppPurchase(activity)
 
 
         if (!userHasBoughtRemoveAds) {
             createAd(activity)
-        } else {
-            removeAdLayout(activity)
         }
     }
 
-    private fun removeAdLayout(activity: AppCompatActivity) {
-        activity.buyLayout.visibility = View.GONE
+    fun hasBoughtInAppPurchase(activity: AppCompatActivity): Boolean {
+        val sharedPref = activity.getPreferences(Context.MODE_PRIVATE)
+        val userHasBoughtRemoveAds = sharedPref.getBoolean("userHasBoughtRemoveAds", false)
+        return userHasBoughtRemoveAds
     }
 
     private fun createAd(activity: AppCompatActivity) {

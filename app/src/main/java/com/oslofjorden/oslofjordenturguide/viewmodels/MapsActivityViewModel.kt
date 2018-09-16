@@ -3,7 +3,7 @@ package com.oslofjorden.oslofjordenturguide.viewmodels
 import android.app.Application
 import android.arch.lifecycle.AndroidViewModel
 import android.arch.lifecycle.MutableLiveData
-import android.widget.ImageButton
+import android.content.Context
 import com.oslofjorden.oslofjordenturguide.MapView.data.MarkerDataRepository
 import com.oslofjorden.oslofjordenturguide.MapView.data.MarkerReader
 import com.oslofjorden.oslofjordenturguide.MapView.data.PolylineReader
@@ -18,12 +18,14 @@ class MapsActivityViewModel(application: Application) : AndroidViewModel(Applica
 
     val markers = MutableLiveData<List<MarkerData>>()
     val polylines = MutableLiveData<List<PolylineData>>()
-    val layersButtonEnabled = MutableLiveData<Boolean>()
+    val dataLoaded = MutableLiveData<Boolean>()
+    val inAppPurchased = MutableLiveData<Boolean>()
 
     init {
         loadMarkers()
         loadPolylines()
-        layersButtonEnabled.value = false
+        dataLoaded.value = false
+        inAppPurchased.value = hasBoughtInAppPurchase(application)
     }
 
     private fun loadMarkers() {
@@ -31,15 +33,15 @@ class MapsActivityViewModel(application: Application) : AndroidViewModel(Applica
     }
 
     private fun loadPolylines() {
-        return polylineRepository.getPolylines(polylines)
+        val polylines = polylineRepository.getPolylines(polylines)
+        dataLoaded.value = true
+        return polylines
     }
 
-    fun disableLayersButton() {
-        layersButtonEnabled.value = false
-    }
-
-    fun enableLayersButton() {
-        layersButtonEnabled.value = true
+    fun hasBoughtInAppPurchase(application: Application): Boolean {
+        val sharedPref = application.getSharedPreferences("myPrefs", Context.MODE_PRIVATE)
+        val userHasBoughtRemoveAds = sharedPref.getBoolean("userHasBoughtRemoveAds", false)
+        return userHasBoughtRemoveAds
     }
 }
 

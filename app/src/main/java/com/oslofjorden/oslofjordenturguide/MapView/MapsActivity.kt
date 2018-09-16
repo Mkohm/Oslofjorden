@@ -1,6 +1,5 @@
 package com.oslofjorden.oslofjordenturguide.MapView
 
-
 import android.Manifest
 import android.arch.lifecycle.LifecycleOwner
 import android.arch.lifecycle.Observer
@@ -9,7 +8,6 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.databinding.DataBindingUtil
 import android.graphics.Color
-import android.graphics.PorterDuff
 import android.os.Bundle
 import android.support.v4.app.ActivityCompat
 import android.support.v4.app.DialogFragment
@@ -18,7 +16,6 @@ import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.view.ContextMenu
 import android.view.View
-import android.widget.ImageButton
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.LocationSource.OnLocationChangedListener
@@ -59,7 +56,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
 
         val viewModel = ViewModelProviders.of(this).get(MapsActivityViewModel(application)::class.java)
 
-
         viewModel.markers.observe(this, Observer { markers ->
             // Update UI when the marker changes
             markerData = markers
@@ -71,9 +67,18 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
             // todo: what?
             polylineData = polylines!!
 
-            viewModel.enableLayersButton()
 
+            viewModel.dataLoaded.value = true
             updateUI()
+        })
+
+        viewModel.dataLoaded.observe(this, Observer { dataLoaded ->
+            when (dataLoaded) {
+                true -> {
+                    bottomSheetController.finishLoading()
+                }
+                false -> showBottomSheetLoading()
+            }
         })
 
 
@@ -83,13 +88,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
         // Assign the component to a property in the binding class.
         binding.setLifecycleOwner(this)
         binding.viewmodel = viewModel
-
-        initBottomSheetController()
-
-        //        layers.isClickable = true
-        //        layers.isEnabled = true
-        //       layers.setImageResource(R.drawable.ic_layers_white_24dp)
-        //      loading.visibility = View.GONE
 
         //The first time the user launches the app, this message will be shown
         showInfomessageToUserIfFirstTime()
@@ -105,7 +103,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
 
         initToolbar()
 
-        onofflocationbutton.isClickable = true
         onofflocationbutton.setOnClickListener {
 
             if (!hasPermission()) {
@@ -126,7 +123,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
 
     }
 
-    fun initBottomSheetController() {
+    fun showBottomSheetLoading() {
         bottomSheetController = BottomSheetController(bottom_sheet, this)
         bottomSheetController.setLoadingText()
         bottomSheetController.expandBottomSheet()
@@ -134,10 +131,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
 
     fun updateUI() {
         loadLastStateOfApplication()
-
     }
 
     override fun onPurchaseSuccess() {
+
         adLayout.visibility = View.GONE
     }
 
@@ -172,16 +169,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
         mapFragment.getMapAsync(this)
     }
 
-    private fun initLocationButton() {
-        val onOffLocationButton = findViewById<View>(R.id.onofflocationbutton) as ImageButton
-        onOffLocationButton.setImageResource(R.drawable.ic_location_off)
-    }
-
     private fun initLayersButton() {
-        layersButton.isClickable = false
-        layersButton.isEnabled = false
-        layersButton.setImageResource(R.drawable.ic_layers_gray)
-
         layersButton.setOnClickListener {
             //Show the choose map info dialog
             val mapInfoDialog = ChooseMapInfoDialog()
@@ -247,17 +235,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
     private fun initToolbar() {
         setToolbar()
         initLayersButton()
-        initLocationButton()
-        initLoadingSpinner()
-    }
-
-    private fun initLoadingSpinner() {
-        loading.indeterminateDrawable.setColorFilter(ContextCompat.getColor(applicationContext, R.color.white), PorterDuff.Mode.SRC_IN)
     }
 
     private fun setToolbar() {
         setSupportActionBar(my_toolbar)
-        supportActionBar?.title = "Oslofjorden Båt - og Turguide"
+        supportActionBar?.title = getString(R.string.app_name)
         my_toolbar.setTitleTextColor(Color.WHITE)
     }
 
@@ -405,7 +387,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
     }
 
     override fun onDialogNegativeClick(dialog: DialogFragment) {
-        Log.d(TAG, "onDialogNegativeClick: gjør ingenting")
+        Log.i(TAG, "onDialogNegativeClick: gjør ingenting")
     }
 
 

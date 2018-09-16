@@ -26,7 +26,6 @@
                 xmlns:app="http://schemas.android.com/apk/res-auto"
                 android:id="@+id/my_toolbar"
                 android:layout_width="match_parent"
-
                 android:layout_height="?attr/actionBarSize"
                 android:layout_gravity="end|top"
                 android:background="?attr/colorPrimaryDark"
@@ -38,7 +37,8 @@
                     android:id="@+id/loading"
                     android:layout_width="24dp"
                     android:layout_height="24dp"
-                    android:indeterminate="true" />
+                    android:indeterminateTint="@color/white"
+                    android:visibility="@{viewmodel.dataLoaded ? View.GONE : View.VISIBLE}" />
 
                 <ImageButton
                     android:id="@+id/layersButton"
@@ -47,10 +47,10 @@
                     android:layout_gravity="end"
                     android:adjustViewBounds="false"
                     android:background="@android:color/transparent"
-                    android:clickable="@{viewmodel.layersButtonEnabled}"
+                    android:clickable="@{viewmodel.dataLoaded}"
                     android:contentDescription="@string/velg_info_knapp"
                     android:paddingRight="8dp"
-                    android:src="@{viewmodel.layersButtonEnabled ? @drawable/ic_layers_white_24dp : @drawable/ic_layers_gray}" />
+                    android:src="@{viewmodel.dataLoaded ? @drawable/ic_layers_white_24dp : @drawable/ic_layers_gray}" />
 
                 <ImageButton
                     android:id="@+id/onofflocationbutton"
@@ -78,6 +78,7 @@
 
             <RelativeLayout
                 android:id="@+id/adLayout"
+                android:visibility="@{viewmodel.inAppPurchased ? View.GONE : View.VISIBLE}"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_below="@id/my_toolbar"
