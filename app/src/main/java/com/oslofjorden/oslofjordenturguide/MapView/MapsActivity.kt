@@ -4,7 +4,6 @@ import android.Manifest
 import android.arch.lifecycle.LifecycleOwner
 import android.arch.lifecycle.Observer
 import android.arch.lifecycle.ViewModelProviders
-import android.content.Context
 import android.content.pm.PackageManager
 import android.databinding.DataBindingUtil
 import android.graphics.Color
@@ -29,6 +28,7 @@ import com.google.maps.android.clustering.algo.GridBasedAlgorithm
 import com.google.maps.android.clustering.algo.PreCachingAlgorithmDecorator
 import com.oslofjorden.R
 import com.oslofjorden.databinding.ActivityMainBinding
+import com.oslofjorden.oslofjordenturguide.MapView.model.Marker
 import com.oslofjorden.oslofjordenturguide.MapView.model.MarkerData
 import com.oslofjorden.oslofjordenturguide.MapView.model.PolylineData
 import com.oslofjorden.oslofjordenturguide.viewmodels.MapsActivityViewModel
@@ -41,46 +41,58 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
     private val LOCATION_PERMISSION_REQUEST_CODE = 1
     private var currentPosition: LatLng = LatLng(59.903765, 10.699610) // Oslo
     private var currentCameraPosition: CameraPosition? = null
-    private lateinit var clickedClusterItem: MarkerData
+    private lateinit var clickedClusterItem: Marker
     private lateinit var bottomSheetController: BottomSheetController
-    private lateinit var mClusterManager: ClusterManager<MarkerData>
+    private lateinit var mClusterManager: ClusterManager<Marker>
     private var previousPolylineClicked: Polyline? = null
-    private var polylineData: List<PolylineData> = ArrayList()
-    private var markerData: List<MarkerData>? = null
     private var mMap: GoogleMap? = null
-    private val polylinesOnMap = ArrayList<Polyline>()
     private lateinit var myLocationListener: MyLocationListener
+
+    private var polylineData: PolylineData? = null
+    private var markerData: MarkerData? = null
+    private var polylinesOnMap: ArrayList<Polyline>? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         val viewModel = ViewModelProviders.of(this).get(MapsActivityViewModel(application)::class.java)
 
-        viewModel.markers.observe(this, Observer { markers ->
-            // Update UI when the marker changes
-            markerData = markers
+        viewModel.mapData.observe(this, Observer {
+            when (it) {
+                is PolylineData -> polylineData = it
+                is MarkerData -> markerData = it
+            }
 
-            updateUI()
-        })
-
-        viewModel.polylines.observe(this, Observer { polylines ->
-            // todo: what?
-            polylineData = polylines!!
-
-
-            viewModel.dataLoaded.value = true
-            updateUI()
-        })
-
-        viewModel.dataLoaded.observe(this, Observer { dataLoaded ->
-            when (dataLoaded) {
-                true -> {
-                    bottomSheetController.finishLoading()
-                }
-                false -> showBottomSheetLoading()
+            val currentMapItems = viewModel.currentMapItems.value
+            if (polylineData != null && markerData != null) {
+                currentMapItems?.let { mapItems -> loadCheckedItems(mapItems) }
             }
         })
 
+
+        viewModel.inAppPurchased.observe(this, Observer { inAppPurchased ->
+            when (inAppPurchased) {
+                false -> AdHandler.createAd(this)
+                true -> viewModel.removeAd()
+            }
+        })
+
+        viewModel.currentMapItems.observe(this, Observer { currentMapItems ->
+            // When there is a change in the app items we want to reload the items on the map
+            when (currentMapItems != null) {
+
+                // loadCheckedItems(currentMapItems!! as BooleanArray)
+            }
+        })
+
+        viewModel.firstTimeLaunchingApp.observe(this, Observer { firstTimeLaunchingApp ->
+            when (firstTimeLaunchingApp) {
+                true -> {
+                    showWelcomeDialog()
+                    viewModel.setInfoMessageShown()
+                }
+            }
+        })
 
         // Inflate view and obtain an instance of the binding class.
         val binding: ActivityMainBinding = DataBindingUtil.setContentView(this, R.layout.activity_main)
@@ -89,19 +101,15 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
         binding.setLifecycleOwner(this)
         binding.viewmodel = viewModel
 
-        //The first time the user launches the app, this message will be shown
-        showInfomessageToUserIfFirstTime()
-
-        //Removes the oslofjorden picture that is used as splash screen
-        window.setBackgroundDrawableResource(R.drawable.graybackground)
+        removeSplashScreen()
 
         val purchasedListener = InAppPurchaseHandler(this, this, this)
 
         initMap()
 
-        AdHandler(this)
-
         initToolbar()
+
+        showBottomSheetLoading()
 
         onofflocationbutton.setOnClickListener {
 
@@ -123,14 +131,15 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
 
     }
 
+    fun removeSplashScreen() {
+        //Removes the oslofjorden picture that is used as splash screen
+        window.setBackgroundDrawableResource(R.drawable.graybackground)
+    }
+
     fun showBottomSheetLoading() {
         bottomSheetController = BottomSheetController(bottom_sheet, this)
         bottomSheetController.setLoadingText()
         bottomSheetController.expandBottomSheet()
-    }
-
-    fun updateUI() {
-        loadLastStateOfApplication()
     }
 
     override fun onPurchaseSuccess() {
@@ -210,24 +219,25 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
     }
 
     private fun removePolylines() {
-        polylinesOnMap.forEach { it.remove() }
+        this.polylinesOnMap?.forEach { it.remove() }
     }
 
     private fun addMarkersToMap(markerType: MarkerTypes) {
-        val markersToAdd = markerData?.filter { marker -> marker.markerTypes.contains(markerType) }
+        val markersToAdd = markerData?.markers?.filter { marker -> marker.markerTypes.contains(markerType) }
         markersToAdd?.let {
             mClusterManager.addItems(markersToAdd)
         }
     }
 
     private fun addPolylines() {
-        for (i in polylineData.indices) {
+        val polylineData = polylineData
+        polylineData?.polylines?.forEachIndexed { index, polyline ->
 
-            val polyline = mMap?.addPolyline(polylineData[i].options)
-            polyline?.tag = polylineData[i]
+            val polyline = mMap?.addPolyline(polyline.options)
+            polyline?.tag = polylineData.polylines[index]
 
             // Store the polylines currently on the map to be able to remove them later
-            polyline?.let { polylinesOnMap.add(it) }
+            polyline?.let { this.polylinesOnMap?.add(it) }
         }
     }
 
@@ -271,7 +281,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
         mMap?.uiSettings?.isCompassEnabled = true
 
 
-        mMap?.setOnPolylineClickListener { polyline ->
+        mMap?.setOnPolylineClickListener { polyline: Polyline ->
             // Set the color of the previous polyline back to what it was
             setOriginalPolylineColor()
 
@@ -293,62 +303,14 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
 
 
     private fun setOriginalPolylineColor() {
-        val description = (previousPolylineClicked?.tag as PolylineData?)?.description
+        val description = (previousPolylineClicked?.tag as com.oslofjorden.oslofjordenturguide.MapView.model.Polyline?)?.description
         previousPolylineClicked?.color = SelectPolylineColor.setPolylineColor(description ?: "")
     }
 
-    private fun loadLastStateOfApplication() {
-        if (loadArray("userChecks", applicationContext).isEmpty()) {
-            // Did not find any checked items in shared preferences
-            val defaultCheckedItems = createDefaultCheckedArray()
-            loadCheckedItems(defaultCheckedItems)
-        } else {
-            val checkedItems = loadArray("userChecks", applicationContext)
-            loadCheckedItems(checkedItems)
-        }
-    }
-
-    fun loadArray(arrayName: String, mContext: Context): BooleanArray {
-        val prefs = mContext.getSharedPreferences(arrayName, 0)
-
-        val size = prefs.getInt(arrayName + "_17", 0)
-        val array = BooleanArray(size)
-        for (i in 0 until size) {
-            Log.d(TAG, "loadArray: " + i + " checked: " + prefs.getBoolean(arrayName + "_" + i, false))
-            array[i] = prefs.getBoolean(arrayName + "_" + i, false)
-        }
-        return array
-    }
-
-    private fun createDefaultCheckedArray(): BooleanArray {
-        val defaultChecked = BooleanArray(17)
-
-        for (i in 0 until 6) {
-            defaultChecked[i] = true
-        }
-
-        for (i in 7 until 17) {
-            defaultChecked[i] = false
-        }
-
-        return defaultChecked
-    }
-
-    private fun showInfomessageToUserIfFirstTime() {
-        val sharedPref = this.getPreferences(Context.MODE_PRIVATE)
-        val firstTimeUserLaunchesApp = sharedPref.getBoolean("firstTimeUserLaunchesApp", true)
-
-        if (firstTimeUserLaunchesApp) {
-            //Saving that the user has opened the app before
-            val editor = sharedPref.edit()
-            editor.putBoolean("firstTimeUserLaunchesApp", false)
-            editor.commit()
-
-            //Show message to the user
-            val infoDialog = InfoDialog()
-            infoDialog.show(supportFragmentManager, "test")
-
-        }
+    private fun showWelcomeDialog() {
+        //Show the welcome message to the user
+        val welcomeDialog = WelcomeDialog()
+        welcomeDialog.show(supportFragmentManager, "test")
     }
 
     private fun goToInitialLocation() {

@@ -1,8 +1,6 @@
 package com.oslofjorden.oslofjordenturguide.MapView
 
-import android.content.Context
 import android.support.v7.app.AppCompatActivity
-import android.view.View
 import android.view.ViewGroup
 import android.widget.RelativeLayout
 import android.widget.RelativeLayout.BELOW
@@ -14,27 +12,12 @@ import com.oslofjorden.BuildConfig
 import com.oslofjorden.R
 import kotlinx.android.synthetic.main.activity_main.*
 
-
-class AdHandler(activity: AppCompatActivity) {
+// Static helper class for creating an adview
+object AdHandler {
     private val testID = "ca-app-pub-3940256099942544/6300978111"
     private val prodID = "ca-app-pub-8816231201193091/8419082785"
 
-    init {
-        val userHasBoughtRemoveAds = hasBoughtInAppPurchase(activity)
-
-
-        if (!userHasBoughtRemoveAds) {
-            createAd(activity)
-        }
-    }
-
-    fun hasBoughtInAppPurchase(activity: AppCompatActivity): Boolean {
-        val sharedPref = activity.getPreferences(Context.MODE_PRIVATE)
-        val userHasBoughtRemoveAds = sharedPref.getBoolean("userHasBoughtRemoveAds", false)
-        return userHasBoughtRemoveAds
-    }
-
-    private fun createAd(activity: AppCompatActivity) {
+    fun createAd(activity: AppCompatActivity) {
         // Since both size and id have to be set programatically or via xml and we want to change
         // the id based on debug/release builds we have to do initialize it programmatically
 

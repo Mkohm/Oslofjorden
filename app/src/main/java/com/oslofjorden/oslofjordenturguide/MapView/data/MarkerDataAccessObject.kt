@@ -5,6 +5,6 @@ import com.oslofjorden.oslofjordenturguide.MapView.model.MarkerData
 
 
 interface MarkerDataAccessObject {
-    fun readMarkers(markers: MutableLiveData<List<MarkerData>>)
+    fun readMarkers(markers: MutableLiveData<MarkerData>)
 }
 

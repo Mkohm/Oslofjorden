@@ -5,8 +5,9 @@ import android.content.Context
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.oslofjorden.R
-import com.oslofjorden.oslofjordenturguide.MapView.model.MarkerData
 import com.oslofjorden.oslofjordenturguide.MapView.MarkerTypes
+import com.oslofjorden.oslofjordenturguide.MapView.model.Marker
+import com.oslofjorden.oslofjordenturguide.MapView.model.MarkerData
 import org.jetbrains.anko.doAsync
 import org.jetbrains.anko.uiThread
 import org.json.JSONObject
@@ -16,7 +17,7 @@ import java.io.Reader
 
 
 class MarkerReader(val context: Context) : MarkerDataAccessObject {
-    override fun readMarkers(markers: MutableLiveData<List<MarkerData>>) {
+    override fun readMarkers(markers: MutableLiveData<MarkerData>) {
         doAsync {
 
             val result = read(context)
@@ -43,8 +44,8 @@ class MarkerReader(val context: Context) : MarkerDataAccessObject {
         return LatLng(latitude, longitude)
     }
 
-    fun read(context: Context): ArrayList<MarkerData> {
-        val markerData = ArrayList<MarkerData>()
+    fun read(context: Context): MarkerData {
+        val markerData = ArrayList<Marker>()
 
         val inputStream = context.resources.openRawResource(R.raw.points)
         val reader = BufferedReader(InputStreamReader(inputStream) as Reader)
@@ -99,13 +100,13 @@ class MarkerReader(val context: Context) : MarkerDataAccessObject {
             markerOption.title(name)
             markerOption.position(position)
 
-            val marker = MarkerData(markerOption, link, markerTypesList as List<MarkerTypes>, null)
+            val marker = Marker(markerOption, link, markerTypesList as List<MarkerTypes>, null)
             markerData.add(marker)
 
 
         }
 
-        return markerData
+        return MarkerData(markerData)
     }
 
     fun createJsonObject(line: String): JSONObject? {

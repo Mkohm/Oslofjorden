@@ -9,8 +9,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import com.google.android.gms.maps.model.Polyline
 import com.oslofjorden.R
-import com.oslofjorden.oslofjordenturguide.MapView.model.MarkerData
-import com.oslofjorden.oslofjordenturguide.MapView.model.PolylineData
+import com.oslofjorden.oslofjordenturguide.MapView.model.Marker
 
 class BottomSheetController(val view: LinearLayout, val activity: MapsActivity) {
     private val behavior: BottomSheetBehavior<LinearLayout> = BottomSheetBehavior.from(view)
@@ -54,9 +53,12 @@ class BottomSheetController(val view: LinearLayout, val activity: MapsActivity) 
         val descriptionTextview = view.findViewById<TextView>(R.id.description)
         val button = view.findViewById<Button>(R.id.url)
 
-        val title = (polyline.tag as PolylineData).title
-        val description = (polyline.tag as PolylineData).description
-        val url = (polyline.tag as PolylineData).url
+        // Get the google maps polyline and convert the tag object into our own Polyline object
+        val ourPolylineType = (polyline.tag as com.oslofjorden.oslofjordenturguide.MapView.model.Polyline)
+
+        val title = ourPolylineType.title
+        val description = ourPolylineType.description
+        val url = ourPolylineType.url
 
         // Do not show the button if there is no link
         setVisibility(url, button)
@@ -79,7 +81,7 @@ class BottomSheetController(val view: LinearLayout, val activity: MapsActivity) 
         customTabsIntent.launchUrl(activity, Uri.parse(url))
     }
 
-    fun setMarkerContent(item: MarkerData) {
+    fun setMarkerContent(item: Marker) {
         val titleTextview = view.findViewById<TextView>(R.id.title)
         val descriptionTextview = view.findViewById<TextView>(R.id.description)
         val button = view.findViewById<Button>(R.id.url)

@@ -2,46 +2,51 @@ package com.oslofjorden.oslofjordenturguide.viewmodels
 
 import android.app.Application
 import android.arch.lifecycle.AndroidViewModel
+import android.arch.lifecycle.MediatorLiveData
 import android.arch.lifecycle.MutableLiveData
-import android.content.Context
-import com.oslofjorden.oslofjordenturguide.MapView.data.MarkerDataRepository
-import com.oslofjorden.oslofjordenturguide.MapView.data.MarkerReader
-import com.oslofjorden.oslofjordenturguide.MapView.data.PolylineReader
-import com.oslofjorden.oslofjordenturguide.MapView.data.PolylineRepository
-import com.oslofjorden.oslofjordenturguide.MapView.model.MarkerData
-import com.oslofjorden.oslofjordenturguide.MapView.model.PolylineData
+import com.oslofjorden.oslofjordenturguide.MapView.data.*
+import com.oslofjorden.oslofjordenturguide.MapView.model.MergedData
 
 class MapsActivityViewModel(application: Application) : AndroidViewModel(Application()) {
     private val markerDataRepository = MarkerDataRepository(MarkerReader(application.applicationContext))
     private val polylineRepository = PolylineRepository(PolylineReader(application.applicationContext))
+    private val sharedPreferencesRepository = SharedPreferencesRepository(SharedPreferencesReader(application.applicationContext))
 
-
-    val markers = MutableLiveData<List<MarkerData>>()
-    val polylines = MutableLiveData<List<PolylineData>>()
-    val dataLoaded = MutableLiveData<Boolean>()
     val inAppPurchased = MutableLiveData<Boolean>()
+    val firstTimeLaunchingApp = MutableLiveData<Boolean>()
+    val currentMapItems = MutableLiveData<BooleanArray>()
+    val mapData = MediatorLiveData<MergedData?>()
+
 
     init {
-        loadMarkers()
-        loadPolylines()
-        dataLoaded.value = false
-        inAppPurchased.value = hasBoughtInAppPurchase(application)
+        loadMapData()
+        sharedPreferencesRepository.getHasPurchasedRemoveAds(inAppPurchased)
+        sharedPreferencesRepository.isFirstTimeLaunchingApp(firstTimeLaunchingApp)
+        sharedPreferencesRepository.getCurrentMapItems(currentMapItems)
     }
 
-    private fun loadMarkers() {
-        return markerDataRepository.getMarkers(markers)
+    fun removeAd() {
+        sharedPreferencesRepository.setHasPurchasedRemoveAds(inAppPurchased)
     }
 
-    private fun loadPolylines() {
-        val polylines = polylineRepository.getPolylines(polylines)
-        dataLoaded.value = true
-        return polylines
+
+    private fun loadMapData() {
+        mapData.addSource(markerDataRepository.getMarkers()) {
+            if (it != null) {
+                mapData.value = it
+            }
+        }
+
+        mapData.addSource(polylineRepository.getPolylines()) {
+            if (it != null) {
+                mapData.value = it
+            }
+        }
     }
 
-    fun hasBoughtInAppPurchase(application: Application): Boolean {
-        val sharedPref = application.getSharedPreferences("myPrefs", Context.MODE_PRIVATE)
-        val userHasBoughtRemoveAds = sharedPref.getBoolean("userHasBoughtRemoveAds", false)
-        return userHasBoughtRemoveAds
+    fun setInfoMessageShown() {
+        sharedPreferencesRepository.setAppOpenedBefore(firstTimeLaunchingApp)
     }
+
 }
 
