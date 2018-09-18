@@ -20,6 +20,11 @@ class SharedPreferencesRepository(private val sharedPreferencesReader: SharedPre
         sharedPreferencesReader.getCurrentMapItems(currentMapItems)
     }
 
+    fun setCurrentMapItems(newMapItems: BooleanArray, currentMapItems:
+    MutableLiveData<BooleanArray>) {
+        sharedPreferencesReader.setCurrentMapItems(newMapItems, currentMapItems)
+    }
+
     fun setAppOpenedBefore(isAppOpenedBefore: MutableLiveData<Boolean>) {
         sharedPreferencesReader.setAppOpenedBefore(isAppOpenedBefore)
     }

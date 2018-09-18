@@ -4,6 +4,7 @@ import android.app.Application
 import android.arch.lifecycle.AndroidViewModel
 import android.arch.lifecycle.MediatorLiveData
 import android.arch.lifecycle.MutableLiveData
+import com.google.android.gms.maps.model.LatLng
 import com.oslofjorden.oslofjordenturguide.MapView.data.*
 import com.oslofjorden.oslofjordenturguide.MapView.model.MergedData
 
@@ -16,13 +17,15 @@ class MapsActivityViewModel(application: Application) : AndroidViewModel(Applica
     val firstTimeLaunchingApp = MutableLiveData<Boolean>()
     val currentMapItems = MutableLiveData<BooleanArray>()
     val mapData = MediatorLiveData<MergedData?>()
-
+    val currentLocation = MutableLiveData<LatLng>()
 
     init {
         loadMapData()
         sharedPreferencesRepository.getHasPurchasedRemoveAds(inAppPurchased)
         sharedPreferencesRepository.isFirstTimeLaunchingApp(firstTimeLaunchingApp)
         sharedPreferencesRepository.getCurrentMapItems(currentMapItems)
+        currentLocation.value = LatLng(59.903765, 10.699610) // Oslo
+
     }
 
     fun removeAd() {
@@ -46,6 +49,10 @@ class MapsActivityViewModel(application: Application) : AndroidViewModel(Applica
 
     fun setInfoMessageShown() {
         sharedPreferencesRepository.setAppOpenedBefore(firstTimeLaunchingApp)
+    }
+
+    fun setMapItems(newMapItems: BooleanArray) {
+        sharedPreferencesRepository.setCurrentMapItems(newMapItems, currentMapItems)
     }
 
 }

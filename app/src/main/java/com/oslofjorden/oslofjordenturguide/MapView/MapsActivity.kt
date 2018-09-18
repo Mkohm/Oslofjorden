@@ -2,6 +2,7 @@ package com.oslofjorden.oslofjordenturguide.MapView
 
 import android.Manifest
 import android.arch.lifecycle.LifecycleOwner
+import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.Observer
 import android.arch.lifecycle.ViewModelProviders
 import android.content.pm.PackageManager
@@ -9,7 +10,6 @@ import android.databinding.DataBindingUtil
 import android.graphics.Color
 import android.os.Bundle
 import android.support.v4.app.ActivityCompat
-import android.support.v4.app.DialogFragment
 import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
@@ -17,10 +17,8 @@ import android.view.ContextMenu
 import android.view.View
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
-import com.google.android.gms.maps.LocationSource.OnLocationChangedListener
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Polyline
 import com.google.maps.android.clustering.ClusterManager
@@ -39,23 +37,22 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
 
 
     private val LOCATION_PERMISSION_REQUEST_CODE = 1
-    private var currentPosition: LatLng = LatLng(59.903765, 10.699610) // Oslo
-    private var currentCameraPosition: CameraPosition? = null
     private lateinit var clickedClusterItem: Marker
     private lateinit var bottomSheetController: BottomSheetController
-    private lateinit var mClusterManager: ClusterManager<Marker>
+    private var mClusterManager: ClusterManager<Marker>? = null
     private var previousPolylineClicked: Polyline? = null
     private var mMap: GoogleMap? = null
     private lateinit var myLocationListener: MyLocationListener
-
     private var polylineData: PolylineData? = null
     private var markerData: MarkerData? = null
-    private var polylinesOnMap: ArrayList<Polyline>? = null
+    private var polylinesOnMap = ArrayList<Polyline>()
+
+    private lateinit var viewModel: MapsActivityViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val viewModel = ViewModelProviders.of(this).get(MapsActivityViewModel(application)::class.java)
+        viewModel = ViewModelProviders.of(this).get(MapsActivityViewModel(application)::class.java)
 
         viewModel.mapData.observe(this, Observer {
             when (it) {
@@ -65,10 +62,14 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
 
             val currentMapItems = viewModel.currentMapItems.value
             if (polylineData != null && markerData != null) {
-                currentMapItems?.let { mapItems -> loadCheckedItems(mapItems) }
+
+                // The polylines and markers are finished loading
+                currentMapItems?.let { mapItems ->
+                    loadCheckedItems(mapItems)
+                    bottomSheetController.finishLoading()
+                }
             }
         })
-
 
         viewModel.inAppPurchased.observe(this, Observer { inAppPurchased ->
             when (inAppPurchased) {
@@ -79,9 +80,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
 
         viewModel.currentMapItems.observe(this, Observer { currentMapItems ->
             // When there is a change in the app items we want to reload the items on the map
-            when (currentMapItems != null) {
-
-                // loadCheckedItems(currentMapItems!! as BooleanArray)
+            currentMapItems?.let {
+                mClusterManager?.let {
+                    loadCheckedItems(currentMapItems)
+                }
             }
         })
 
@@ -91,6 +93,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
                     showWelcomeDialog()
                     viewModel.setInfoMessageShown()
                 }
+            }
+        })
+
+        viewModel.currentLocation.observe(this, Observer { currentLocation ->
+            currentLocation?.let {
+                updateCameraPosition(currentLocation)
             }
         })
 
@@ -107,7 +115,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
 
         initMap()
 
-        initToolbar()
+        setToolbar()
+        initLayersButton(viewModel.currentMapItems)
 
         showBottomSheetLoading()
 
@@ -171,17 +180,20 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
         }
     }
 
-
     private fun initMap() {
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         val mapFragment = supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
     }
 
-    private fun initLayersButton() {
+    private fun initLayersButton(userChecks: MutableLiveData<BooleanArray>) {
         layersButton.setOnClickListener {
             //Show the choose map info dialog
             val mapInfoDialog = ChooseMapInfoDialog()
+            val bundle = Bundle()
+            bundle.putBooleanArray("userChecks", userChecks.value)
+
+            mapInfoDialog.arguments = bundle
             mapInfoDialog.show(supportFragmentManager, "test")
         }
     }
@@ -193,25 +205,21 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
     }
 
     private fun loadCheckedItems(checkedList: BooleanArray) {
-        mClusterManager.clearItems()
+        mClusterManager?.clearItems()
 
         for (i in checkedList.indices) {
             //Load items if the checkbox was checked
+            val type = MarkerTypes.getTypeFromIndex(i)
+
             if (checkedList[i]) {
-
-                //Kyststier behandles spesielt
-                if (i == 0) {
-
+                if (type.equals(MarkerTypes.PATHS)) {
                     addPolylines()
-
                 } else {
-                    val type = MarkerTypes.getTypeFromIndex(i)
                     addMarkersToMap(type)
                 }
-
+                // It was not checked
             } else {
-                if (i == 0) {
-
+                if (type.equals(MarkerTypes.PATHS)) {
                     removePolylines()
                 }
             }
@@ -219,13 +227,13 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
     }
 
     private fun removePolylines() {
-        this.polylinesOnMap?.forEach { it.remove() }
+        this.polylinesOnMap.forEach { it.remove() }
     }
 
     private fun addMarkersToMap(markerType: MarkerTypes) {
         val markersToAdd = markerData?.markers?.filter { marker -> marker.markerTypes.contains(markerType) }
         markersToAdd?.let {
-            mClusterManager.addItems(markersToAdd)
+            mClusterManager?.addItems(markersToAdd)
         }
     }
 
@@ -237,14 +245,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
             polyline?.tag = polylineData.polylines[index]
 
             // Store the polylines currently on the map to be able to remove them later
-            polyline?.let { this.polylinesOnMap?.add(it) }
+            polyline?.let { this.polylinesOnMap.add(it) }
         }
-    }
-
-
-    private fun initToolbar() {
-        setToolbar()
-        initLayersButton()
     }
 
     private fun setToolbar() {
@@ -253,26 +255,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
         my_toolbar.setTitleTextColor(Color.WHITE)
     }
 
-
-    // todo: remove?
-    override fun onPause() {
-        super.onPause()
-
-        currentCameraPosition = mMap?.cameraPosition
-    }
-
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
 
-        myLocationListener = MyLocationListener(this, mMap, onofflocationbutton, lifecycle, OnLocationChangedListener { it ->
-            // update ui
-            val cameraUpdate = CameraUpdateFactory.newLatLng(LatLng(it.latitude, it.longitude))
-            mMap?.animateCamera(cameraUpdate)
-        })
-
         setUpClusterer()
-
-        goToInitialLocation()
 
         //enable zoom buttons, and remove toolbar when clicking on markers
         mMap?.uiSettings?.isZoomControlsEnabled = false
@@ -313,18 +299,18 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
         welcomeDialog.show(supportFragmentManager, "test")
     }
 
-    private fun goToInitialLocation() {
-        val cameraUpdate = CameraUpdateFactory.newLatLngZoom(currentPosition, 13f)
+    private fun updateCameraPosition(coordinates: LatLng) {
+        val cameraUpdate = CameraUpdateFactory.newLatLngZoom(coordinates, 13f)
         mMap?.moveCamera(cameraUpdate)
     }
 
     private fun setUpClusterer() {
         mClusterManager = ClusterManager(this, mMap)
-        mClusterManager.algorithm = PreCachingAlgorithmDecorator(GridBasedAlgorithm())
-        mClusterManager.renderer = OwnIconRendered(applicationContext, mMap, mClusterManager)
+        mClusterManager?.algorithm = PreCachingAlgorithmDecorator(GridBasedAlgorithm())
+        mClusterManager?.renderer = OwnIconRendered(applicationContext, mMap, mClusterManager)
 
 
-        mClusterManager.setOnClusterItemClickListener { item ->
+        mClusterManager?.setOnClusterItemClickListener { item ->
             clickedClusterItem = item
 
             bottomSheetController.setMarkerContent(item)
@@ -337,25 +323,22 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
             true
         }
 
-        mMap?.setInfoWindowAdapter(mClusterManager.markerManager)
+        mMap?.setInfoWindowAdapter(mClusterManager?.markerManager)
 
         // Point the map's listeners at the listeners implemented by the cluster manager.
         mMap?.setOnCameraIdleListener(mClusterManager)
         mMap?.setOnMarkerClickListener(mClusterManager)
     }
 
-    override fun onDialogPositiveClick(dialog: DialogFragment, checkedItems: BooleanArray) {
-        loadCheckedItems(checkedItems)
+    override fun onDialogPositiveClick(newMapItems: BooleanArray) {
+        viewModel.setMapItems(newMapItems)
     }
 
-    override fun onDialogNegativeClick(dialog: DialogFragment) {
+    override fun onDialogNegativeClick() {
         Log.i(TAG, "onDialogNegativeClick: gjør ingenting")
     }
 
-
     companion object {
         var TAG = "TAG"
-
     }
-
 }

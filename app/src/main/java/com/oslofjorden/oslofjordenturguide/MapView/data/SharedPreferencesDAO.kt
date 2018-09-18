@@ -9,6 +9,6 @@ interface SharedPreferencesDAO {
     fun isFirstTimeLaunchingApp(isFirstTimeLaunchingApp: MutableLiveData<Boolean>)
     fun setAppOpenedBefore(isFirstTimeLaunchingApp: MutableLiveData<Boolean>)
 
-    fun setCurrentMapItems(currentMapItems: MutableLiveData<BooleanArray>)
+    fun setCurrentMapItems(newMapItems: BooleanArray, currentMapItems: MutableLiveData<BooleanArray>)
     fun getCurrentMapItems(currentMapItems: MutableLiveData<BooleanArray>)
 }

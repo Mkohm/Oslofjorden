@@ -23,10 +23,25 @@ class SharedPreferencesReader(private val context: Context) : SharedPreferencesD
         isFirstTimeLaunchingApp.value = false
     }
 
-    override fun setCurrentMapItems(currentMapItems: MutableLiveData<BooleanArray>) {
-        //ODO("not implemented") //To change body of created functions use File | Settings | File
-        // Templates.
+    override fun setCurrentMapItems(newMapItems: BooleanArray, currentMapItems: MutableLiveData<BooleanArray>) {
+        val arrayName = "userChecks"
+
+        newMapItems.let {
+
+            val prefs = context.getSharedPreferences(arrayName, 0)
+            val editor = prefs.edit()
+            editor.putInt(arrayName + "_17", newMapItems.size)
+
+            for (i in newMapItems.indices) {
+                editor.putBoolean(arrayName + "_" + i, newMapItems[i])
+            }
+            editor.commit()
+
+            currentMapItems.value = newMapItems
+        }
+
     }
+
 
     override fun getCurrentMapItems(currentMapItems: MutableLiveData<BooleanArray>) {
         val arrayName = "userChecks"
