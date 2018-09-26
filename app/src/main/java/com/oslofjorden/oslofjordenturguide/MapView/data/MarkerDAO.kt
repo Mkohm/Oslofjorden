@@ -4,7 +4,7 @@ import android.arch.lifecycle.MutableLiveData
 import com.oslofjorden.oslofjordenturguide.MapView.model.MarkerData
 
 
-interface MarkerDataAccessObject {
+interface MarkerDAO {
     fun readMarkers(markers: MutableLiveData<MarkerData>)
 }
 

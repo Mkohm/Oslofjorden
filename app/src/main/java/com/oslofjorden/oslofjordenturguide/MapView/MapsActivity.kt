@@ -42,7 +42,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
     private var mClusterManager: ClusterManager<Marker>? = null
     private var previousPolylineClicked: Polyline? = null
     private var mMap: GoogleMap? = null
-    private lateinit var myLocationListener: MyLocationListener
     private var polylineData: PolylineData? = null
     private var markerData: MarkerData? = null
     private var polylinesOnMap = ArrayList<Polyline>()
@@ -51,8 +50,14 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        removeSplashScreen()
 
         viewModel = ViewModelProviders.of(this).get(MapsActivityViewModel(application)::class.java)
+
+        // Inflate view and obtain an instance of the binding class.
+        val binding: ActivityMainBinding = DataBindingUtil.setContentView(this, R.layout.activity_main)
+        binding.viewmodel = viewModel
+        binding.setLifecycleOwner(this)
 
         viewModel.mapData.observe(this, Observer {
             when (it) {
@@ -102,17 +107,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
             }
         })
 
-        // Inflate view and obtain an instance of the binding class.
-        val binding: ActivityMainBinding = DataBindingUtil.setContentView(this, R.layout.activity_main)
-
-        // Assign the component to a property in the binding class.
-        binding.setLifecycleOwner(this)
-        binding.viewmodel = viewModel
-
-        removeSplashScreen()
-
-        val purchasedListener = InAppPurchaseHandler(this, this, this)
-
         initMap()
 
         setToolbar()
@@ -127,15 +121,15 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
                 return@setOnClickListener
             }
 
-            if (!myLocationListener.enabled) {
-                myLocationListener.enableMyLocation()
+            if (viewModel.locationEnabled.value!!) {
+                viewModel.getLocationUpdates()
             } else {
-                myLocationListener.disableMyLocation()
+                viewModel.disableLocationUpdates()
             }
         }
 
         buyButton.setOnClickListener {
-            purchasedListener.queryPurchases()
+            viewModel.purchase(this)
         }
 
     }
@@ -173,7 +167,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
 
         if (PermissionUtils.isPermissionGranted(permissions, grantResults, Manifest.permission.ACCESS_FINE_LOCATION)) {
             // Enable the my location layer if the permission has been granted.
-            myLocationListener.enableMyLocation()
+            viewModel.getLocationUpdates()
             onofflocationbutton.setImageResource(R.drawable.ic_location_on)
         } else {
             // Display the missing permission error dialog when the fragments resume.
@@ -301,7 +295,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
 
     private fun updateCameraPosition(coordinates: LatLng) {
         val cameraUpdate = CameraUpdateFactory.newLatLngZoom(coordinates, 13f)
-        mMap?.moveCamera(cameraUpdate)
+        mMap?.animateCamera(cameraUpdate)
     }
 
     private fun setUpClusterer() {

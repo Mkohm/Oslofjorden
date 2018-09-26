@@ -16,7 +16,7 @@ import java.io.InputStreamReader
 import java.io.Reader
 
 
-class MarkerReader(val context: Context) : MarkerDataAccessObject {
+class MarkerReader(val context: Context) : MarkerDAO {
     override fun readMarkers(markers: MutableLiveData<MarkerData>) {
         doAsync {
 

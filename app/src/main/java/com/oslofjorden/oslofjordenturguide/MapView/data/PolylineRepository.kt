@@ -4,7 +4,7 @@ import android.arch.lifecycle.LiveData
 import android.arch.lifecycle.MutableLiveData
 import com.oslofjorden.oslofjordenturguide.MapView.model.PolylineData
 
-class PolylineRepository(private val polylineDataAccessObject: PolylineDataAccessObject) {
+class PolylineRepository(private val polylineDataAccessObject: PolylineDAO) {
 
     fun getPolylines(): LiveData<PolylineData> {
         val liveData = MutableLiveData<PolylineData>()

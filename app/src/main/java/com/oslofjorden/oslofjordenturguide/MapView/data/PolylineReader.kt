@@ -13,7 +13,7 @@ import org.jetbrains.anko.uiThread
 import java.io.EOFException
 import java.io.ObjectInputStream
 
-class PolylineReader(val context: Context) : PolylineDataAccessObject {
+class PolylineReader(val context: Context) : PolylineDAO {
     override fun readPolylines(liveData: MutableLiveData<PolylineData>) {
         doAsync {
 

@@ -5,7 +5,7 @@ import android.arch.lifecycle.MutableLiveData
 import com.oslofjorden.oslofjordenturguide.MapView.model.MarkerData
 
 
-class MarkerDataRepository(private val markerDataAccessObject: MarkerDataAccessObject) {
+class MarkerDataRepository(private val markerDataAccessObject: MarkerDAO) {
 
     fun getMarkers(): LiveData<MarkerData> {
         val liveData = MutableLiveData<MarkerData>()
