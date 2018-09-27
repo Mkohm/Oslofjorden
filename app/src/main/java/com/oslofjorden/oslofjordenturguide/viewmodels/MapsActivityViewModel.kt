@@ -38,8 +38,7 @@ class MapsActivityViewModel(application: Application) : AndroidViewModel(Applica
         sharedPreferencesRepository.getCurrentMapItems(currentMapItems)
         currentLocation.value = LatLng(59.903765, 10.699610) // Oslo
 
-        // todo: change to false when location works
-        locationEnabled.value = true
+        locationEnabled.value = false
 
 
         inAppPurchaseInteractor.startGooglePlayConnection(billingClient)
@@ -72,11 +71,11 @@ class MapsActivityViewModel(application: Application) : AndroidViewModel(Applica
     }
 
     fun getLocationUpdates() {
-        locationInteractor.enableLocationUpdates(currentLocation)
+        locationInteractor.enableLocationUpdates(currentLocation, locationEnabled)
     }
 
     fun disableLocationUpdates() {
-        locationInteractor.disableLocationUpdates()
+        locationInteractor.disableLocationUpdates(locationEnabled)
     }
 
     override fun onPurchasesUpdated(responseCode: Int, purchases: MutableList<Purchase>?) {

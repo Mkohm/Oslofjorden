@@ -13,6 +13,7 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.LocationSource.OnLocationChangedListener
 import com.oslofjorden.R
 
+//todo: delete this
 class MyLocationListener(context: Context, private val mMap: GoogleMap?, private val onOffLocationButton: ImageButton, private val lifecycle: Lifecycle, private val callback: OnLocationChangedListener) : LifecycleObserver, LocationListener {
 
 

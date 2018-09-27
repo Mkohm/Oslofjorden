@@ -61,7 +61,7 @@
                     android:background="@android:color/transparent"
                     android:contentDescription="@string/skru_p_posisjon"
                     android:paddingRight="8dp"
-                    android:src="@drawable/ic_location_off" />
+                    android:src="@{viewmodel.locationEnabled ? @drawable/ic_location_on : @drawable/ic_location_off}" />
 
             </android.support.v7.widget.Toolbar>
 

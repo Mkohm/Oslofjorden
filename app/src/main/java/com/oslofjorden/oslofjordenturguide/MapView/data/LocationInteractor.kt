@@ -5,12 +5,12 @@ import com.google.android.gms.maps.model.LatLng
 
 class LocationInteractor(private val locationProvider: LocationProvider) {
 
-    fun enableLocationUpdates(currentLocation: MutableLiveData<LatLng>) {
-        locationProvider.getLocation(currentLocation)
+    fun enableLocationUpdates(currentLocation: MutableLiveData<LatLng>, locationEnabled: MutableLiveData<Boolean>) {
+        locationProvider.getLocation(currentLocation, locationEnabled)
     }
 
-    fun disableLocationUpdates() {
-
+    fun disableLocationUpdates(locationEnabled: MutableLiveData<Boolean>) {
+        locationProvider.stopLocationUpdates(locationEnabled)
     }
 
 }

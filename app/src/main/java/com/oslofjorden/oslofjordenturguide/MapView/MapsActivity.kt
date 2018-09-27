@@ -39,7 +39,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
     private val LOCATION_PERMISSION_REQUEST_CODE = 1
     private lateinit var clickedClusterItem: Marker
     private lateinit var bottomSheetController: BottomSheetController
-    private var mClusterManager: ClusterManager<Marker>? = null
+    private var clusterManager: ClusterManager<Marker>? = null
     private var previousPolylineClicked: Polyline? = null
     private var mMap: GoogleMap? = null
     private var polylineData: PolylineData? = null
@@ -50,7 +50,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         removeSplashScreen()
+        setToolbar()
+        initMap()
+        showBottomSheetLoading()
 
         viewModel = ViewModelProviders.of(this).get(MapsActivityViewModel(application)::class.java)
 
@@ -85,8 +89,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
 
         viewModel.currentMapItems.observe(this, Observer { currentMapItems ->
             // When there is a change in the app items we want to reload the items on the map
-            currentMapItems?.let {
-                mClusterManager?.let {
+            currentMapItems?.let { _ ->
+                clusterManager?.let {
                     loadCheckedItems(currentMapItems)
                 }
             }
@@ -107,24 +111,16 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
             }
         })
 
-        initMap()
-
-        setToolbar()
-        initLayersButton(viewModel.currentMapItems)
-
-        showBottomSheetLoading()
-
         onofflocationbutton.setOnClickListener {
-
             if (!hasPermission()) {
                 requestPermission()
                 return@setOnClickListener
             }
 
             if (viewModel.locationEnabled.value!!) {
-                viewModel.getLocationUpdates()
-            } else {
                 viewModel.disableLocationUpdates()
+            } else {
+                viewModel.getLocationUpdates()
             }
         }
 
@@ -132,6 +128,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
             viewModel.purchase(this)
         }
 
+        layersButton.setOnClickListener {
+            //Show the choose map info dialog
+            showMapInfoDialog(viewModel.currentMapItems)
+        }
     }
 
     fun removeSplashScreen() {
@@ -146,7 +146,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
     }
 
     override fun onPurchaseSuccess() {
-
         adLayout.visibility = View.GONE
     }
 
@@ -157,7 +156,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
     private fun hasPermission(): Boolean {
         return ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
     }
-
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         // If the request code is something other than what we requested
@@ -180,16 +178,14 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
         mapFragment.getMapAsync(this)
     }
 
-    private fun initLayersButton(userChecks: MutableLiveData<BooleanArray>) {
-        layersButton.setOnClickListener {
-            //Show the choose map info dialog
-            val mapInfoDialog = ChooseMapInfoDialog()
-            val bundle = Bundle()
-            bundle.putBooleanArray("userChecks", userChecks.value)
 
-            mapInfoDialog.arguments = bundle
-            mapInfoDialog.show(supportFragmentManager, "test")
-        }
+    fun showMapInfoDialog(userChecks: MutableLiveData<BooleanArray>) {
+        val mapInfoDialog = ChooseMapInfoDialog()
+        val bundle = Bundle()
+        bundle.putBooleanArray("userChecks", userChecks.value)
+
+        mapInfoDialog.arguments = bundle
+        mapInfoDialog.show(supportFragmentManager, "test")
     }
 
     override fun onCreateContextMenu(menu: ContextMenu, v: View, menuInfo: ContextMenu.ContextMenuInfo) {
@@ -199,7 +195,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
     }
 
     private fun loadCheckedItems(checkedList: BooleanArray) {
-        mClusterManager?.clearItems()
+        clusterManager?.clearItems()
 
         for (i in checkedList.indices) {
             //Load items if the checkbox was checked
@@ -227,7 +223,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
     private fun addMarkersToMap(markerType: MarkerTypes) {
         val markersToAdd = markerData?.markers?.filter { marker -> marker.markerTypes.contains(markerType) }
         markersToAdd?.let {
-            mClusterManager?.addItems(markersToAdd)
+            clusterManager?.addItems(markersToAdd)
         }
     }
 
@@ -235,11 +231,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
         val polylineData = polylineData
         polylineData?.polylines?.forEachIndexed { index, polyline ->
 
-            val polyline = mMap?.addPolyline(polyline.options)
-            polyline?.tag = polylineData.polylines[index]
+            val addedPolyline = mMap?.addPolyline(polyline.options)
+            addedPolyline?.tag = polylineData.polylines[index]
 
             // Store the polylines currently on the map to be able to remove them later
-            polyline?.let { this.polylinesOnMap.add(it) }
+            addedPolyline?.let { this.polylinesOnMap.add(it) }
         }
     }
 
@@ -252,16 +248,20 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
 
-        setUpClusterer()
+        viewModel.currentLocation.value?.let {
+            updateCameraPosition(it)
+        }
+
+        setUpClusterer(googleMap)
 
         //enable zoom buttons, and remove toolbar when clicking on markers
-        mMap?.uiSettings?.isZoomControlsEnabled = false
-        mMap?.uiSettings?.isMapToolbarEnabled = false
-        mMap?.uiSettings?.isMyLocationButtonEnabled = false
-        mMap?.uiSettings?.isCompassEnabled = true
+        googleMap.uiSettings.isZoomControlsEnabled = false
+        googleMap.uiSettings.isMapToolbarEnabled = false
+        googleMap.uiSettings.isMyLocationButtonEnabled = false
+        googleMap.uiSettings.isCompassEnabled = true
 
 
-        mMap?.setOnPolylineClickListener { polyline: Polyline ->
+        googleMap.setOnPolylineClickListener { polyline: Polyline ->
             // Set the color of the previous polyline back to what it was
             setOriginalPolylineColor()
 
@@ -275,7 +275,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
             previousPolylineClicked = polyline
         }
 
-        mMap?.setOnMapClickListener { latLng ->
+        googleMap.setOnMapClickListener { latLng ->
             bottomSheetController.hideBottomSheet()
             setOriginalPolylineColor()
         }
@@ -298,30 +298,33 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
         mMap?.animateCamera(cameraUpdate)
     }
 
-    private fun setUpClusterer() {
-        mClusterManager = ClusterManager(this, mMap)
-        mClusterManager?.algorithm = PreCachingAlgorithmDecorator(GridBasedAlgorithm())
-        mClusterManager?.renderer = OwnIconRendered(applicationContext, mMap, mClusterManager)
+    private fun setUpClusterer(googleMap: GoogleMap) {
+        clusterManager = ClusterManager(this, googleMap)
 
+        clusterManager?.let { clusterManager ->
 
-        mClusterManager?.setOnClusterItemClickListener { item ->
-            clickedClusterItem = item
+            clusterManager.algorithm = PreCachingAlgorithmDecorator(GridBasedAlgorithm())
+            clusterManager.renderer = OwnIconRendered(applicationContext, googleMap, this.clusterManager)
 
-            bottomSheetController.setMarkerContent(item)
-            bottomSheetController.expandBottomSheet()
+            clusterManager.setOnClusterItemClickListener { item ->
+                clickedClusterItem = item
 
-            // Navigate to the center of the marker when clicking on it
-            mMap?.animateCamera(CameraUpdateFactory.newLatLng(item.position))
+                bottomSheetController.setMarkerContent(item)
+                bottomSheetController.expandBottomSheet()
 
-            // Do not show the window that usually appears when clicking on a marker
-            true
+                // Navigate to the center of the marker when clicking on it
+                googleMap.animateCamera(CameraUpdateFactory.newLatLng(item.position))
+
+                // Do not show the window that usually appears when clicking on a marker
+                true
+            }
+
+            googleMap.setInfoWindowAdapter(clusterManager.markerManager)
+
+            // Point the map's listeners at the listeners implemented by the cluster manager.
+            googleMap.setOnCameraIdleListener(clusterManager)
+            googleMap.setOnMarkerClickListener(clusterManager)
         }
-
-        mMap?.setInfoWindowAdapter(mClusterManager?.markerManager)
-
-        // Point the map's listeners at the listeners implemented by the cluster manager.
-        mMap?.setOnCameraIdleListener(mClusterManager)
-        mMap?.setOnMarkerClickListener(mClusterManager)
     }
 
     override fun onDialogPositiveClick(newMapItems: BooleanArray) {

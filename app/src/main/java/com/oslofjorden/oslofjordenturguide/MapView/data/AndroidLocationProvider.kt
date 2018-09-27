@@ -9,6 +9,7 @@ import com.google.android.gms.location.*
 import com.google.android.gms.maps.model.LatLng
 
 class AndroidLocationProvider(context: Context) : LocationProvider {
+
     private var fusedLocationProviderClient: FusedLocationProviderClient? = null
     private var locationCallback: LocationCallback? = null
 
@@ -26,15 +27,22 @@ class AndroidLocationProvider(context: Context) : LocationProvider {
     }
 
     @RequiresPermission(allOf = arrayOf(ACCESS_COARSE_LOCATION, ACCESS_FINE_LOCATION))
-    override fun getLocation(currentLocation: MutableLiveData<LatLng>) {
+    override fun getLocation(currentLocation: MutableLiveData<LatLng>, locationEnabled: MutableLiveData<Boolean>) {
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult?) {
                 locationResult ?: return
 
                 currentLocation.value = LatLng(locationResult.lastLocation.latitude, locationResult.lastLocation.longitude)
+                locationEnabled.value = true
             }
         }
 
         fusedLocationProviderClient?.requestLocationUpdates(createLocationRequest(), locationCallback, null)
+    }
+
+
+    override fun stopLocationUpdates(locationEnabled: MutableLiveData<Boolean>) {
+        fusedLocationProviderClient?.removeLocationUpdates(locationCallback)
+        locationEnabled.value = false
     }
 }
