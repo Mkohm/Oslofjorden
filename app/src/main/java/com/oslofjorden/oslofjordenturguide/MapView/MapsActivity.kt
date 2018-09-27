@@ -9,6 +9,7 @@ import android.content.pm.PackageManager
 import android.databinding.DataBindingUtil
 import android.graphics.Color
 import android.os.Bundle
+import android.support.annotation.RequiresPermission
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity
@@ -51,17 +52,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        setupViewModel()
         removeSplashScreen()
         setToolbar()
         initMap()
         showBottomSheetLoading()
 
-        viewModel = ViewModelProviders.of(this).get(MapsActivityViewModel(application)::class.java)
-
-        // Inflate view and obtain an instance of the binding class.
-        val binding: ActivityMainBinding = DataBindingUtil.setContentView(this, R.layout.activity_main)
-        binding.viewmodel = viewModel
-        binding.setLifecycleOwner(this)
 
         viewModel.mapData.observe(this, Observer {
             when (it) {
@@ -115,13 +111,21 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
             if (!hasPermission()) {
                 requestPermission()
                 return@setOnClickListener
+            } else {
+
+                if (viewModel.locationEnabled.value!!) {
+                    viewModel.disableLocationUpdates()
+
+                    @RequiresPermission(allOf = [Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION])
+                    mMap?.isMyLocationEnabled = false
+                } else {
+                    viewModel.getLocationUpdates()
+
+                    @RequiresPermission(allOf = [Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION])
+                    mMap?.isMyLocationEnabled = true
+                }
             }
 
-            if (viewModel.locationEnabled.value!!) {
-                viewModel.disableLocationUpdates()
-            } else {
-                viewModel.getLocationUpdates()
-            }
         }
 
         buyButton.setOnClickListener {
@@ -132,6 +136,15 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
             //Show the choose map info dialog
             showMapInfoDialog(viewModel.currentMapItems)
         }
+    }
+
+    fun setupViewModel() {
+        viewModel = ViewModelProviders.of(this).get(MapsActivityViewModel(application)::class.java)
+
+        // Inflate view and obtain an instance of the binding class.
+        val binding: ActivityMainBinding = DataBindingUtil.setContentView(this, R.layout.activity_main)
+        binding.viewmodel = viewModel
+        binding.setLifecycleOwner(this)
     }
 
     fun removeSplashScreen() {
