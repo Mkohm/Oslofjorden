@@ -26,14 +26,18 @@ class AndroidLocationProvider(context: Context) : LocationProvider {
         return locationRequest
     }
 
-    @RequiresPermission(allOf = arrayOf(ACCESS_COARSE_LOCATION, ACCESS_FINE_LOCATION))
+    @RequiresPermission(allOf = [ACCESS_COARSE_LOCATION, ACCESS_FINE_LOCATION])
     override fun getLocation(currentLocation: MutableLiveData<LatLng>, locationEnabled: MutableLiveData<Boolean>) {
+
+        // We set the value to true even before the first location update to make sure that the
+        // icon showing if location is giving feedback of a press
+        locationEnabled.value = true
+
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult?) {
                 locationResult ?: return
 
                 currentLocation.value = LatLng(locationResult.lastLocation.latitude, locationResult.lastLocation.longitude)
-                locationEnabled.value = true
             }
         }
 

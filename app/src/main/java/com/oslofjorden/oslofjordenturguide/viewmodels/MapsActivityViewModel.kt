@@ -4,36 +4,41 @@ import android.app.Application
 import android.arch.lifecycle.AndroidViewModel
 import android.arch.lifecycle.MediatorLiveData
 import android.arch.lifecycle.MutableLiveData
-import com.android.billingclient.api.BillingClient
+import com.android.billingclient.api.BillingClient.BillingResponse
+import com.android.billingclient.api.BillingClient.newBuilder
 import com.android.billingclient.api.Purchase
 import com.android.billingclient.api.PurchasesUpdatedListener
 import com.google.android.gms.maps.model.LatLng
+import com.oslofjorden.R
 import com.oslofjorden.oslofjordenturguide.MapView.InAppPurchaseInteractor
 import com.oslofjorden.oslofjordenturguide.MapView.MapsActivity
+import com.oslofjorden.oslofjordenturguide.MapView.SingleLiveEvent
 import com.oslofjorden.oslofjordenturguide.MapView.data.*
 import com.oslofjorden.oslofjordenturguide.MapView.model.MergedData
 
-class MapsActivityViewModel(application: Application) : AndroidViewModel(Application()), PurchasesUpdatedListener {
+class MapsActivityViewModel(private val myApplication: Application) : AndroidViewModel(Application()), PurchasesUpdatedListener {
 
-    private val markerDataRepository = MarkerDataRepository(MarkerReader(application.applicationContext))
-    private val polylineRepository = PolylineRepository(PolylineReader(application.applicationContext))
-    private val sharedPreferencesRepository = SharedPreferencesRepository(SharedPreferencesReader(application.applicationContext))
+    private val markerDataRepository = MarkerDataRepository(MarkerReader(myApplication.applicationContext))
+    private val polylineRepository = PolylineRepository(PolylineReader(myApplication.applicationContext))
+    private val sharedPreferencesRepository = SharedPreferencesRepository(SharedPreferencesReader(myApplication.applicationContext))
 
-    private val locationInteractor = LocationInteractor(AndroidLocationProvider(application.applicationContext))
+    private val locationInteractor = LocationInteractor(AndroidLocationProvider(myApplication.applicationContext))
     private val inAppPurchaseInteractor = InAppPurchaseInteractor
-    private val billingClient = BillingClient.newBuilder(application).setListener(this).build()
+    private val billingClient = newBuilder(myApplication).setListener(this).build()
 
 
-    val inAppPurchased = MutableLiveData<Boolean>()
+    val hasPurchasedRemoveAds = MutableLiveData<Boolean>()
     val firstTimeLaunchingApp = MutableLiveData<Boolean>()
     val currentMapItems = MutableLiveData<BooleanArray>()
     val mapData = MediatorLiveData<MergedData?>()
     val currentLocation = MutableLiveData<LatLng>()
     val locationEnabled = MutableLiveData<Boolean>()
 
+    val inAppPurchaseStatus = SingleLiveEvent<String>()
+
     init {
         loadMapData()
-        sharedPreferencesRepository.getHasPurchasedRemoveAds(inAppPurchased)
+        sharedPreferencesRepository.getHasPurchasedRemoveAds(hasPurchasedRemoveAds)
         sharedPreferencesRepository.isFirstTimeLaunchingApp(firstTimeLaunchingApp)
         sharedPreferencesRepository.getCurrentMapItems(currentMapItems)
         currentLocation.value = LatLng(59.903765, 10.699610) // Oslo
@@ -45,7 +50,7 @@ class MapsActivityViewModel(application: Application) : AndroidViewModel(Applica
     }
 
     fun removeAd() {
-        sharedPreferencesRepository.setHasPurchasedRemoveAds(inAppPurchased)
+        sharedPreferencesRepository.setHasPurchasedRemoveAds(hasPurchasedRemoveAds)
     }
 
     private fun loadMapData() {
@@ -80,13 +85,30 @@ class MapsActivityViewModel(application: Application) : AndroidViewModel(Applica
 
     override fun onPurchasesUpdated(responseCode: Int, purchases: MutableList<Purchase>?) {
         when (responseCode) {
-            BillingClient.BillingResponse.ITEM_ALREADY_OWNED -> sharedPreferencesRepository.setHasPurchasedRemoveAds(inAppPurchased)
-            BillingClient.BillingResponse.OK -> sharedPreferencesRepository.setHasPurchasedRemoveAds(inAppPurchased)
+            BillingResponse.ITEM_ALREADY_OWNED -> removeAd()
+            BillingResponse.OK -> removeAd()
+            BillingResponse.DEVELOPER_ERROR -> showErrorMessage(getString(R.string.developer_error))
+            BillingResponse.ERROR -> showErrorMessage(getString(R.string.error))
+            BillingResponse.BILLING_UNAVAILABLE -> showErrorMessage(getString(R.string.billing_unavailable))
+            BillingResponse.FEATURE_NOT_SUPPORTED -> showErrorMessage(getString(R.string.feature_not_supported))
+            BillingResponse.SERVICE_DISCONNECTED -> showErrorMessage(getString(R.string.service_disconnected))
+            BillingResponse.ITEM_UNAVAILABLE -> showErrorMessage(getString(R.string.item_unavailable))
+            BillingResponse.USER_CANCELED -> showErrorMessage(getString(R.string.user_cancelled))
+            BillingResponse.ITEM_NOT_OWNED -> showErrorMessage(getString(R.string.item_not_owned))
+            BillingResponse.SERVICE_UNAVAILABLE -> showErrorMessage(getString(R.string.service_unavailable))
         }
+    }
+
+    private fun showErrorMessage(snackMessage: String?) {
+        inAppPurchaseStatus.value = snackMessage
     }
 
     fun purchase(activity: MapsActivity) {
         inAppPurchaseInteractor.queryPurchases(activity)
+    }
+
+    private fun getString(id: Int): String? {
+        return myApplication.resources.getString(id)
     }
 
 }

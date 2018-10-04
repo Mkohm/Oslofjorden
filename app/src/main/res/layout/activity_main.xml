@@ -84,7 +84,7 @@
                 android:background="@color/gray"
                 android:clickable="true"
                 android:focusable="true"
-                android:visibility="@{viewmodel.inAppPurchased ? View.GONE : View.VISIBLE}">
+                android:visibility="@{viewmodel.hasPurchasedRemoveAds ? View.GONE : View.VISIBLE}">
 
                 <LinearLayout
                     android:id="@+id/buyLayout"
@@ -116,7 +116,6 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:layout_marginLeft="8dp"
-                        android:enabled="false"
                         android:text="@string/kj_p"
                         tools:text="Kjøp" />
 

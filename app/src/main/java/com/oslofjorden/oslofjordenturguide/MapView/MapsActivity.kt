@@ -33,6 +33,7 @@ import com.oslofjorden.oslofjordenturguide.MapView.model.PolylineData
 import com.oslofjorden.oslofjordenturguide.viewmodels.MapsActivityViewModel
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.bottomsheet.*
+import org.jetbrains.anko.longToast
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListener, LifecycleOwner, ActivityCompat.OnRequestPermissionsResultCallback, AppPurchasedListener {
 
@@ -76,7 +77,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
             }
         })
 
-        viewModel.inAppPurchased.observe(this, Observer { inAppPurchased ->
+        viewModel.hasPurchasedRemoveAds.observe(this, Observer { inAppPurchased ->
             when (inAppPurchased) {
                 false -> AdHandler.createAd(this)
                 true -> viewModel.removeAd()
@@ -104,6 +105,13 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
         viewModel.currentLocation.observe(this, Observer { currentLocation ->
             currentLocation?.let {
                 updateCameraPosition(currentLocation)
+                setLocationDot(mMap)
+            }
+        })
+
+        viewModel.inAppPurchaseStatus.observe(this, Observer { statusMessage ->
+            statusMessage?.let {
+                longToast(it)
             }
         })
 
@@ -114,15 +122,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
             } else {
 
                 if (viewModel.locationEnabled.value!!) {
-                    viewModel.disableLocationUpdates()
-
-                    @RequiresPermission(allOf = [Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION])
-                    mMap?.isMyLocationEnabled = false
+                    disableLocationUpdates(viewModel, mMap)
                 } else {
-                    viewModel.getLocationUpdates()
-
-                    @RequiresPermission(allOf = [Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION])
-                    mMap?.isMyLocationEnabled = true
+                    enableLocationUpdates()
                 }
             }
 
@@ -136,6 +138,22 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
             //Show the choose map info dialog
             showMapInfoDialog(viewModel.currentMapItems)
         }
+    }
+
+    @RequiresPermission(allOf = [Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION])
+    private fun setLocationDot(mMap: GoogleMap?) {
+        mMap?.isMyLocationEnabled = true
+    }
+
+    @RequiresPermission(allOf = [Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION])
+    private fun disableLocationUpdates(viewModel: MapsActivityViewModel, mMap: GoogleMap?) {
+        viewModel.disableLocationUpdates()
+        mMap?.isMyLocationEnabled = false
+    }
+
+    @RequiresPermission(allOf = [Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION])
+    private fun enableLocationUpdates() {
+        viewModel.getLocationUpdates()
     }
 
     fun setupViewModel() {

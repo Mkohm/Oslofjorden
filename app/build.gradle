@@ -60,6 +60,7 @@ dependencies {
 
     implementation "android.arch.lifecycle:extensions:1.1.1"
     implementation 'org.jetbrains.anko:anko-common:0.10.6'
+    implementation  "org.jetbrains.anko:anko-design:0.10.6" // For SnackBars
 
 
 

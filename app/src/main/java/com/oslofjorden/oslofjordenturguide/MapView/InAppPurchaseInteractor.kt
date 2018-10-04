@@ -1,19 +1,22 @@
 package com.oslofjorden.oslofjordenturguide.MapView
 
-import com.android.billingclient.api.*
+import com.android.billingclient.api.BillingClient
+import com.android.billingclient.api.BillingClientStateListener
+import com.android.billingclient.api.BillingFlowParams
+import com.android.billingclient.api.SkuDetailsParams
 
 // Starts a connection to google play to initiate the app purchaseOk and will receive a callback when a purchaseOk is completed.
 object InAppPurchaseInteractor {
     private lateinit var billingClient: BillingClient
 
     fun startGooglePlayConnection(billingClient: BillingClient) {
+        this.billingClient = billingClient
+
         billingClient.startConnection(object : BillingClientStateListener {
             override fun onBillingSetupFinished(@BillingClient.BillingResponse billingResponseCode: Int) {
                 if (billingResponseCode == BillingClient.BillingResponse.OK) {
                     // The billing client is ready. We will now enable the buy button
 
-                    //todo: viewmodel- binding handles this
-                    //activity.buyButton.isEnabled = true
                 }
             }
 

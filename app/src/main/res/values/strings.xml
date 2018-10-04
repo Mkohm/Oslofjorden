@@ -25,5 +25,13 @@
     <string name="vi_setter_pris_p_om_du_vil_st_tte_oslofjorden_com_og_dermed_fjerne_reklamen">Vi setter pris på om du vil støtte oslofjorden.com og dermed fjerne reklamen.</string>
     <string name="kj_p">Kjøp</string>
     <string name="app_name">Oslofjorden Båt og Turguide</string>
-
+    <string name="developer_error">Developer error</string>
+    <string name="error">An error occured</string>
+    <string name="billing_unavailable">Billing unavailable</string>
+    <string name="feature_not_supported">Feature not supported</string>
+    <string name="service_disconnected">Service disconnected</string>
+    <string name="item_unavailable">Items unavailable</string>
+    <string name="user_cancelled">User cancelled</string>
+    <string name="item_not_owned">Item not owned</string>
+    <string name="service_unavailable">Service unavailable</string>
 </resources>
