@@ -1,15 +1,15 @@
 package com.oslofjorden.oslofjordenturguide.viewmodels
-
+import com.oslofjorden.R
 import android.app.Application
 import android.arch.lifecycle.AndroidViewModel
 import android.arch.lifecycle.MediatorLiveData
 import android.arch.lifecycle.MutableLiveData
+import android.util.Log
 import com.android.billingclient.api.BillingClient.BillingResponse
 import com.android.billingclient.api.BillingClient.newBuilder
 import com.android.billingclient.api.Purchase
 import com.android.billingclient.api.PurchasesUpdatedListener
 import com.google.android.gms.maps.model.LatLng
-import com.oslofjorden.R
 import com.oslofjorden.oslofjordenturguide.MapView.InAppPurchaseInteractor
 import com.oslofjorden.oslofjordenturguide.MapView.MapsActivity
 import com.oslofjorden.oslofjordenturguide.MapView.SingleLiveEvent
@@ -37,6 +37,7 @@ class MapsActivityViewModel(private val myApplication: Application) : AndroidVie
     val inAppPurchaseStatus = SingleLiveEvent<String>()
 
     init {
+        Log.d("tag", "test")
         loadMapData()
         sharedPreferencesRepository.getHasPurchasedRemoveAds(hasPurchasedRemoveAds)
         sharedPreferencesRepository.isFirstTimeLaunchingApp(firstTimeLaunchingApp)

@@ -2,10 +2,10 @@ package com.oslofjorden.oslofjordenturguide.MapView.data
 
 import android.arch.lifecycle.MutableLiveData
 import android.content.Context
+import android.graphics.Color
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.PolylineOptions
 import com.oslofjorden.R
-import com.oslofjorden.oslofjordenturguide.MapView.SelectPolylineColor
 import com.oslofjorden.oslofjordenturguide.MapView.model.Polyline
 import com.oslofjorden.oslofjordenturguide.MapView.model.PolylineData
 import org.jetbrains.anko.doAsync
@@ -37,25 +37,28 @@ class PolylineReader(val context: Context) : PolylineDAO {
             try {
                 val name = objectInputStream.readObject() as String
                 val description = objectInputStream.readObject() as String
-                val url = objectInputStream.readObject() as String?
-                val binaryCoordinates = objectInputStream.readObject() as ArrayList<DoubleArray>
+                val url = objectInputStream.readObject() as String
+                val color = objectInputStream.readObject() as String
+                // val color = SelectPolylineColor.setPolylineColor(description)
+                val binaryCoordinates = objectInputStream.readObject() as ArrayList<Pair<Double, Double>>
                 val coordinates = convertToLatLngObjects(binaryCoordinates)
-                val color = SelectPolylineColor.setPolylineColor(description)
 
-                polylines.add(Polyline(PolylineOptions().addAll(coordinates).clickable(true).color(color), name, description, url))
+                polylines.add(Polyline(PolylineOptions().addAll(coordinates).clickable(true).color(Color.parseColor("#$color")), name, description, url))
 
             } catch (e: EOFException) {
                 objectInputStream.close()
-                return PolylineData(polylines)
+                break
             }
         }
 
+        return PolylineData(polylines)
+
     }
 
-    private fun convertToLatLngObjects(binaryCoordinates: ArrayList<DoubleArray>): ArrayList<LatLng> {
+    private fun convertToLatLngObjects(binaryCoordinates: ArrayList<Pair<Double, Double>>): ArrayList<LatLng> {
         val coordinates = ArrayList<LatLng>()
         for (i in 0 until binaryCoordinates.size) {
-            coordinates.add(LatLng(binaryCoordinates[i][0], binaryCoordinates[i][1]))
+            coordinates.add(LatLng(binaryCoordinates[i].first, binaryCoordinates[i].second))
         }
         return coordinates
     }
