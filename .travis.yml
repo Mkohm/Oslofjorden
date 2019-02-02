@@ -9,3 +9,8 @@ android:
   - extra
 script:
   - ./gradlew lint
+
+notifications:
+  slack: oslofjordencom:vImW8YpFDd6QNAO1lu9vW5WZ
+    on_success: always
+    on_failure: always
