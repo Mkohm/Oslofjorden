@@ -8,8 +8,7 @@ android:
   - add-on
   - extra
 script:
-  - ./gradlew lint
-  - ./gradlew :ktlint
+  - ./gradlew lint :ktlint
 
 
 notifications:
