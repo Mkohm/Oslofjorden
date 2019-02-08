@@ -2,18 +2,21 @@ package com.oslofjorden.binaryfilegenerator
 
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
-import java.io.*
+import java.io.BufferedReader
+import java.io.File
+import java.io.FileOutputStream
+import java.io.InputStreamReader
+import java.io.ObjectOutputStream
+import java.io.Serializable
 
-
-// To run this first build the project separately and then run the file
-fun main(args: Array<String>) {
+// Be sure to not build before running this - that will make an error.
+fun main() {
     val generator = BinaryGeneratorFromKml()
     val data = generator.parseKMLAndOutputLists()
     generator.writeBinaryFile(data)
 }
 
 class BinaryGeneratorFromKml {
-
 
     fun parseKMLAndOutputLists(): Array<java.util.ArrayList<out Serializable?>> {
 
@@ -24,9 +27,9 @@ class BinaryGeneratorFromKml {
 
         val coordinatesList = ArrayList<ArrayList<Pair<Double, Double>>>()
 
-
         val path = System.getProperty("user.dir")
-        val reader = BufferedReader(InputStreamReader(File(path + "/binaryFileGenerator/src/main/res/mapData" + "/turer_oslofjorden.kml").inputStream()))
+        val reader =
+            BufferedReader(InputStreamReader(File(path + "/binaryFileGenerator/src/main/res/mapData" + "/turer_oslofjorden.kml").inputStream()))
         val text = reader.readText()
 
         val doc = Jsoup.parse(text)
@@ -47,7 +50,6 @@ class BinaryGeneratorFromKml {
             }
 
             descriptions.add(description)
-
 
             val color = getColor(placemark)
             colors.add(color ?: "ffffffff")
@@ -75,7 +77,6 @@ class BinaryGeneratorFromKml {
         val style = placemark.select("Style").toString()
         val regex = """<color>(.{8})</color>""".toRegex()
         return regex.find(style)?.groupValues?.get(1)
-
     }
 
     fun getCoordinates(placemark: Element): ArrayList<Pair<Double, Double>> {
@@ -83,17 +84,16 @@ class BinaryGeneratorFromKml {
 
         val result = ArrayList<Pair<Double, Double>>()
 
-
         val coordinatePairs = coordinateString.split(" ")
 
         for (coordinatePair in coordinatePairs) {
 
             val coordinates = coordinatePair.split(",")
 
-            val latitude = coordinates[0].toDouble()
-            val longitude = coordinates[1].toDouble()
+            val longitude = coordinates[0].toDouble()
+            val latitude = coordinates[1].toDouble()
 
-            val pair = Pair(latitude, longitude);
+            val pair = Pair(latitude, longitude)
 
 
             result.add(pair)
@@ -120,6 +120,4 @@ class BinaryGeneratorFromKml {
 
         out.close()
     }
-
-
 }
