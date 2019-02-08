@@ -26,6 +26,7 @@ import com.google.maps.android.clustering.ClusterManager
 import com.google.maps.android.clustering.algo.GridBasedAlgorithm
 import com.google.maps.android.clustering.algo.PreCachingAlgorithmDecorator
 import com.oslofjorden.R
+import com.oslofjorden.databinding.ActivityMainBinding
 import com.oslofjorden.oslofjordenturguide.MapView.model.Marker
 import com.oslofjorden.oslofjordenturguide.MapView.model.MarkerData
 import com.oslofjorden.oslofjordenturguide.MapView.model.PolylineData
