@@ -84,7 +84,6 @@ dependencies {
     kapt "android.arch.lifecycle:compiler:$lifecycle_version" // use kapt for Kotlin
     // alternately - if using Java8, use the following instead of compiler
 
-  
     // optional - Test helpers for LiveData
     testImplementation "android.arch.core:core-testing:$lifecycle_version"
 }

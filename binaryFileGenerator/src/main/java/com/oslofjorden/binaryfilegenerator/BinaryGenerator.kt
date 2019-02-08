@@ -1,10 +1,13 @@
 package com.oslofjorden.binaryfilegenerator
 
-
 import org.json.JSONArray
 import org.json.JSONObject
-import java.io.*
-
+import java.io.BufferedReader
+import java.io.File
+import java.io.FileOutputStream
+import java.io.InputStreamReader
+import java.io.ObjectOutputStream
+import java.io.Serializable
 
 class BinaryGenerator {
 
@@ -18,7 +21,6 @@ class BinaryGenerator {
         val links = ArrayList<String?>()
         val coordinatesList = ArrayList<ArrayList<DoubleArray>>()
 
-
         val path = System.getProperty("user.dir")
 
         File(path + "/binarygenerator/src/main/java/com/oslofjorden/binarygenerator/mapData/").walk().forEach {
@@ -27,7 +29,6 @@ class BinaryGenerator {
 
                 val reader = BufferedReader(InputStreamReader(it.inputStream()))
 
-
                 while (true) {
 
                     val line = reader.readLine() ?: break
@@ -35,21 +36,20 @@ class BinaryGenerator {
                         continue
                     }
 
-
                     val jsonObject = createJsonObject(line)
 
                     val propertiesObject = jsonObject?.getJSONObject("properties")
                     val name = propertiesObject?.get("Name") as String
-                    var description = propertiesObject.optString("description", "Vi har desverre " +
-                            "ingen beskrivelse av dette stedet")
-
+                    var description = propertiesObject.optString(
+                        "description",
+                        "Vi har desverre " + "ingen beskrivelse av dette stedet"
+                    )
 
                     val geometryObject = jsonObject.getJSONObject("geometry")
                     val jsonCoordinates = geometryObject.getJSONArray("coordinates")
                     val coordinates = getCoordinates(jsonCoordinates)
 
                     names.add(name)
-
 
                     val url = extractUrl(description)
                     links.add(url)
@@ -58,7 +58,6 @@ class BinaryGenerator {
                     descriptions.add(description)
 
                     coordinatesList.add(coordinates)
-
                 }
             }
         }
@@ -70,8 +69,10 @@ class BinaryGenerator {
 
         try {
             // todo: This is a little simple but will work good enough
-            return "http://" + description.substring(description.indexOf("www"), description.indexOf
-            (".html") + 5) + "?app=1"
+            return "http://" + description.substring(
+                description.indexOf("www"),
+                description.indexOf(".html") + 5
+            ) + "?app=1"
         } catch (e: Exception) {
             return null
         }
@@ -92,7 +93,7 @@ class BinaryGenerator {
             var coord = jsonCoordinates.get(j).toString()
             val lng = coord.substring(1, coord.indexOf(",")).toDouble()
 
-            val lat = coord.substring(coord.indexOf(",")+1, coord.length-1).toDouble()
+            val lat = coord.substring(coord.indexOf(",") + 1, coord.length - 1).toDouble()
 
             val latLng = doubleArrayOf(lat, lng)
             coordinates.add(latLng)
@@ -100,7 +101,7 @@ class BinaryGenerator {
         return coordinates
     }
 
-    //Writes objects to the file, two objects at each iteration, so when reading it can be checked if the thread is cancelled
+    // Writes objects to the file, two objects at each iteration, so when reading it can be checked if the thread is cancelled
     fun writeBinaryFile(data: Array<java.util.ArrayList<out Serializable>>) {
 
         val fileout = FileOutputStream("polylines_binary_file.bin")
@@ -113,24 +114,21 @@ class BinaryGenerator {
             out.writeObject(data[3].get(i))
         }
 
-
         out.close()
     }
 
     fun createJsonObject(line: String): JSONObject? {
         var obj: JSONObject? = null
-        //For all the lines ending with ","
+        // For all the lines ending with ","
         if (line.matches(".{0,},".toRegex())) {
             obj = JSONObject(line.substring(0, line.length - 1))
-            //The line does not end with ","
+            // The line does not end with ","
         } else if (line.matches(".{0,}[^,]".toRegex())) {
             obj = JSONObject(line)
         }
         return obj
     }
-
 }
-
 
 fun main(args: Array<String>) {
 

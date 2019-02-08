@@ -34,7 +34,6 @@ class ChooseMapInfoDialog : DialogFragment() {
                 Log.i("TAG", "onClick: Avbrøt")
             }
 
-
             return builder.create()
         }
 

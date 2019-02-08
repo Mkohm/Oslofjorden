@@ -34,6 +34,4 @@ object AdHandler {
         val adRequest = AdRequest.Builder().build()
         adView.loadAd(adRequest)
     }
-
-
 }

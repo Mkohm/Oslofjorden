@@ -2,8 +2,12 @@ package com.oslofjorden.binaryfilegenerator
 
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
-import java.io.*
-
+import java.io.BufferedReader
+import java.io.File
+import java.io.FileOutputStream
+import java.io.InputStreamReader
+import java.io.ObjectOutputStream
+import java.io.Serializable
 
 // To run this first build the project separately and then run the file
 fun main(args: Array<String>) {
@@ -14,7 +18,6 @@ fun main(args: Array<String>) {
 
 class BinaryGeneratorFromKml {
 
-
     fun parseKMLAndOutputLists(): Array<java.util.ArrayList<out Serializable?>> {
 
         val names = ArrayList<String>()
@@ -24,9 +27,9 @@ class BinaryGeneratorFromKml {
 
         val coordinatesList = ArrayList<ArrayList<Pair<Double, Double>>>()
 
-
         val path = System.getProperty("user.dir")
-        val reader = BufferedReader(InputStreamReader(File(path + "/binaryFileGenerator/src/main/res/mapData" + "/turer_oslofjorden.kml").inputStream()))
+        val reader =
+            BufferedReader(InputStreamReader(File(path + "/binaryFileGenerator/src/main/res/mapData" + "/turer_oslofjorden.kml").inputStream()))
         val text = reader.readText()
 
         val doc = Jsoup.parse(text)
@@ -47,7 +50,6 @@ class BinaryGeneratorFromKml {
             }
 
             descriptions.add(description)
-
 
             val color = getColor(placemark)
             colors.add(color ?: "ffffffff")
@@ -75,14 +77,12 @@ class BinaryGeneratorFromKml {
         val style = placemark.select("Style").toString()
         val regex = """<color>(.{8})</color>""".toRegex()
         return regex.find(style)?.groupValues?.get(1)
-
     }
 
     fun getCoordinates(placemark: Element): ArrayList<Pair<Double, Double>> {
         val coordinateString = placemark.select("LineString").select("coordinates").text()
 
         val result = ArrayList<Pair<Double, Double>>()
-
 
         val coordinatePairs = coordinateString.split(" ")
 
@@ -93,17 +93,15 @@ class BinaryGeneratorFromKml {
             val latitude = coordinates[0].toDouble()
             val longitude = coordinates[1].toDouble()
 
-            val pair = Pair(latitude, longitude);
-
+            val pair = Pair(latitude, longitude)
 
             result.add(pair)
         }
 
-
         return result
     }
 
-    //Writes objects to the file, two objects at each iteration, so when reading it can be checked if the thread is cancelled
+    // Writes objects to the file, two objects at each iteration, so when reading it can be checked if the thread is cancelled
     fun writeBinaryFile(data: Array<java.util.ArrayList<out Serializable>>) {
 
         val fileout = FileOutputStream("polylines_binary_file.bin")
@@ -117,9 +115,6 @@ class BinaryGeneratorFromKml {
             out.writeObject(data[4].get(i))
         }
 
-
         out.close()
     }
-
-
 }

@@ -39,9 +39,7 @@ class SharedPreferencesReader(private val context: Context) : SharedPreferencesD
 
             currentMapItems.value = newMapItems
         }
-
     }
-
 
     override fun getCurrentMapItems(currentMapItems: MutableLiveData<BooleanArray>) {
         val arrayName = "userChecks"
@@ -53,7 +51,6 @@ class SharedPreferencesReader(private val context: Context) : SharedPreferencesD
             Log.d(MapsActivity.TAG, "loadArray: " + i + " checked: " + prefs.getBoolean(arrayName + "_" + i, false))
             array[i] = prefs.getBoolean(arrayName + "_" + i, false)
         }
-
 
         if (array.isEmpty()) {
             val defaultChecked = BooleanArray(17)
@@ -70,7 +67,6 @@ class SharedPreferencesReader(private val context: Context) : SharedPreferencesD
             currentMapItems.value = array
         }
     }
-
 
     override fun setHasPurchasedRemoveAds(hasPurchasedRemoveAds: MutableLiveData<Boolean>) {
         val sharedPref = context.getSharedPreferences("myPrefs", Context.MODE_PRIVATE)
