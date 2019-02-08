@@ -26,7 +26,7 @@ class BinaryGeneratorFromKml {
 
 
         val path = System.getProperty("user.dir")
-        val reader = BufferedReader(InputStreamReader(File(path + "/binaryFileGenerator/src/main/res/mapData" + "/turer_oslofjorden.kml").inputStream()))
+        val reader = BufferedReader(InputStreamReader(File(path + "/binaryFileGenerator/src/main/res/mapData/doc.kml").inputStream()))
         val text = reader.readText()
 
         val doc = Jsoup.parse(text)
