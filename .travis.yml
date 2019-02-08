@@ -10,6 +10,7 @@ android:
 script:
   - ./gradlew lint
 
+
 notifications:
   slack: oslofjordencom:vImW8YpFDd6QNAO1lu9vW5WZ#android-ci
     on_success: always
