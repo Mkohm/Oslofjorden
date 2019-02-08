@@ -8,7 +8,6 @@ android:
   - add-on
   - extra
 script:
-  - ./gradlew gradleDependencies
   - ./gradlew ktlint dependencies lint
 
 
