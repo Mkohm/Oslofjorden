@@ -157,7 +157,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
     }
 
     fun setupViewModel() {
-        viewModel = ViewModelProviders.of(this).get(MapsActivityViewModel(application)::class.java)
+        viewModel = ViewModelProviders.of(this).get(MapsActivityViewModel::class.java)
 
         // Inflate view and obtain an instance of the binding class.
         val binding: ActivityMainBinding = DataBindingUtil.setContentView(this, R.layout.activity_main)
