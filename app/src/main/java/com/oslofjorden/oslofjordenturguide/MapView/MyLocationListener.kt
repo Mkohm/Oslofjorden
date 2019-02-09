@@ -13,9 +13,8 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.LocationSource.OnLocationChangedListener
 import com.oslofjorden.R
 
-//todo: delete this
+// todo: delete this
 class MyLocationListener(context: Context, private val mMap: GoogleMap?, private val onOffLocationButton: ImageButton, private val lifecycle: Lifecycle, private val callback: OnLocationChangedListener) : LifecycleObserver, LocationListener {
-
 
     override fun onStatusChanged(p0: String?, p1: Int, p2: Bundle?) {}
 
@@ -28,7 +27,6 @@ class MyLocationListener(context: Context, private val mMap: GoogleMap?, private
     var enabled = false
     private val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
-
     @OnLifecycleEvent(Lifecycle.Event.ON_START)
     fun start() {
         if (enabled) {
@@ -36,7 +34,6 @@ class MyLocationListener(context: Context, private val mMap: GoogleMap?, private
             enableMyLocation()
         }
     }
-
 
     fun enableMyLocation() {
         if (lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) {
@@ -46,7 +43,6 @@ class MyLocationListener(context: Context, private val mMap: GoogleMap?, private
             mMap?.isMyLocationEnabled = true
         }
     }
-
 
     @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
     fun stop() {

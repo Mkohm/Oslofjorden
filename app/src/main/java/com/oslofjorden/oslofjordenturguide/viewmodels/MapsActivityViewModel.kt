@@ -1,5 +1,5 @@
 package com.oslofjorden.oslofjordenturguide.viewmodels
-import com.oslofjorden.R
+
 import android.app.Application
 import android.arch.lifecycle.AndroidViewModel
 import android.arch.lifecycle.MediatorLiveData
@@ -10,22 +10,31 @@ import com.android.billingclient.api.BillingClient.newBuilder
 import com.android.billingclient.api.Purchase
 import com.android.billingclient.api.PurchasesUpdatedListener
 import com.google.android.gms.maps.model.LatLng
+import com.oslofjorden.R
 import com.oslofjorden.oslofjordenturguide.MapView.InAppPurchaseInteractor
 import com.oslofjorden.oslofjordenturguide.MapView.MapsActivity
 import com.oslofjorden.oslofjordenturguide.MapView.SingleLiveEvent
-import com.oslofjorden.oslofjordenturguide.MapView.data.*
+import com.oslofjorden.oslofjordenturguide.MapView.data.AndroidLocationProvider
+import com.oslofjorden.oslofjordenturguide.MapView.data.LocationInteractor
+import com.oslofjorden.oslofjordenturguide.MapView.data.MarkerDataRepository
+import com.oslofjorden.oslofjordenturguide.MapView.data.MarkerReader
+import com.oslofjorden.oslofjordenturguide.MapView.data.PolylineReader
+import com.oslofjorden.oslofjordenturguide.MapView.data.PolylineRepository
+import com.oslofjorden.oslofjordenturguide.MapView.data.SharedPreferencesReader
+import com.oslofjorden.oslofjordenturguide.MapView.data.SharedPreferencesRepository
 import com.oslofjorden.oslofjordenturguide.MapView.model.MergedData
 
-class MapsActivityViewModel(private val myApplication: Application) : AndroidViewModel(Application()), PurchasesUpdatedListener {
+class MapsActivityViewModel(private val myApplication: Application) : AndroidViewModel(Application()),
+    PurchasesUpdatedListener {
 
     private val markerDataRepository = MarkerDataRepository(MarkerReader(myApplication.applicationContext))
     private val polylineRepository = PolylineRepository(PolylineReader(myApplication.applicationContext))
-    private val sharedPreferencesRepository = SharedPreferencesRepository(SharedPreferencesReader(myApplication.applicationContext))
+    private val sharedPreferencesRepository =
+        SharedPreferencesRepository(SharedPreferencesReader(myApplication.applicationContext))
 
     private val locationInteractor = LocationInteractor(AndroidLocationProvider(myApplication.applicationContext))
     private val inAppPurchaseInteractor = InAppPurchaseInteractor
     private val billingClient = newBuilder(myApplication).setListener(this).build()
-
 
     val hasPurchasedRemoveAds = MutableLiveData<Boolean>()
     val firstTimeLaunchingApp = MutableLiveData<Boolean>()
@@ -44,7 +53,6 @@ class MapsActivityViewModel(private val myApplication: Application) : AndroidVie
         currentLocation.value = LatLng(59.903765, 10.699610) // Oslo
 
         locationEnabled.value = false
-
 
         inAppPurchaseInteractor.startGooglePlayConnection(billingClient)
     }
@@ -110,6 +118,4 @@ class MapsActivityViewModel(private val myApplication: Application) : AndroidVie
     private fun getString(id: Int): String? {
         return myApplication.resources.getString(id)
     }
-
 }
-

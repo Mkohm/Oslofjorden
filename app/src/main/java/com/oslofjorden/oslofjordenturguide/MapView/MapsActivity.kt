@@ -37,7 +37,6 @@ import org.jetbrains.anko.longToast
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListener, LifecycleOwner, ActivityCompat.OnRequestPermissionsResultCallback, AppPurchasedListener {
 
-
     private val LOCATION_PERMISSION_REQUEST_CODE = 1
     private lateinit var clickedClusterItem: Marker
     private lateinit var bottomSheetController: BottomSheetController
@@ -58,7 +57,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
         setToolbar()
         initMap()
         showBottomSheetLoading()
-
 
         viewModel.mapData.observe(this, Observer {
             when (it) {
@@ -127,7 +125,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
                     enableLocationUpdates()
                 }
             }
-
         }
 
         buyButton.setOnClickListener {
@@ -135,7 +132,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
         }
 
         layersButton.setOnClickListener {
-            //Show the choose map info dialog
+            // Show the choose map info dialog
             showMapInfoDialog(viewModel.currentMapItems)
         }
     }
@@ -166,7 +163,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
     }
 
     fun removeSplashScreen() {
-        //Removes the oslofjorden picture that is used as splash screen
+        // Removes the oslofjorden picture that is used as splash screen
         window.setBackgroundDrawableResource(R.drawable.graybackground)
     }
 
@@ -209,7 +206,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
         mapFragment.getMapAsync(this)
     }
 
-
     fun showMapInfoDialog(userChecks: MutableLiveData<BooleanArray>) {
         val mapInfoDialog = ChooseMapInfoDialog()
         val bundle = Bundle()
@@ -229,7 +225,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
         clusterManager?.clearItems()
 
         for (i in checkedList.indices) {
-            //Load items if the checkbox was checked
+            // Load items if the checkbox was checked
             val type = MarkerTypes.getTypeFromIndex(i)
 
             if (checkedList[i]) {
@@ -285,12 +281,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
 
         setUpClusterer(googleMap)
 
-        //enable zoom buttons, and remove toolbar when clicking on markers
+        // enable zoom buttons, and remove toolbar when clicking on markers
         googleMap.uiSettings.isZoomControlsEnabled = false
         googleMap.uiSettings.isMapToolbarEnabled = false
         googleMap.uiSettings.isMyLocationButtonEnabled = false
         googleMap.uiSettings.isCompassEnabled = true
-
 
         googleMap.setOnPolylineClickListener { polyline: Polyline ->
             // Set the color of the previous polyline back to what it was
@@ -298,10 +293,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
 
             polyline.color = Color.BLACK
 
-
             bottomSheetController.setPolylineContent(polyline)
             bottomSheetController.expandBottomSheet()
-
 
             previousPolylineClicked = polyline
         }
@@ -312,14 +305,13 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
         }
     }
 
-
     private fun setOriginalPolylineColor() {
         val description = (previousPolylineClicked?.tag as com.oslofjorden.oslofjordenturguide.MapView.model.Polyline?)?.description
         previousPolylineClicked?.color = SelectPolylineColor.setPolylineColor(description ?: "")
     }
 
     private fun showWelcomeDialog() {
-        //Show the welcome message to the user
+        // Show the welcome message to the user
         val welcomeDialog = WelcomeDialog()
         welcomeDialog.show(supportFragmentManager, "test")
     }

@@ -10,7 +10,15 @@ import java.io.InputStreamReader
 import java.io.ObjectOutputStream
 import java.io.Serializable
 
-class BinaryPolylineGenerator {
+// To run this first build the project separately and then run the file
+fun main(args: Array<String>) {
+    val generator = BinaryGenerator()
+    val data = generator.parseKMLAndOutputLists()
+    generator.writeBinaryFile(data)
+}
+
+class BinaryGenerator {
+
     fun parseKMLAndOutputLists(): Array<java.util.ArrayList<out Serializable?>> {
 
         val names = ArrayList<String>()
@@ -21,6 +29,7 @@ class BinaryPolylineGenerator {
         val coordinatesList = ArrayList<ArrayList<Pair<Double, Double>>>()
 
         val path = System.getProperty("user.dir")
+
         val reader = BufferedReader(InputStreamReader(File("$path/binaryGenerator/src/main/res/mapData/doc.kml").inputStream()))
 
         val text = reader.readText()
@@ -46,6 +55,7 @@ class BinaryPolylineGenerator {
             }
 
             descriptions.add(description)
+
 
             colors.add(color)
 
@@ -84,8 +94,6 @@ class BinaryPolylineGenerator {
         if (color == null) {
             return "blue"
         } else {
-
-
             val rgbColor = convertFromAABBGGRRToRRGGBB(color)
 
             return "#$rgbColor"
@@ -103,16 +111,6 @@ class BinaryPolylineGenerator {
     private fun getLink(description: String): String {
         val regex = """<a href="(.*)">""".toRegex()
         return regex.find(description)?.groupValues?.get(1) ?: "null"
-    }
-
-    fun getColor(placemark: Element): String {
-        val style = placemark.toString()
-
-        val regex = """<color>(.{8})</color>""".toRegex()
-        val colorFromString = regex.find(style)?.groupValues?.get(1)
-
-
-        return if (colorFromString == null) "blue" else "#$colorFromString"
     }
 
     fun getCoordinates(placemark: Element): ArrayList<Pair<Double, Double>> {
@@ -135,11 +133,10 @@ class BinaryPolylineGenerator {
             result.add(pair)
         }
 
-
         return result
     }
 
-    //Writes objects to the file, two objects at each iteration, so when reading it can be checked if the thread is cancelled
+    // Writes objects to the file, two objects at each iteration, so when reading it can be checked if the thread is cancelled
     fun writeBinaryFile(data: Array<java.util.ArrayList<out Serializable>>) {
 
         val fileout = FileOutputStream("polylines_binary_file.bin")
@@ -152,7 +149,6 @@ class BinaryPolylineGenerator {
             out.writeObject(data[3].get(i))
             out.writeObject(data[4].get(i))
         }
-
 
         out.close()
     }

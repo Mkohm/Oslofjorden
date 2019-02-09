@@ -5,7 +5,11 @@ import android.Manifest.permission.ACCESS_FINE_LOCATION
 import android.arch.lifecycle.MutableLiveData
 import android.content.Context
 import android.support.annotation.RequiresPermission
-import com.google.android.gms.location.*
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationResult
+import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.model.LatLng
 
 class AndroidLocationProvider(context: Context) : LocationProvider {
@@ -37,13 +41,13 @@ class AndroidLocationProvider(context: Context) : LocationProvider {
             override fun onLocationResult(locationResult: LocationResult?) {
                 locationResult ?: return
 
-                currentLocation.value = LatLng(locationResult.lastLocation.latitude, locationResult.lastLocation.longitude)
+                currentLocation.value =
+                    LatLng(locationResult.lastLocation.latitude, locationResult.lastLocation.longitude)
             }
         }
 
         fusedLocationProviderClient?.requestLocationUpdates(createLocationRequest(), locationCallback, null)
     }
-
 
     override fun stopLocationUpdates(locationEnabled: MutableLiveData<Boolean>) {
         fusedLocationProviderClient?.removeLocationUpdates(locationCallback)

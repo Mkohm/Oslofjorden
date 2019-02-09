@@ -31,5 +31,4 @@ object SelectPolylineColor {
             else -> Color.GREEN
         }
     }
-
 }

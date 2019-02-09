@@ -12,5 +12,4 @@ class LocationInteractor(private val locationProvider: LocationProvider) {
     fun disableLocationUpdates(locationEnabled: MutableLiveData<Boolean>) {
         locationProvider.stopLocationUpdates(locationEnabled)
     }
-
 }

@@ -16,7 +16,6 @@ class BottomSheetController(val view: LinearLayout, val activity: MapsActivity) 
 
     private val customTabsIntent: CustomTabsIntent = CustomTabsIntent.Builder().addDefaultShareMenuItem().setToolbarColor(activity.resources.getColor(R.color.colorPrimary)).setShowTitle(true).build()
 
-
     fun expandBottomSheet() {
         behavior.state = BottomSheetBehavior.STATE_EXPANDED
     }
@@ -38,7 +37,6 @@ class BottomSheetController(val view: LinearLayout, val activity: MapsActivity) 
 
     fun finishLoading() {
         behavior.state = BottomSheetBehavior.STATE_HIDDEN
-
 
         // Enable the views that was disabled during loading
         val descriptionTextview = view.findViewById<TextView>(R.id.description)
@@ -66,13 +64,10 @@ class BottomSheetController(val view: LinearLayout, val activity: MapsActivity) 
         titleTextview.text = title
         descriptionTextview.text = description
 
-
         button.setOnClickListener {
             // open link with custom tabs
             openCustomTab(url)
         }
-
-
     }
 
     private fun openCustomTab(url: String?) {
@@ -125,5 +120,4 @@ class BottomSheetController(val view: LinearLayout, val activity: MapsActivity) 
             button.visibility = View.VISIBLE
         }
     }
-
 }
