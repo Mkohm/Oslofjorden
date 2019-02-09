@@ -25,6 +25,7 @@ import com.google.android.gms.maps.model.Polyline
 import com.google.maps.android.clustering.ClusterManager
 import com.google.maps.android.clustering.algo.GridBasedAlgorithm
 import com.google.maps.android.clustering.algo.PreCachingAlgorithmDecorator
+import com.google.maps.android.clustering.view.DefaultClusterRenderer
 import com.oslofjorden.R
 import com.oslofjorden.databinding.ActivityMainBinding
 import com.oslofjorden.oslofjordenturguide.MapView.model.Marker
@@ -327,7 +328,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
         clusterManager?.let { clusterManager ->
 
             clusterManager.algorithm = PreCachingAlgorithmDecorator(GridBasedAlgorithm())
-            clusterManager.renderer = OwnIconRendered(applicationContext, googleMap, this.clusterManager)
+            clusterManager.renderer= DefaultClusterRenderer(applicationContext, googleMap, this.clusterManager)
 
             clusterManager.setOnClusterItemClickListener { item ->
                 clickedClusterItem = item

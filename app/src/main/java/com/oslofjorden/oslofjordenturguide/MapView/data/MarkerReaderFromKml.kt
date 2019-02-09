@@ -61,7 +61,7 @@ class MarkerReaderFromKml(val context: Context) : MarkerDAO {
 
 
             val markerOption = MarkerOptions()
-            markerOption.position(LatLng(longitude,latitude))
+            markerOption.position(LatLng(latitude,longitude))
             markerOption.title(names)
 
             val marker = Marker(markerOption, descriptions , listOf(MarkerTypes.BEACH))
