@@ -38,11 +38,11 @@ class PolylineReader(val context: Context) : PolylineDAO {
                 val description = objectInputStream.readObject() as String
                 val url = objectInputStream.readObject() as String
                 val color = objectInputStream.readObject() as String
-                // val color = SelectPolylineColor.setPolylineColor(description)
                 val binaryCoordinates = objectInputStream.readObject() as ArrayList<Pair<Double, Double>>
                 val coordinates = convertToLatLngObjects(binaryCoordinates)
 
-                polylines.add(Polyline(PolylineOptions().addAll(coordinates).clickable(true).color(Color.parseColor("#$color")), name, description, url))
+                polylines.add(Polyline(PolylineOptions().addAll(coordinates).clickable(true).color(Color.parseColor(color)), name, description, url))
+
             } catch (e: EOFException) {
                 objectInputStream.close()
                 break
