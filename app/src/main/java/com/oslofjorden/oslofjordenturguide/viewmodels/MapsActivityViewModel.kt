@@ -37,7 +37,6 @@ class MapsActivityViewModel(private val myApplication: Application) : AndroidVie
     val inAppPurchaseStatus = SingleLiveEvent<String>()
 
     init {
-        Log.d("tag", "test")
         loadMapData()
         sharedPreferencesRepository.getHasPurchasedRemoveAds(hasPurchasedRemoveAds)
         sharedPreferencesRepository.isFirstTimeLaunchingApp(firstTimeLaunchingApp)
