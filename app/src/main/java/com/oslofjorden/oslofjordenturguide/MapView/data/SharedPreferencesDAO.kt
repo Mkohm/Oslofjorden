@@ -1,6 +1,6 @@
 package com.oslofjorden.oslofjordenturguide.MapView.data
 
-import android.arch.lifecycle.MutableLiveData
+import androidx.lifecycle.MutableLiveData
 
 interface SharedPreferencesDAO {
     fun hasPurchasedRemoveAds(hasPurchasedRemoveAds: MutableLiveData<Boolean>)

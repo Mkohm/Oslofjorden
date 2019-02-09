@@ -13,7 +13,7 @@
             type="com.oslofjorden.oslofjordenturguide.viewmodels.MapsActivityViewModel" />
     </data>
 
-    <android.support.design.widget.CoordinatorLayout
+    <androidx.coordinatorlayout.widget.CoordinatorLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
@@ -22,15 +22,15 @@
             android:layout_height="match_parent">
 
 
-            <android.support.v7.widget.Toolbar xmlns:android="http://schemas.android.com/apk/res/android"
-                xmlns:app="http://schemas.android.com/apk/res-auto"
-                android:id="@+id/my_toolbar"
-                android:layout_width="match_parent"
-                android:layout_height="?attr/actionBarSize"
-                android:layout_gravity="end|top"
-                android:background="?attr/colorPrimaryDark"
-                android:theme="@style/ThemeOverlay.AppCompat.ActionBar"
-                app:popupTheme="@style/ThemeOverlay.AppCompat.Light">
+            <androidx.appcompat.widget.Toolbar xmlns:android="http://schemas.android.com/apk/res/android"
+                                               xmlns:app="http://schemas.android.com/apk/res-auto"
+                                               android:id="@+id/my_toolbar"
+                                               android:layout_width="match_parent"
+                                               android:layout_height="?attr/actionBarSize"
+                                               android:layout_gravity="end|top"
+                                               android:background="?attr/colorPrimaryDark"
+                                               android:theme="@style/ThemeOverlay.AppCompat.ActionBar"
+                                               app:popupTheme="@style/ThemeOverlay.AppCompat.Light">
 
 
                 <ProgressBar
@@ -63,7 +63,7 @@
                     android:paddingRight="8dp"
                     android:src="@{viewmodel.locationEnabled ? @drawable/ic_location_on : @drawable/ic_location_off}" />
 
-            </android.support.v7.widget.Toolbar>
+            </androidx.appcompat.widget.Toolbar>
 
 
             <fragment xmlns:android="http://schemas.android.com/apk/res/android"
@@ -128,5 +128,5 @@
 
         <include layout="@layout/bottomsheet" />
 
-    </android.support.design.widget.CoordinatorLayout>
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
 </layout>
