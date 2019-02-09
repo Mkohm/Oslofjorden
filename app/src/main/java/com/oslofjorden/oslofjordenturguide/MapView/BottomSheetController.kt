@@ -1,8 +1,8 @@
 package com.oslofjorden.oslofjordenturguide.MapView
 
 import android.net.Uri
-import android.support.customtabs.CustomTabsIntent
-import android.support.design.widget.BottomSheetBehavior
+import androidx.browser.customtabs.CustomTabsIntent
+import com.google.android.material.bottomsheet.BottomSheetBehavior
 import android.view.View
 import android.widget.Button
 import android.widget.LinearLayout

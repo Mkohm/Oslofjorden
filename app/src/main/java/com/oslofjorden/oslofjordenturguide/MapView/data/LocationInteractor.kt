@@ -1,6 +1,6 @@
 package com.oslofjorden.oslofjordenturguide.MapView.data
 
-import android.arch.lifecycle.MutableLiveData
+import androidx.lifecycle.MutableLiveData
 import com.google.android.gms.maps.model.LatLng
 
 class LocationInteractor(private val locationProvider: LocationProvider) {
