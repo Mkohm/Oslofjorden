@@ -82,9 +82,7 @@ dependencies {
 
     // ViewModel and LiveData
     implementation "android.arch.lifecycle:extensions:$lifecycle_version"
-
     implementation "android.arch.lifecycle:runtime:$lifecycle_version"
-
     kapt "android.arch.lifecycle:compiler:$lifecycle_version" // use kapt for Kotlin
     // alternately - if using Java8, use the following instead of compiler
 
