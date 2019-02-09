@@ -26,7 +26,7 @@ class PolylineReader(val context: Context) : PolylineDAO {
     }
 
     fun readBinaryData(resource: Int): PolylineData {
-        val polylines = ArrayList<Polyline>()
+        val polylines = HashMap<List<LatLng>, Polyline>()
 
         val inputStream = context.resources.openRawResource(resource)
         val objectInputStream = ObjectInputStream(inputStream)
@@ -41,7 +41,7 @@ class PolylineReader(val context: Context) : PolylineDAO {
                 val binaryCoordinates = objectInputStream.readObject() as ArrayList<Pair<Double, Double>>
                 val coordinates = convertToLatLngObjects(binaryCoordinates)
 
-                polylines.add(Polyline(PolylineOptions().addAll(coordinates).clickable(true).color(Color.parseColor(color)), name, description, url))
+                polylines.put(coordinates, Polyline(PolylineOptions().addAll(coordinates).clickable(true).color(Color.parseColor(color)), name, description, url))
             } catch (e: EOFException) {
                 objectInputStream.close()
                 break
