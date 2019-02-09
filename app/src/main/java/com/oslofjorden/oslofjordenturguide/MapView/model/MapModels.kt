@@ -9,9 +9,8 @@ import com.oslofjorden.oslofjordenturguide.MapView.MarkerTypes
 
 sealed class MergedData
 
-
-data class PolylineData(val polylines: List<Polyline>): MergedData()
-data class MarkerData(val markers: List<Marker>): MergedData()
+data class PolylineData(val polylines: List<Polyline>) : MergedData()
+data class MarkerData(val markers: List<Marker>) : MergedData()
 
 data class Polyline(val options: PolylineOptions?, val title: String, val description: String, val url: String?)
 
@@ -27,5 +26,4 @@ data class Marker(val markerOptions: MarkerOptions, val link: String?, val marke
     override fun getSnippet(): String {
         return ""
     }
-
 }

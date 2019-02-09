@@ -10,8 +10,7 @@ import com.oslofjorden.oslofjordenturguide.MapView.model.Marker;
 
 class OwnIconRendered extends DefaultClusterRenderer<Marker> {
 
-    public OwnIconRendered(Context context, GoogleMap map,
-                           ClusterManager<Marker> clusterManager) {
+    public OwnIconRendered(Context context, GoogleMap map, ClusterManager<Marker> clusterManager) {
         super(context, map, clusterManager);
     }
 

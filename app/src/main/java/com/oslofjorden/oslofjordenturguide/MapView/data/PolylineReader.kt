@@ -25,7 +25,6 @@ class PolylineReader(val context: Context) : PolylineDAO {
         }
     }
 
-
     fun readBinaryData(resource: Int): PolylineData {
         val polylines = ArrayList<Polyline>()
 
@@ -51,7 +50,6 @@ class PolylineReader(val context: Context) : PolylineDAO {
         }
 
         return PolylineData(polylines)
-
     }
 
     private fun convertToLatLngObjects(binaryCoordinates: ArrayList<Pair<Double, Double>>): ArrayList<LatLng> {

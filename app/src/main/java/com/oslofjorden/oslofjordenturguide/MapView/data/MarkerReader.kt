@@ -15,7 +15,6 @@ import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.io.Reader
 
-
 class MarkerReader(val context: Context) : MarkerDAO {
     override fun readMarkers(markers: MutableLiveData<MarkerData>) {
         doAsync {
@@ -26,11 +25,9 @@ class MarkerReader(val context: Context) : MarkerDAO {
 
                 // Update the livedata with the loaded markers
                 markers.postValue(result)
-
             }
         }
     }
-
 
     fun setMarkerPosition(line: String): LatLng {
         val indexOfStartCoordinate = line.indexOf("\"coordinates\": [ ") + 17
@@ -39,7 +36,6 @@ class MarkerReader(val context: Context) : MarkerDAO {
 
         val longitude = java.lang.Double.valueOf(coordinates.substring(0, coordinates.indexOf(",")))
         val latitude = java.lang.Double.valueOf(coordinates.substring(coordinates.indexOf(",") + 1))
-
 
         return LatLng(latitude, longitude)
     }
@@ -102,8 +98,6 @@ class MarkerReader(val context: Context) : MarkerDAO {
 
             val marker = Marker(markerOption, link, markerTypesList as List<MarkerTypes>, null)
             markerData.add(marker)
-
-
         }
 
         return MarkerData(markerData)
@@ -111,14 +105,13 @@ class MarkerReader(val context: Context) : MarkerDAO {
 
     fun createJsonObject(line: String): JSONObject? {
         var obj: JSONObject? = null
-        //For all the lines ending with ","
+        // For all the lines ending with ","
         if (line.matches(".{0,},".toRegex())) {
             obj = JSONObject(line.substring(0, line.length - 1))
-            //The line does not end with ","
+            // The line does not end with ","
         } else if (line.matches(".{0,}[^,]".toRegex())) {
             obj = JSONObject(line)
         }
         return obj
     }
-
 }

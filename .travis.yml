@@ -7,11 +7,11 @@ android:
   - android-28
   - add-on
   - extra
+  - extra-google-google_play_services
+  - extra-android-m2repository
+  - extra-google-m2repository
 script:
-  - ./gradlew lint
-
+  - ./gradlew ktlint dependencies lint
 
 notifications:
   slack: oslofjordencom:vImW8YpFDd6QNAO1lu9vW5WZ#android-ci
-    on_success: always
-    on_failure: always
