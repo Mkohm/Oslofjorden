@@ -42,7 +42,6 @@ class PolylineReader(val context: Context) : PolylineDAO {
                 val coordinates = convertToLatLngObjects(binaryCoordinates)
 
                 polylines.add(Polyline(PolylineOptions().addAll(coordinates).clickable(true).color(Color.parseColor(color)), name, description, url))
-
             } catch (e: EOFException) {
                 objectInputStream.close()
                 break

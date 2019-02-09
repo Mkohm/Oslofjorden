@@ -328,7 +328,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
         clusterManager?.let { clusterManager ->
 
             clusterManager.algorithm = PreCachingAlgorithmDecorator(GridBasedAlgorithm())
-            clusterManager.renderer= DefaultClusterRenderer(applicationContext, googleMap, this.clusterManager)
+            clusterManager.renderer = DefaultClusterRenderer(applicationContext, googleMap, this.clusterManager)
 
             clusterManager.setOnClusterItemClickListener { item ->
                 clickedClusterItem = item

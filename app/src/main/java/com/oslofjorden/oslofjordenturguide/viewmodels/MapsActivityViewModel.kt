@@ -4,7 +4,6 @@ import android.app.Application
 import android.arch.lifecycle.AndroidViewModel
 import android.arch.lifecycle.MediatorLiveData
 import android.arch.lifecycle.MutableLiveData
-import android.util.Log
 import com.android.billingclient.api.BillingClient.BillingResponse
 import com.android.billingclient.api.BillingClient.newBuilder
 import com.android.billingclient.api.Purchase
@@ -14,7 +13,14 @@ import com.oslofjorden.R
 import com.oslofjorden.oslofjordenturguide.MapView.InAppPurchaseInteractor
 import com.oslofjorden.oslofjordenturguide.MapView.MapsActivity
 import com.oslofjorden.oslofjordenturguide.MapView.SingleLiveEvent
-import com.oslofjorden.oslofjordenturguide.MapView.data.*
+import com.oslofjorden.oslofjordenturguide.MapView.data.AndroidLocationProvider
+import com.oslofjorden.oslofjordenturguide.MapView.data.LocationInteractor
+import com.oslofjorden.oslofjordenturguide.MapView.data.MarkerDataRepository
+import com.oslofjorden.oslofjordenturguide.MapView.data.MarkerReaderFromKml
+import com.oslofjorden.oslofjordenturguide.MapView.data.PolylineReader
+import com.oslofjorden.oslofjordenturguide.MapView.data.PolylineRepository
+import com.oslofjorden.oslofjordenturguide.MapView.data.SharedPreferencesReader
+import com.oslofjorden.oslofjordenturguide.MapView.data.SharedPreferencesRepository
 import com.oslofjorden.oslofjordenturguide.MapView.model.MergedData
 
 class MapsActivityViewModel(private val myApplication: Application) : AndroidViewModel(Application()),
