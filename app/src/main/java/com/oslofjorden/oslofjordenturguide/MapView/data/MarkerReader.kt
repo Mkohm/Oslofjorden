@@ -96,7 +96,7 @@ class MarkerReader(val context: Context) : MarkerDAO {
             markerOption.title(name)
             markerOption.position(position)
 
-            val marker = Marker(markerOption, link, markerTypesList as List<MarkerTypes>, null)
+            val marker = Marker(markerOption, link, markerTypesList as List<MarkerTypes>)
             markerData.add(marker)
         }
 
