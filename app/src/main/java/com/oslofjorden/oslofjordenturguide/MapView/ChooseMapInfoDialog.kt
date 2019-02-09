@@ -2,11 +2,11 @@ package com.oslofjorden.oslofjordenturguide.MapView
 
 import android.app.Dialog
 import android.os.Bundle
-import android.support.v4.app.DialogFragment
-import android.support.v7.app.AlertDialog
+import androidx.fragment.app.DialogFragment
+import androidx.appcompat.app.AlertDialog
 import android.util.Log
 
-class ChooseMapInfoDialog : DialogFragment() {
+class ChooseMapInfoDialog : androidx.fragment.app.DialogFragment() {
 
     // Use this instance of the interface to deliver action events
 

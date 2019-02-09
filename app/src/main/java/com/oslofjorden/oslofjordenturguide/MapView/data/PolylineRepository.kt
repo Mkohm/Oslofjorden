@@ -1,7 +1,7 @@
 package com.oslofjorden.oslofjordenturguide.MapView.data
 
-import android.arch.lifecycle.LiveData
-import android.arch.lifecycle.MutableLiveData
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import com.oslofjorden.oslofjordenturguide.MapView.model.PolylineData
 
 class PolylineRepository(private val polylineDataAccessObject: PolylineDAO) {
