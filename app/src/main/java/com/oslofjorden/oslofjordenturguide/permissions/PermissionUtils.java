@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.oslofjorden.oslofjordenturguide.MapView;
+package com.oslofjorden.oslofjordenturguide.permissions;
 
 import android.content.pm.PackageManager;
 import androidx.core.app.ActivityCompat;

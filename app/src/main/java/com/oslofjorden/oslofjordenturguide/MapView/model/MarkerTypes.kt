@@ -1,4 +1,4 @@
-package com.oslofjorden.oslofjordenturguide.MapView
+package com.oslofjorden.oslofjordenturguide.MapView.model
 
 enum class MarkerTypes(val value: String) {
     PATHS("Kyststier"), BEACH("Badestrand"), RESTAURANT("Restaurant"), STORE("Butikk"), PARKING_TRANSPORT("Parkering"), POINT_OF_INTEREST("Interessante steder"), FISHING_SPOT("Fiskeplass"), GUEST_HARBOR("Gjestehavn"), OUT_HARBOR("Uthavn"), PETROL_STATION("Sted å fylle " + "bensin"), MARINA("Marina"), RAMP("Båtrampe"), CRANE("Kran/Truck"), TOILETT("Toalett"), LIGHTHOUSE("Fyr"), BOAT_STORE("Båtbutikk"), CAMPING("Campingplass");

@@ -3,7 +3,7 @@ package com.oslofjorden.oslofjordenturguide.MapView.data
 import androidx.lifecycle.MutableLiveData
 import android.content.Context
 import android.util.Log
-import com.oslofjorden.oslofjordenturguide.MapView.MapsActivity
+import com.oslofjorden.oslofjordenturguide.usecase.broweMap.MapsActivity
 
 class SharedPreferencesReader(private val context: Context) : SharedPreferencesDAO {
     override fun isFirstTimeLaunchingApp(isFirstTimeLaunchingApp: MutableLiveData<Boolean>) {

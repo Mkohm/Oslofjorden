@@ -1,10 +1,11 @@
-package com.oslofjorden.oslofjordenturguide.MapView
+package com.oslofjorden.oslofjordenturguide.usecase.chooseMapData
 
 import android.app.Dialog
 import android.os.Bundle
-import androidx.fragment.app.DialogFragment
 import androidx.appcompat.app.AlertDialog
 import android.util.Log
+import com.oslofjorden.oslofjordenturguide.MapView.model.MarkerTypes
+import com.oslofjorden.oslofjordenturguide.MapView.NoticeDialogListener
 
 class ChooseMapInfoDialog : androidx.fragment.app.DialogFragment() {
 

@@ -10,8 +10,8 @@ import com.android.billingclient.api.Purchase
 import com.android.billingclient.api.PurchasesUpdatedListener
 import com.google.android.gms.maps.model.LatLng
 import com.oslofjorden.R
-import com.oslofjorden.oslofjordenturguide.MapView.InAppPurchaseInteractor
-import com.oslofjorden.oslofjordenturguide.MapView.MapsActivity
+import com.oslofjorden.oslofjordenturguide.usecase.removeAds.InAppPurchaseInteractor
+import com.oslofjorden.oslofjordenturguide.usecase.broweMap.MapsActivity
 import com.oslofjorden.oslofjordenturguide.MapView.SingleLiveEvent
 import com.oslofjorden.oslofjordenturguide.MapView.data.AndroidLocationProvider
 import com.oslofjorden.oslofjordenturguide.MapView.data.LocationInteractor

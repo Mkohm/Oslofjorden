@@ -1,4 +1,4 @@
-package com.oslofjorden.oslofjordenturguide.MapView
+package com.oslofjorden.oslofjordenturguide.usecase.broweMap
 
 import android.net.Uri
 import androidx.browser.customtabs.CustomTabsIntent
@@ -9,6 +9,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import com.google.android.gms.maps.model.Polyline
 import com.oslofjorden.R
+import com.oslofjorden.oslofjordenturguide.MapView.model.MarkerTypes
 import com.oslofjorden.oslofjordenturguide.MapView.model.Marker
 
 class BottomSheetController(val view: LinearLayout, val activity: MapsActivity) {

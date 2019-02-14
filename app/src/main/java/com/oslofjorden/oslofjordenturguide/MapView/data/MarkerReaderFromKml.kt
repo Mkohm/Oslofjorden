@@ -5,7 +5,7 @@ import android.content.Context
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.oslofjorden.R
-import com.oslofjorden.oslofjordenturguide.MapView.MarkerTypes
+import com.oslofjorden.oslofjordenturguide.MapView.model.MarkerTypes
 import com.oslofjorden.oslofjordenturguide.MapView.model.Marker
 import com.oslofjorden.oslofjordenturguide.MapView.model.MarkerData
 import org.jetbrains.anko.doAsync

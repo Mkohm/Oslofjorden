@@ -1,16 +1,17 @@
-package com.oslofjorden.oslofjordenturguide.MapView
+package com.oslofjorden.oslofjordenturguide.usecase.removeAds
 
 import com.android.billingclient.api.BillingClient
 import com.android.billingclient.api.BillingClientStateListener
 import com.android.billingclient.api.BillingFlowParams
 import com.android.billingclient.api.SkuDetailsParams
+import com.oslofjorden.oslofjordenturguide.usecase.broweMap.MapsActivity
 
 // Starts a connection to google play to initiate the app purchaseOk and will receive a callback when a purchaseOk is completed.
 object InAppPurchaseInteractor {
     private lateinit var billingClient: BillingClient
 
     fun startGooglePlayConnection(billingClient: BillingClient) {
-        this.billingClient = billingClient
+        InAppPurchaseInteractor.billingClient = billingClient
 
         billingClient.startConnection(object : BillingClientStateListener {
             override fun onBillingSetupFinished(@BillingClient.BillingResponse billingResponseCode: Int) {

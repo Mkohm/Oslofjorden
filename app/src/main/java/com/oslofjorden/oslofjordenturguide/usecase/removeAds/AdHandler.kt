@@ -1,4 +1,4 @@
-package com.oslofjorden.oslofjordenturguide.MapView
+package com.oslofjorden.oslofjordenturguide.usecase.removeAds
 
 import androidx.appcompat.app.AppCompatActivity
 import android.view.ViewGroup

@@ -1,4 +1,4 @@
-package com.oslofjorden.oslofjordenturguide.MapView
+package com.oslofjorden.oslofjordenturguide.usecase.broweMap
 
 import android.Manifest
 import androidx.lifecycle.LifecycleOwner
@@ -28,15 +28,25 @@ import com.google.maps.android.clustering.algo.PreCachingAlgorithmDecorator
 import com.google.maps.android.clustering.view.DefaultClusterRenderer
 import com.oslofjorden.R
 import com.oslofjorden.databinding.ActivityMainBinding
+import com.oslofjorden.oslofjordenturguide.MapView.model.MarkerTypes
+import com.oslofjorden.oslofjordenturguide.MapView.NoticeDialogListener
+import com.oslofjorden.oslofjordenturguide.permissions.PermissionUtils
+import com.oslofjorden.oslofjordenturguide.MapView.SelectPolylineColor
+import com.oslofjorden.oslofjordenturguide.MapView.WelcomeDialog
 import com.oslofjorden.oslofjordenturguide.MapView.model.Marker
 import com.oslofjorden.oslofjordenturguide.MapView.model.MarkerData
 import com.oslofjorden.oslofjordenturguide.MapView.model.PolylineData
+import com.oslofjorden.oslofjordenturguide.usecase.chooseMapData.ChooseMapInfoDialog
+import com.oslofjorden.oslofjordenturguide.usecase.removeAds.AdHandler
+import com.oslofjorden.oslofjordenturguide.usecase.removeAds.AppPurchasedListener
 import com.oslofjorden.oslofjordenturguide.viewmodels.MapsActivityViewModel
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.bottomsheet.*
 import org.jetbrains.anko.longToast
 
-class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListener, LifecycleOwner, ActivityCompat.OnRequestPermissionsResultCallback, AppPurchasedListener {
+class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
+    NoticeDialogListener, LifecycleOwner, ActivityCompat.OnRequestPermissionsResultCallback,
+    AppPurchasedListener {
 
     private val LOCATION_PERMISSION_REQUEST_CODE = 1
     private lateinit var clickedClusterItem: Marker
@@ -169,7 +179,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
     }
 
     fun showBottomSheetLoading() {
-        bottomSheetController = BottomSheetController(bottom_sheet, this)
+        bottomSheetController =
+            BottomSheetController(bottom_sheet, this)
         bottomSheetController.setLoadingText()
         bottomSheetController.expandBottomSheet()
     }
@@ -179,7 +190,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
     }
 
     private fun requestPermission() {
-        PermissionUtils.requestPermission(this, LOCATION_PERMISSION_REQUEST_CODE, Manifest.permission.ACCESS_FINE_LOCATION, true)
+        PermissionUtils.requestPermission(
+            this,
+            LOCATION_PERMISSION_REQUEST_CODE,
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            true
+        )
     }
 
     private fun hasPermission(): Boolean {
@@ -192,7 +208,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
             return
         }
 
-        if (PermissionUtils.isPermissionGranted(permissions, grantResults, Manifest.permission.ACCESS_FINE_LOCATION)) {
+        if (PermissionUtils.isPermissionGranted(
+                permissions,
+                grantResults,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            )
+        ) {
             // Enable the my location layer if the permission has been granted.
             viewModel.getLocationUpdates()
             onofflocationbutton.setImageResource(R.drawable.ic_location_on)
@@ -308,7 +329,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
 
     private fun setOriginalPolylineColor() {
         val description = (previousPolylineClicked?.tag as com.oslofjorden.oslofjordenturguide.MapView.model.Polyline?)?.description
-        previousPolylineClicked?.color = SelectPolylineColor.setPolylineColor(description ?: "")
+        previousPolylineClicked?.color =
+            SelectPolylineColor.setPolylineColor(description ?: "")
     }
 
     private fun showWelcomeDialog() {
