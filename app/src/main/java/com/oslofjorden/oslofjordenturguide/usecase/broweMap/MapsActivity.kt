@@ -1,21 +1,21 @@
 package com.oslofjorden.oslofjordenturguide.usecase.broweMap
 
 import android.Manifest
+import android.content.pm.PackageManager
+import android.graphics.Color
+import android.os.Bundle
+import android.util.Log
+import android.view.ContextMenu
+import android.view.View
+import androidx.annotation.RequiresPermission
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
-import android.content.pm.PackageManager
-import androidx.databinding.DataBindingUtil
-import android.graphics.Color
-import android.os.Bundle
-import androidx.annotation.RequiresPermission
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
-import androidx.appcompat.app.AppCompatActivity
-import android.util.Log
-import android.view.ContextMenu
-import android.view.View
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -31,7 +31,6 @@ import com.oslofjorden.databinding.ActivityMainBinding
 import com.oslofjorden.oslofjordenturguide.MapView.model.MarkerTypes
 import com.oslofjorden.oslofjordenturguide.MapView.NoticeDialogListener
 import com.oslofjorden.oslofjordenturguide.permissions.PermissionUtils
-import com.oslofjorden.oslofjordenturguide.MapView.SelectPolylineColor
 import com.oslofjorden.oslofjordenturguide.MapView.WelcomeDialog
 import com.oslofjorden.oslofjordenturguide.MapView.model.Marker
 import com.oslofjorden.oslofjordenturguide.MapView.model.MarkerData
@@ -44,15 +43,14 @@ import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.bottomsheet.*
 import org.jetbrains.anko.longToast
 
-class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
-    NoticeDialogListener, LifecycleOwner, ActivityCompat.OnRequestPermissionsResultCallback,
-    AppPurchasedListener {
+class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListener, LifecycleOwner,
+    ActivityCompat.OnRequestPermissionsResultCallback, AppPurchasedListener {
 
     private val LOCATION_PERMISSION_REQUEST_CODE = 1
     private lateinit var clickedClusterItem: Marker
     private lateinit var bottomSheetController: BottomSheetController
     private var clusterManager: ClusterManager<Marker>? = null
-    private var previousPolylineClicked: Polyline? = null
+    private lateinit var previousPolylineClicked: Polyline
     private var mMap: GoogleMap? = null
     private var polylineData: PolylineData? = null
     private var markerData: MarkerData? = null
@@ -199,7 +197,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
     }
 
     private fun hasPermission(): Boolean {
-        return ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        return ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
@@ -278,10 +279,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
 
     private fun addPolylines() {
         val polylineData = polylineData
-        polylineData?.polylines?.forEachIndexed { index, polyline ->
+        polylineData?.polylines?.values?.forEach { polyline ->
 
             val addedPolyline = mMap?.addPolyline(polyline.options)
-            addedPolyline?.tag = polylineData.polylines[index]
+            addedPolyline?.tag = polylineData.polylines[polyline.options.points]
 
             // Store the polylines currently on the map to be able to remove them later
             addedPolyline?.let { this.polylinesOnMap.add(it) }
@@ -310,15 +311,13 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
         googleMap.uiSettings.isCompassEnabled = true
 
         googleMap.setOnPolylineClickListener { polyline: Polyline ->
-            // Set the color of the previous polyline back to what it was
+            previousPolylineClicked = polyline
             setOriginalPolylineColor()
 
             polyline.color = Color.BLACK
 
             bottomSheetController.setPolylineContent(polyline)
             bottomSheetController.expandBottomSheet()
-
-            previousPolylineClicked = polyline
         }
 
         googleMap.setOnMapClickListener { latLng ->
@@ -328,9 +327,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
     }
 
     private fun setOriginalPolylineColor() {
-        val description = (previousPolylineClicked?.tag as com.oslofjorden.oslofjordenturguide.MapView.model.Polyline?)?.description
-        previousPolylineClicked?.color =
-            SelectPolylineColor.setPolylineColor(description ?: "")
+        previousPolylineClicked.color = polylineData?.polylines?.get(previousPolylineClicked.points)?.options!!.color
     }
 
     private fun showWelcomeDialog() {
