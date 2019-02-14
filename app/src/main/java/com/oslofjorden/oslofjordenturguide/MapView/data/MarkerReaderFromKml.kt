@@ -30,7 +30,6 @@ class MarkerReaderFromKml(val context: Context) : MarkerDAO {
 
     fun read(context: Context): MarkerData {
         val markerList = ArrayList<Marker>()
-        val path = System.getProperty("user.dir")
 
         val inputStream = context.resources.openRawResource(R.raw.doc)
         val reader = InputStreamReader(inputStream) as Reader
@@ -43,7 +42,7 @@ class MarkerReaderFromKml(val context: Context) : MarkerDAO {
         for (placemark in placemarks) {
             val names = placemark.getElementsByTag("name")[0].text()
 
-            var descriptions = ""
+            var descriptions: String? = null
             if (placemark.getElementsByTag("description").size != 0) {
                 descriptions = placemark.getElementsByTag("description")[0].text()
             }
