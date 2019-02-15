@@ -1,7 +1,7 @@
-package com.oslofjorden.oslofjordenturguide.MapView.data
+package com.oslofjorden.oslofjordenturguide.data
 
 import androidx.lifecycle.MutableLiveData
-import com.oslofjorden.oslofjordenturguide.MapView.model.PolylineData
+import com.oslofjorden.oslofjordenturguide.model.PolylineData
 
 interface PolylineDAO {
 

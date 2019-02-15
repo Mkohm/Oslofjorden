@@ -1,9 +1,9 @@
-package com.oslofjorden.oslofjordenturguide.MapView.data
+package com.oslofjorden.oslofjordenturguide.data
 
 import androidx.lifecycle.MutableLiveData
 import android.content.Context
 import android.util.Log
-import com.oslofjorden.oslofjordenturguide.usecase.broweMap.MapsActivity
+import com.oslofjorden.oslofjordenturguide.usecase.browseMap.MapsActivity
 
 class SharedPreferencesReader(private val context: Context) : SharedPreferencesDAO {
     override fun isFirstTimeLaunchingApp(isFirstTimeLaunchingApp: MutableLiveData<Boolean>) {
@@ -18,7 +18,7 @@ class SharedPreferencesReader(private val context: Context) : SharedPreferencesD
         val sharedPref = context.getSharedPreferences("myPrefs", Context.MODE_PRIVATE)
         val editor = sharedPref.edit()
         editor.putBoolean("firstTimeUserLaunchesApp", false)
-        editor.commit()
+        editor.apply()
 
         isFirstTimeLaunchingApp.value = false
     }
@@ -35,7 +35,7 @@ class SharedPreferencesReader(private val context: Context) : SharedPreferencesD
             for (i in newMapItems.indices) {
                 editor.putBoolean(arrayName + "_" + i, newMapItems[i])
             }
-            editor.commit()
+            editor.apply()
 
             currentMapItems.value = newMapItems
         }
@@ -72,7 +72,7 @@ class SharedPreferencesReader(private val context: Context) : SharedPreferencesD
         val sharedPref = context.getSharedPreferences("myPrefs", Context.MODE_PRIVATE)
         val editor = sharedPref.edit()
         editor.putBoolean("userHasBoughtRemoveAds", true)
-        editor.commit()
+        editor.apply()
 
         hasPurchasedRemoveAds.value = true
     }

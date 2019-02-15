@@ -1,4 +1,4 @@
-package com.oslofjorden.oslofjordenturguide.MapView.data
+package com.oslofjorden.oslofjordenturguide.data
 
 import androidx.lifecycle.MutableLiveData
 

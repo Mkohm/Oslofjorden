@@ -1,6 +1,7 @@
-package com.oslofjorden.oslofjordenturguide.usecase.broweMap
+package com.oslofjorden.oslofjordenturguide.usecase.browseMap
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Bundle
@@ -28,22 +29,22 @@ import com.google.maps.android.clustering.algo.PreCachingAlgorithmDecorator
 import com.google.maps.android.clustering.view.DefaultClusterRenderer
 import com.oslofjorden.R
 import com.oslofjorden.databinding.ActivityMainBinding
-import com.oslofjorden.oslofjordenturguide.MapView.model.MarkerTypes
-import com.oslofjorden.oslofjordenturguide.MapView.NoticeDialogListener
+import com.oslofjorden.oslofjordenturguide.usecase.chooseMapData.mapDataChangedListener
+import com.oslofjorden.oslofjordenturguide.model.Marker
+import com.oslofjorden.oslofjordenturguide.model.MarkerData
+import com.oslofjorden.oslofjordenturguide.model.MarkerTypes
+import com.oslofjorden.oslofjordenturguide.model.PolylineData
 import com.oslofjorden.oslofjordenturguide.permissions.PermissionUtils
-import com.oslofjorden.oslofjordenturguide.MapView.WelcomeDialog
-import com.oslofjorden.oslofjordenturguide.MapView.model.Marker
-import com.oslofjorden.oslofjordenturguide.MapView.model.MarkerData
-import com.oslofjorden.oslofjordenturguide.MapView.model.PolylineData
 import com.oslofjorden.oslofjordenturguide.usecase.chooseMapData.ChooseMapInfoDialog
 import com.oslofjorden.oslofjordenturguide.usecase.removeAds.AdHandler
 import com.oslofjorden.oslofjordenturguide.usecase.removeAds.AppPurchasedListener
-import com.oslofjorden.oslofjordenturguide.viewmodels.MapsActivityViewModel
+import com.oslofjorden.oslofjordenturguide.usecase.welcomeUser.WelcomeDialog
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.bottomsheet.*
 import org.jetbrains.anko.longToast
 
-class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListener, LifecycleOwner,
+class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
+    mapDataChangedListener, LifecycleOwner,
     ActivityCompat.OnRequestPermissionsResultCallback, AppPurchasedListener {
 
     private val LOCATION_PERMISSION_REQUEST_CODE = 1
@@ -58,6 +59,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
 
     private lateinit var viewModel: MapsActivityViewModel
 
+    @SuppressLint("MissingPermission")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -171,12 +173,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
         binding.setLifecycleOwner(this)
     }
 
-    fun removeSplashScreen() {
-        // Removes the oslofjorden picture that is used as splash screen
-        window.setBackgroundDrawableResource(R.drawable.graybackground)
-    }
+    private fun removeSplashScreen() = window.setBackgroundDrawableResource(R.drawable.graybackground)
 
-    fun showBottomSheetLoading() {
+    private fun showBottomSheetLoading() {
         bottomSheetController =
             BottomSheetController(bottom_sheet, this)
         bottomSheetController.setLoadingText()
@@ -187,21 +186,14 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
         adLayout.visibility = View.GONE
     }
 
-    private fun requestPermission() {
-        PermissionUtils.requestPermission(
-            this,
-            LOCATION_PERMISSION_REQUEST_CODE,
-            Manifest.permission.ACCESS_FINE_LOCATION,
-            true
-        )
-    }
+    private fun requestPermission() = PermissionUtils.requestPermission(
+        this, LOCATION_PERMISSION_REQUEST_CODE, Manifest.permission.ACCESS_FINE_LOCATION, true
+    )
 
-    private fun hasPermission(): Boolean {
-        return ContextCompat.checkSelfPermission(
-            this,
-            Manifest.permission.ACCESS_FINE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED
-    }
+    private fun hasPermission(): Boolean = ContextCompat.checkSelfPermission(
+        this,
+        Manifest.permission.ACCESS_FINE_LOCATION
+    ) == PackageManager.PERMISSION_GRANTED
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         // If the request code is something other than what we requested
@@ -266,9 +258,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
         }
     }
 
-    private fun removePolylines() {
-        this.polylinesOnMap.forEach { it.remove() }
-    }
+    private fun removePolylines() = this.polylinesOnMap.forEach { it.remove() }
 
     private fun addMarkersToMap(markerType: MarkerTypes) {
         val markersToAdd = markerData?.markers?.filter { marker -> marker.markerTypes.contains(markerType) }
@@ -330,16 +320,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
         previousPolylineClicked.color = polylineData?.polylines?.get(previousPolylineClicked.points)?.options!!.color
     }
 
-    private fun showWelcomeDialog() {
-        // Show the welcome message to the user
-        val welcomeDialog = WelcomeDialog()
-        welcomeDialog.show(supportFragmentManager, "test")
-    }
+    private fun showWelcomeDialog() = WelcomeDialog().show(supportFragmentManager, "test")
 
-    private fun updateCameraPosition(coordinates: LatLng) {
-        val cameraUpdate = CameraUpdateFactory.newLatLngZoom(coordinates, 13f)
-        mMap?.animateCamera(cameraUpdate)
-    }
+    private fun updateCameraPosition(coordinates: LatLng) =
+        mMap?.animateCamera(CameraUpdateFactory.newLatLngZoom(coordinates, 13f))
 
     private fun setUpClusterer(googleMap: GoogleMap) {
         clusterManager = ClusterManager(this, googleMap)
@@ -370,9 +354,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, NoticeDialogListen
         }
     }
 
-    override fun onDialogPositiveClick(newMapItems: BooleanArray) {
-        viewModel.setMapItems(newMapItems)
-    }
+    override fun onDialogPositiveClick(newMapItems: BooleanArray) = viewModel.setMapItems(newMapItems)
 
     override fun onDialogNegativeClick() {
         Log.i(TAG, "onDialogNegativeClick: gjør ingenting")

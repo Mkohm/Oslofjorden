@@ -4,7 +4,7 @@ import com.android.billingclient.api.BillingClient
 import com.android.billingclient.api.BillingClientStateListener
 import com.android.billingclient.api.BillingFlowParams
 import com.android.billingclient.api.SkuDetailsParams
-import com.oslofjorden.oslofjordenturguide.usecase.broweMap.MapsActivity
+import com.oslofjorden.oslofjordenturguide.usecase.browseMap.MapsActivity
 
 // Starts a connection to google play to initiate the app purchaseOk and will receive a callback when a purchaseOk is completed.
 object InAppPurchaseInteractor {

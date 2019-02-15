@@ -1,4 +1,4 @@
-package com.oslofjorden.oslofjordenturguide.MapView.data
+package com.oslofjorden.oslofjordenturguide.data
 
 import android.Manifest.permission.ACCESS_COARSE_LOCATION
 import android.Manifest.permission.ACCESS_FINE_LOCATION

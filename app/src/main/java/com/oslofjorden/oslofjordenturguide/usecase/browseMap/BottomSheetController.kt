@@ -1,4 +1,4 @@
-package com.oslofjorden.oslofjordenturguide.usecase.broweMap
+package com.oslofjorden.oslofjordenturguide.usecase.browseMap
 
 import android.net.Uri
 import androidx.browser.customtabs.CustomTabsIntent
@@ -9,8 +9,8 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import com.google.android.gms.maps.model.Polyline
 import com.oslofjorden.R
-import com.oslofjorden.oslofjordenturguide.MapView.model.MarkerTypes
-import com.oslofjorden.oslofjordenturguide.MapView.model.Marker
+import com.oslofjorden.oslofjordenturguide.model.MarkerTypes
+import com.oslofjorden.oslofjordenturguide.model.Marker
 
 class BottomSheetController(val view: LinearLayout, val activity: MapsActivity) {
     private val behavior: BottomSheetBehavior<LinearLayout> = BottomSheetBehavior.from(view)
@@ -27,7 +27,7 @@ class BottomSheetController(val view: LinearLayout, val activity: MapsActivity) 
 
     fun setLoadingText() {
         val titleTextview = view.findViewById<TextView>(R.id.title)
-        titleTextview.text = "Oslofjorden laster inn - vennligst vent.."
+        titleTextview.text = activity.getString(R.string.bottom_sheet_loading_data)
 
         val descriptionTextview = view.findViewById<TextView>(R.id.description)
         descriptionTextview.visibility = View.GONE
@@ -53,7 +53,7 @@ class BottomSheetController(val view: LinearLayout, val activity: MapsActivity) 
         val button = view.findViewById<Button>(R.id.url)
 
         // Get the google maps polyline and convert the tag object into our own Polyline object
-        val ourPolylineType = (polyline.tag as com.oslofjorden.oslofjordenturguide.MapView.model.Polyline)
+        val ourPolylineType = (polyline.tag as com.oslofjorden.oslofjordenturguide.model.Polyline)
 
         val title = ourPolylineType.title
         val description = ourPolylineType.description

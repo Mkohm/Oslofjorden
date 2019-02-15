@@ -1,13 +1,13 @@
-package com.oslofjorden.oslofjordenturguide.MapView.data
+package com.oslofjorden.oslofjordenturguide.data
 
 import androidx.lifecycle.MutableLiveData
 import android.content.Context
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.oslofjorden.R
-import com.oslofjorden.oslofjordenturguide.MapView.model.MarkerTypes
-import com.oslofjorden.oslofjordenturguide.MapView.model.Marker
-import com.oslofjorden.oslofjordenturguide.MapView.model.MarkerData
+import com.oslofjorden.oslofjordenturguide.model.MarkerTypes
+import com.oslofjorden.oslofjordenturguide.model.Marker
+import com.oslofjorden.oslofjordenturguide.model.MarkerData
 import org.jetbrains.anko.doAsync
 import org.jetbrains.anko.uiThread
 import org.jsoup.Jsoup

@@ -4,15 +4,14 @@ import android.app.Dialog
 import android.os.Bundle
 import androidx.appcompat.app.AlertDialog
 import android.util.Log
-import com.oslofjorden.oslofjordenturguide.MapView.model.MarkerTypes
-import com.oslofjorden.oslofjordenturguide.MapView.NoticeDialogListener
+import com.oslofjorden.oslofjordenturguide.model.MarkerTypes
 
 class ChooseMapInfoDialog : androidx.fragment.app.DialogFragment() {
 
     // Use this instance of the interface to deliver action events
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        val mListener: NoticeDialogListener = activity as NoticeDialogListener
+        val mListener: mapDataChangedListener = activity as mapDataChangedListener
 
         val arguments = arguments
 

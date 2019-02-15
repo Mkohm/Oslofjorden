@@ -1,4 +1,4 @@
-package com.oslofjorden.oslofjordenturguide.MapView;
+package com.oslofjorden.oslofjordenturguide.usecase.welcomeUser;
 
 import android.app.AlertDialog;
 import android.app.Dialog;

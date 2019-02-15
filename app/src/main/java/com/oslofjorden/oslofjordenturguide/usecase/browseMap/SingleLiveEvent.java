@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package com.oslofjorden.oslofjordenturguide.MapView;
+package com.oslofjorden.oslofjordenturguide.usecase.browseMap;
 
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.MutableLiveData;

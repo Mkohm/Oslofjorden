@@ -1,8 +1,8 @@
-package com.oslofjorden.oslofjordenturguide.MapView.data
+package com.oslofjorden.oslofjordenturguide.data
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import com.oslofjorden.oslofjordenturguide.MapView.model.MarkerData
+import com.oslofjorden.oslofjordenturguide.model.MarkerData
 
 class MarkerDataRepository(private val markerDataAccessObject: MarkerDAO) {
 

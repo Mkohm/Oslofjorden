@@ -4,13 +4,13 @@
 
     <data>
 
-        <import type="com.oslofjorden.oslofjordenturguide.viewmodels.MapsActivityViewModel" />
+        <import type="com.oslofjorden.oslofjordenturguide.usecase.browseMap.MapsActivityViewModel" />
 
         <import type="android.view.View" />
 
         <variable
             name="viewmodel"
-            type="com.oslofjorden.oslofjordenturguide.viewmodels.MapsActivityViewModel" />
+            type="com.oslofjorden.oslofjordenturguide.usecase.browseMap.MapsActivityViewModel" />
     </data>
 
     <androidx.coordinatorlayout.widget.CoordinatorLayout

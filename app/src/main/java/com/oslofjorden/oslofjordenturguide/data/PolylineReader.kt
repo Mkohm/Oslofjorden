@@ -1,4 +1,4 @@
-package com.oslofjorden.oslofjordenturguide.MapView.data
+package com.oslofjorden.oslofjordenturguide.data
 
 import androidx.lifecycle.MutableLiveData
 import android.content.Context
@@ -6,8 +6,8 @@ import android.graphics.Color
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.PolylineOptions
 import com.oslofjorden.R
-import com.oslofjorden.oslofjordenturguide.MapView.model.Polyline
-import com.oslofjorden.oslofjordenturguide.MapView.model.PolylineData
+import com.oslofjorden.oslofjordenturguide.model.Polyline
+import com.oslofjorden.oslofjordenturguide.model.PolylineData
 import org.jetbrains.anko.doAsync
 import org.jetbrains.anko.uiThread
 import java.io.EOFException

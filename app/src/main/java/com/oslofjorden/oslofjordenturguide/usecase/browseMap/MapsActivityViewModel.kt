@@ -1,4 +1,4 @@
-package com.oslofjorden.oslofjordenturguide.viewmodels
+package com.oslofjorden.oslofjordenturguide.usecase.browseMap
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
@@ -11,17 +11,15 @@ import com.android.billingclient.api.PurchasesUpdatedListener
 import com.google.android.gms.maps.model.LatLng
 import com.oslofjorden.R
 import com.oslofjorden.oslofjordenturguide.usecase.removeAds.InAppPurchaseInteractor
-import com.oslofjorden.oslofjordenturguide.usecase.broweMap.MapsActivity
-import com.oslofjorden.oslofjordenturguide.MapView.SingleLiveEvent
-import com.oslofjorden.oslofjordenturguide.MapView.data.AndroidLocationProvider
-import com.oslofjorden.oslofjordenturguide.MapView.data.LocationInteractor
-import com.oslofjorden.oslofjordenturguide.MapView.data.MarkerDataRepository
-import com.oslofjorden.oslofjordenturguide.MapView.data.MarkerReaderFromKml
-import com.oslofjorden.oslofjordenturguide.MapView.data.PolylineReader
-import com.oslofjorden.oslofjordenturguide.MapView.data.PolylineRepository
-import com.oslofjorden.oslofjordenturguide.MapView.data.SharedPreferencesReader
-import com.oslofjorden.oslofjordenturguide.MapView.data.SharedPreferencesRepository
-import com.oslofjorden.oslofjordenturguide.MapView.model.MergedData
+import com.oslofjorden.oslofjordenturguide.data.AndroidLocationProvider
+import com.oslofjorden.oslofjordenturguide.data.LocationInteractor
+import com.oslofjorden.oslofjordenturguide.data.MarkerDataRepository
+import com.oslofjorden.oslofjordenturguide.data.MarkerReaderFromKml
+import com.oslofjorden.oslofjordenturguide.data.PolylineReader
+import com.oslofjorden.oslofjordenturguide.data.PolylineRepository
+import com.oslofjorden.oslofjordenturguide.data.SharedPreferencesReader
+import com.oslofjorden.oslofjordenturguide.data.SharedPreferencesRepository
+import com.oslofjorden.oslofjordenturguide.model.MergedData
 
 class MapsActivityViewModel(private val myApplication: Application) : AndroidViewModel(Application()),
     PurchasesUpdatedListener {
