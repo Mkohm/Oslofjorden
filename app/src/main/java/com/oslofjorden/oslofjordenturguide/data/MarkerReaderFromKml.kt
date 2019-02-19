@@ -45,6 +45,7 @@ class MarkerReaderFromKml(val context: Context) : MarkerDAO {
             var descriptions: String? = null
             if (placemark.getElementsByTag("description").size != 0) {
                 descriptions = placemark.getElementsByTag("description")[0].text()
+                descriptions += "?app=1"
             }
 
             val coordinates = placemark.getElementsByTag("coordinates")[0].text()
