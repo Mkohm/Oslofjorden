@@ -16,7 +16,6 @@ import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProviders
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -29,13 +28,13 @@ import com.google.maps.android.clustering.algo.PreCachingAlgorithmDecorator
 import com.google.maps.android.clustering.view.DefaultClusterRenderer
 import com.oslofjorden.R
 import com.oslofjorden.databinding.ActivityMainBinding
-import com.oslofjorden.oslofjordenturguide.usecase.chooseMapData.mapDataChangedListener
 import com.oslofjorden.oslofjordenturguide.model.Marker
 import com.oslofjorden.oslofjordenturguide.model.MarkerData
 import com.oslofjorden.oslofjordenturguide.model.MarkerTypes
 import com.oslofjorden.oslofjordenturguide.model.PolylineData
 import com.oslofjorden.oslofjordenturguide.permissions.PermissionUtils
 import com.oslofjorden.oslofjordenturguide.usecase.chooseMapData.ChooseMapInfoDialog
+import com.oslofjorden.oslofjordenturguide.usecase.chooseMapData.mapDataChangedListener
 import com.oslofjorden.oslofjordenturguide.usecase.removeAds.AdHandler
 import com.oslofjorden.oslofjordenturguide.usecase.removeAds.AppPurchasedListener
 import com.oslofjorden.oslofjordenturguide.usecase.welcomeUser.WelcomeDialog
