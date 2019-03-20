@@ -14,7 +14,7 @@ import com.oslofjorden.oslofjordenturguide.usecase.removeAds.InAppPurchaseIntera
 import com.oslofjorden.oslofjordenturguide.data.AndroidLocationProvider
 import com.oslofjorden.oslofjordenturguide.data.LocationInteractor
 import com.oslofjorden.oslofjordenturguide.data.MarkerDataRepository
-import com.oslofjorden.oslofjordenturguide.data.MarkerReaderFromKml
+import com.oslofjorden.oslofjordenturguide.data.MarkerReaderFromGPX
 import com.oslofjorden.oslofjordenturguide.data.PolylineReader
 import com.oslofjorden.oslofjordenturguide.data.PolylineRepository
 import com.oslofjorden.oslofjordenturguide.data.SharedPreferencesReader
@@ -24,7 +24,7 @@ import com.oslofjorden.oslofjordenturguide.model.MergedData
 class MapsActivityViewModel(private val myApplication: Application) : AndroidViewModel(Application()),
     PurchasesUpdatedListener {
 
-    private val markerDataRepository = MarkerDataRepository(MarkerReaderFromKml(myApplication.applicationContext))
+    private val markerDataRepository = MarkerDataRepository(MarkerReaderFromGPX(myApplication.applicationContext))
     private val polylineRepository = PolylineRepository(PolylineReader(myApplication.applicationContext))
     private val sharedPreferencesRepository =
         SharedPreferencesRepository(SharedPreferencesReader(myApplication.applicationContext))

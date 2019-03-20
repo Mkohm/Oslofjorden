@@ -15,6 +15,7 @@ import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.io.Reader
 
+@Deprecated("This one needs a special formatting of the gpx file and is therefore not very nice.")
 class MarkerReader(val context: Context) : MarkerDAO {
     override fun readMarkers(markers: MutableLiveData<MarkerData>) {
         doAsync {

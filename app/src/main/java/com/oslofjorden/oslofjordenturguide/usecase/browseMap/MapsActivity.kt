@@ -165,12 +165,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
     }
 
     fun setupViewModel() {
-        viewModel = ViewModelProviders.of(this).get(MapsActivityViewModel::class.java)
+        viewModel = MapsActivityViewModel(application)
 
         // Inflate view and obtain an instance of the binding class.
         val binding: ActivityMainBinding = DataBindingUtil.setContentView(this, R.layout.activity_main)
         binding.viewmodel = viewModel
-        binding.setLifecycleOwner(this)
+        binding.lifecycleOwner = this
     }
 
     private fun removeSplashScreen() = window.setBackgroundDrawableResource(R.drawable.graybackground)
