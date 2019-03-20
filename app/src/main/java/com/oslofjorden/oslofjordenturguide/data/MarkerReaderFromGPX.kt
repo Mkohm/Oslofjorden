@@ -14,7 +14,7 @@ import org.jsoup.Jsoup
 import java.io.InputStreamReader
 import java.io.Reader
 
-class MarkerReaderFromGPX(val context: Context) : MarkerDAO {
+class MarkerReaderFromGPX(private val context: Context) : MarkerDAO {
     override fun readMarkers(markers: MutableLiveData<MarkerData>) {
         doAsync {
 
