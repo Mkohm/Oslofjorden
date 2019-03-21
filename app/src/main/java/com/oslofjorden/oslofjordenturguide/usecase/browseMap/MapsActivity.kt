@@ -42,15 +42,13 @@ import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.bottomsheet.*
 import org.jetbrains.anko.longToast
 
-class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
-    mapDataChangedListener, LifecycleOwner,
-    ActivityCompat.OnRequestPermissionsResultCallback, AppPurchasedListener {
+class MapsActivity : AppCompatActivity(), OnMapReadyCallback, mapDataChangedListener, LifecycleOwner, ActivityCompat.OnRequestPermissionsResultCallback, AppPurchasedListener {
 
     private val LOCATION_PERMISSION_REQUEST_CODE = 1
     private lateinit var clickedClusterItem: Marker
     private lateinit var bottomSheetController: BottomSheetController
     private var clusterManager: ClusterManager<Marker>? = null
-    private lateinit var previousPolylineClicked: Polyline
+    private var previousPolylineClicked: Polyline? = null
     private var mMap: GoogleMap? = null
     private var polylineData: PolylineData? = null
     private var markerData: MarkerData? = null
@@ -175,8 +173,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
     private fun removeSplashScreen() = window.setBackgroundDrawableResource(R.drawable.graybackground)
 
     private fun showBottomSheetLoading() {
-        bottomSheetController =
-            BottomSheetController(bottom_sheet, this)
+        bottomSheetController = BottomSheetController(bottom_sheet, this)
         bottomSheetController.setLoadingText()
         bottomSheetController.expandBottomSheet()
     }
@@ -185,14 +182,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
         adLayout.visibility = View.GONE
     }
 
-    private fun requestPermission() = PermissionUtils.requestPermission(
-        this, LOCATION_PERMISSION_REQUEST_CODE, Manifest.permission.ACCESS_FINE_LOCATION, true
-    )
+    private fun requestPermission() = PermissionUtils.requestPermission(this, LOCATION_PERMISSION_REQUEST_CODE, Manifest.permission.ACCESS_FINE_LOCATION, true)
 
-    private fun hasPermission(): Boolean = ContextCompat.checkSelfPermission(
-        this,
-        Manifest.permission.ACCESS_FINE_LOCATION
-    ) == PackageManager.PERMISSION_GRANTED
+    private fun hasPermission(): Boolean = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         // If the request code is something other than what we requested
@@ -200,12 +192,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
             return
         }
 
-        if (PermissionUtils.isPermissionGranted(
-                permissions,
-                grantResults,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            )
-        ) {
+        if (PermissionUtils.isPermissionGranted(permissions, grantResults, Manifest.permission.ACCESS_FINE_LOCATION)) {
             // Enable the my location layer if the permission has been granted.
             viewModel.getLocationUpdates()
             onofflocationbutton.setImageResource(R.drawable.ic_location_on)
@@ -300,13 +287,14 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
         googleMap.uiSettings.isCompassEnabled = true
 
         googleMap.setOnPolylineClickListener { polyline: Polyline ->
-            previousPolylineClicked = polyline
             setOriginalPolylineColor()
 
             polyline.color = Color.BLACK
 
             bottomSheetController.setPolylineContent(polyline)
             bottomSheetController.expandBottomSheet()
+
+            previousPolylineClicked = polyline
         }
 
         googleMap.setOnMapClickListener { latLng ->
@@ -316,13 +304,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
     }
 
     private fun setOriginalPolylineColor() {
-        previousPolylineClicked.color = polylineData?.polylines?.get(previousPolylineClicked.points)?.options!!.color
+        previousPolylineClicked?.color = polylineData?.polylines?.get(previousPolylineClicked?.points)?.options!!.color
     }
 
     private fun showWelcomeDialog() = WelcomeDialog().show(supportFragmentManager, "test")
 
-    private fun updateCameraPosition(coordinates: LatLng) =
-        mMap?.animateCamera(CameraUpdateFactory.newLatLngZoom(coordinates, 13f))
+    private fun updateCameraPosition(coordinates: LatLng) = mMap?.animateCamera(CameraUpdateFactory.newLatLngZoom(coordinates, 13f))
 
     private fun setUpClusterer(googleMap: GoogleMap) {
         clusterManager = ClusterManager(this, googleMap)
@@ -333,6 +320,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
             clusterManager.renderer = DefaultClusterRenderer(applicationContext, googleMap, this.clusterManager)
 
             clusterManager.setOnClusterItemClickListener { item ->
+                setOriginalPolylineColor()
+
                 clickedClusterItem = item
 
                 bottomSheetController.setMarkerContent(item)
