@@ -9,8 +9,11 @@ apply plugin: 'kotlin-android-extensions'
  * This lets us upload a new build at most every 10 seconds for the
  * next 680 years.
  */
-def vcode = (int) (((new Date().getTime() / 1000) - 1451606400) / 10)
+def getDate() {
+    return new Date().format('yyyy-MM-dd-HH:mm:ss')
+}
 
+def vcode = (int) (((new Date().getTime() / 1000) - 1451606400) / 10)
 
 android {
     signingConfigs {
@@ -27,8 +30,8 @@ android {
         minSdkVersion 15
         targetSdkVersion 28
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
-        versionCode 10150382
-        versionName "2.1." + vcode
+        versionCode vcode
+        versionName "2.1." + getDate()
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         signingConfig signingConfigs.signingConfig
     }
