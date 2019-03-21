@@ -1,8 +1,8 @@
 package com.oslofjorden.oslofjordenturguide.data
 
-import androidx.lifecycle.MutableLiveData
 import android.content.Context
 import android.graphics.Color
+import androidx.lifecycle.MutableLiveData
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.PolylineOptions
 import com.oslofjorden.R
@@ -36,7 +36,7 @@ class PolylineReader(val context: Context) : PolylineDAO {
             try {
                 val name = objectInputStream.readObject() as String
                 val description = objectInputStream.readObject() as String
-                val url = objectInputStream.readObject() as String
+                var url = getUrl(objectInputStream)
                 val color = objectInputStream.readObject() as String
                 val binaryCoordinates = objectInputStream.readObject() as ArrayList<Pair<Double, Double>>
                 val coordinates = convertToLatLngObjects(binaryCoordinates)
@@ -49,6 +49,20 @@ class PolylineReader(val context: Context) : PolylineDAO {
         }
 
         return PolylineData(polylines)
+    }
+
+    private fun getUrl(objectInputStream: ObjectInputStream): String? {
+        var url = objectInputStream.readObject() as String?
+
+        // If there is no url, the url in the objectinputstream is "null".
+        if (url == "null") {
+            url = null
+            // If there is an actual url we add the parameter to the url so that we will display
+            // the website without the map.
+        } else {
+            url += "?app=1"
+        }
+        return url
     }
 
     private fun convertToLatLngObjects(binaryCoordinates: ArrayList<Pair<Double, Double>>): ArrayList<LatLng> {

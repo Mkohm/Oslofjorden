@@ -27,7 +27,7 @@ android {
         minSdkVersion 15
         targetSdkVersion 28
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
-        versionCode vcode
+        versionCode 10150381
         versionName "2.1." + vcode
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         signingConfig signingConfigs.signingConfig
