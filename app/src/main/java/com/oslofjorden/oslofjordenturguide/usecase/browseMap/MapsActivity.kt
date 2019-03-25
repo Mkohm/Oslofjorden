@@ -86,7 +86,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, mapDataChangedList
         viewModel.hasPurchasedRemoveAds.observe(this, Observer { inAppPurchased ->
             when (inAppPurchased) {
                 false -> AdHandler.createAd(this)
-                true -> viewModel.removeAd()
+                // when inAppPurchased is true, the ad is removed by itself by data binding.
             }
         })
 

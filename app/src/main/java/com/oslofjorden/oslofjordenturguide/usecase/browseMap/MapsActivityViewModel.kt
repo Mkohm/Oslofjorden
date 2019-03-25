@@ -54,7 +54,7 @@ class MapsActivityViewModel(private val myApplication: Application) : AndroidVie
         inAppPurchaseInteractor.startGooglePlayConnection(billingClient)
     }
 
-    fun removeAd() {
+    private fun persistInAppPurchaseDone() {
         sharedPreferencesRepository.setHasPurchasedRemoveAds(hasPurchasedRemoveAds)
     }
 
@@ -90,8 +90,8 @@ class MapsActivityViewModel(private val myApplication: Application) : AndroidVie
 
     override fun onPurchasesUpdated(responseCode: Int, purchases: MutableList<Purchase>?) {
         when (responseCode) {
-            BillingResponse.ITEM_ALREADY_OWNED -> removeAd()
-            BillingResponse.OK -> removeAd()
+            BillingResponse.ITEM_ALREADY_OWNED -> persistInAppPurchaseDone()
+            BillingResponse.OK -> persistInAppPurchaseDone()
             BillingResponse.DEVELOPER_ERROR -> showErrorMessage(getString(R.string.developer_error))
             BillingResponse.ERROR -> showErrorMessage(getString(R.string.error))
             BillingResponse.BILLING_UNAVAILABLE -> showErrorMessage(getString(R.string.billing_unavailable))
