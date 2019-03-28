@@ -18,14 +18,6 @@ def getDate() {
 def vcode = (int) (((new Date().getTime() / 1000) - 1451606400) / 10)
 
 android {
-    signingConfigs {
-        signingConfig {
-            keyAlias signingConfigKeyAlias
-            keyPassword signingConfigKeyPassword
-            storeFile file('/Users/mariuskohmann/Code/Personal/OslofjordenTurguideDocuments/keystore.jks')
-            storePassword signingConfigStorePassword
-        }
-    }
     compileSdkVersion 28
     defaultConfig {
         applicationId "com.oslofjorden"
@@ -34,7 +26,6 @@ android {
         versionCode vcode
         versionName "2.1." + getDate()
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-        signingConfig signingConfigs.signingConfig
     }
     buildTypes {
         release {
@@ -55,6 +46,22 @@ android {
         baseline file("lint-baseline.xml")
         warningsAsErrors true
         abortOnError true
+    }
+}
+
+allprojects {
+    afterEvaluate { project ->
+        def propsFile = rootProject.file('keystore.properties')
+        def configName = 'release'
+
+        if (propsFile.exists() && android.signingConfigs.hasProperty(configName)) {
+            def props = new Properties()
+            props.load(new FileInputStream(propsFile))
+            android.signingConfigs[configName].storeFile = file(props['storeFile'])
+            android.signingConfigs[configName].storePassword = props['storePassword']
+            android.signingConfigs[configName].keyAlias = props['keyAlias']
+            android.signingConfigs[configName].keyPassword = props['keyPassword']
+        }
     }
 }
 
