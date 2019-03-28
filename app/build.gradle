@@ -20,10 +20,10 @@ def vcode = (int) (((new Date().getTime() / 1000) - 1451606400) / 10)
 android {
     signingConfigs {
         signingConfig {
-            keyAlias 'oslofjordenkeystore'
-            keyPassword 'key45!-osloapp'
+            keyAlias signingConfigKeyAlias
+            keyPassword signingConfigKeyPassword
             storeFile file('/Users/mariuskohmann/Code/Personal/OslofjordenTurguideDocuments/keystore.jks')
-            storePassword 'key45!-osloapp'
+            storePassword signingConfigStorePassword
         }
     }
     compileSdkVersion 28
