@@ -4,9 +4,10 @@ import android.app.Dialog
 import android.os.Bundle
 import androidx.appcompat.app.AlertDialog
 import android.util.Log
+import androidx.fragment.app.DialogFragment
 import com.oslofjorden.oslofjordenturguide.model.MarkerTypes
 
-class ChooseMapInfoDialog : androidx.fragment.app.DialogFragment() {
+class ChooseMapInfoDialog : DialogFragment() {
 
     // Use this instance of the interface to deliver action events
 
