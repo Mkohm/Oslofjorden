@@ -1,21 +1,19 @@
 package com.oslofjorden.oslofjordenturguide.usecase.browseMap
 
 import android.net.Uri
-import androidx.browser.customtabs.CustomTabsIntent
-import com.google.android.material.bottomsheet.BottomSheetBehavior
 import android.view.View
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.browser.customtabs.CustomTabsIntent
 import com.google.android.gms.maps.model.Polyline
+import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.oslofjorden.R
-import com.oslofjorden.oslofjordenturguide.model.MarkerTypes
 import com.oslofjorden.oslofjordenturguide.model.Marker
+import com.oslofjorden.oslofjordenturguide.model.MarkerTypes
 
-class BottomSheetController(val view: LinearLayout, val activity: MapsActivity) {
+class BottomSheetController(private val view: LinearLayout, private val activity: MapsActivity) {
     private val behavior: BottomSheetBehavior<LinearLayout> = BottomSheetBehavior.from(view)
-
-    private val customTabsIntent: CustomTabsIntent = CustomTabsIntent.Builder().addDefaultShareMenuItem().setToolbarColor(activity.resources.getColor(R.color.colorPrimary)).setShowTitle(true).build()
 
     fun expandBottomSheet() {
         behavior.state = BottomSheetBehavior.STATE_EXPANDED
