@@ -11,6 +11,4 @@
 .externalNativeBuild
 .idea/
 fastlane/report.xml
-gradle.properties
-keystore.properties
 app/build/
