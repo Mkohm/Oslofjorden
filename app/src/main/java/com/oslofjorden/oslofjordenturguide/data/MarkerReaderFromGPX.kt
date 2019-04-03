@@ -62,7 +62,7 @@ class MarkerReaderFromGPX(private val context: Context) : MarkerDAO {
                     "Gjestehavn" -> markerTypes.add(MarkerTypes.GUEST_HARBOR)
                     "Uthavn" -> markerTypes.add(MarkerTypes.OUT_HARBOR)
                     "WC" -> markerTypes.add(MarkerTypes.TOILETT)
-                    "Point of Interes" -> markerTypes.add(MarkerTypes.BEACH)
+                    "Point of Interes" -> markerTypes.add(MarkerTypes.POINT_OF_INTEREST)
                     "Fiskeplass" -> markerTypes.add(MarkerTypes.FISHING_SPOT)
                     "Campingplass" -> markerTypes.add(MarkerTypes.CAMPING)
                     "Bunkers" -> markerTypes.add(MarkerTypes.PETROL_STATION)
