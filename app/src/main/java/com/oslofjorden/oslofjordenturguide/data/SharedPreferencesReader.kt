@@ -3,6 +3,7 @@ package com.oslofjorden.oslofjordenturguide.data
 import androidx.lifecycle.MutableLiveData
 import android.content.Context
 import android.util.Log
+import com.oslofjorden.oslofjordenturguide.model.MarkerTypes
 import com.oslofjorden.oslofjordenturguide.usecase.browseMap.MapsActivity
 
 class SharedPreferencesReader(private val context: Context) : SharedPreferencesDAO {
@@ -30,7 +31,7 @@ class SharedPreferencesReader(private val context: Context) : SharedPreferencesD
 
             val prefs = context.getSharedPreferences(arrayName, 0)
             val editor = prefs.edit()
-            editor.putInt(arrayName + "_17", newMapItems.size)
+            editor.putInt(arrayName + "_18", newMapItems.size)
 
             for (i in newMapItems.indices) {
                 editor.putBoolean(arrayName + "_" + i, newMapItems[i])
@@ -45,7 +46,7 @@ class SharedPreferencesReader(private val context: Context) : SharedPreferencesD
         val arrayName = "userChecks"
         val prefs = context.getSharedPreferences(arrayName, 0)
 
-        val size = prefs.getInt(arrayName + "_17", 0)
+        val size = prefs.getInt(arrayName + "_18", 0)
         val array = BooleanArray(size)
         for (i in 0 until size) {
             Log.d(MapsActivity.TAG, "loadArray: " + i + " checked: " + prefs.getBoolean(arrayName + "_" + i, false))
@@ -53,12 +54,12 @@ class SharedPreferencesReader(private val context: Context) : SharedPreferencesD
         }
 
         if (array.isEmpty()) {
-            val defaultChecked = BooleanArray(17)
+            val defaultChecked = BooleanArray(18)
             for (i in 0 until 6) {
                 defaultChecked[i] = true
             }
 
-            for (i in 7 until 17) {
+            for (i in 7 until 18) {
                 defaultChecked[i] = false
             }
 

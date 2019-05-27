@@ -57,7 +57,16 @@ class MarkerReaderFromGPX(private val context: Context) : MarkerDAO {
                     "Badeplass" -> markerTypes.add(MarkerTypes.BEACH)
                     "Butikk" -> markerTypes.add(MarkerTypes.STORE)
                     "Spisested" -> markerTypes.add(MarkerTypes.RESTAURANT)
-                    "Parkering transp" -> markerTypes.add(MarkerTypes.PARKING_TRANSPORT)
+                    "Parkering transp" -> {
+
+                        // TODO: This is a hack that should be avoided by using a better map
+                        //  program.
+                        if (name.contains("Ferge")) {
+                            markerTypes.add(MarkerTypes.FERRY)
+                        } else {
+                            markerTypes.add(MarkerTypes.PARKING_TRANSPORT)
+                        }
+                    }
                     "Rampe" -> markerTypes.add(MarkerTypes.RAMP)
                     "Gjestehavn" -> markerTypes.add(MarkerTypes.GUEST_HARBOR)
                     "Uthavn" -> markerTypes.add(MarkerTypes.OUT_HARBOR)
@@ -81,13 +90,7 @@ class MarkerReaderFromGPX(private val context: Context) : MarkerDAO {
         return MarkerData(markerList)
     }
 
-    private fun createMarker(
-        latitude: Double,
-        longitude: Double,
-        name: String,
-        link: String?,
-        markerTypes: ArrayList<MarkerTypes>
-    ): Marker {
+    private fun createMarker(latitude: Double, longitude: Double, name: String, link: String?, markerTypes: ArrayList<MarkerTypes>): Marker {
         val markerOption = MarkerOptions()
         markerOption.position(LatLng(latitude, longitude))
         markerOption.title(name)
