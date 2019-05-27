@@ -3,7 +3,6 @@ package com.oslofjorden.oslofjordenturguide.data
 import androidx.lifecycle.MutableLiveData
 import android.content.Context
 import android.util.Log
-import com.oslofjorden.oslofjordenturguide.model.MarkerTypes
 import com.oslofjorden.oslofjordenturguide.usecase.browseMap.MapsActivity
 
 class SharedPreferencesReader(private val context: Context) : SharedPreferencesDAO {
