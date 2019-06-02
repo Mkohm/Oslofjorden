@@ -58,7 +58,6 @@ class MarkerReaderFromGPX(private val context: Context) : MarkerDAO {
                     "Butikk" -> markerTypes.add(MarkerTypes.STORE)
                     "Spisested" -> markerTypes.add(MarkerTypes.RESTAURANT)
                     "Parkering transp" -> {
-
                         // TODO: This is a hack that should be avoided by using a better map
                         //  program.
                         if (name.contains("Ferge")) {
