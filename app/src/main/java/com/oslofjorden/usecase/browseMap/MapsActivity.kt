@@ -230,14 +230,14 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, mapDataChangedList
             val type = MarkerTypes.getTypeFromIndex(i)
 
             if (checkedList[i]) {
-                if (type.equals(MarkerTypes.PATHS)) {
+                if (type == MarkerTypes.PATHS) {
                     addPolylines()
                 } else {
                     addMarkersToMap(type)
                 }
                 // It was not checked
             } else {
-                if (type.equals(MarkerTypes.PATHS)) {
+                if (type == MarkerTypes.PATHS) {
                     removePolylines()
                 }
             }
