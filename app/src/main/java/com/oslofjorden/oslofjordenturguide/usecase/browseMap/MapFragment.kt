@@ -1,44 +1,37 @@
 package com.oslofjorden.oslofjordenturguide.usecase.browseMap
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
 import android.view.ContextMenu
-import android.view.Menu
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import androidx.annotation.RequiresPermission
-import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.Toolbar
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
-import androidx.drawerlayout.widget.DrawerLayout
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
-import androidx.navigation.findNavController
-import androidx.navigation.ui.AppBarConfiguration
-import androidx.navigation.ui.navigateUp
-import androidx.navigation.ui.setupActionBarWithNavController
-import androidx.navigation.ui.setupWithNavController
+import com.google.android.gms.dynamic.SupportFragmentWrapper
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.MapFragment
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Polyline
-import com.google.android.material.floatingactionbutton.FloatingActionButton
-import com.google.android.material.navigation.NavigationView
-import com.google.android.material.snackbar.Snackbar
 import com.google.maps.android.clustering.ClusterManager
 import com.google.maps.android.clustering.algo.GridBasedAlgorithm
 import com.google.maps.android.clustering.algo.PreCachingAlgorithmDecorator
 import com.google.maps.android.clustering.view.DefaultClusterRenderer
 import com.oslofjorden.R
 import com.oslofjorden.databinding.ActivityMainBinding
+import com.oslofjorden.databinding.FragmentMapBinding
 import com.oslofjorden.oslofjordenturguide.model.Marker
 import com.oslofjorden.oslofjordenturguide.model.MarkerData
 import com.oslofjorden.oslofjordenturguide.model.MarkerTypes
@@ -51,9 +44,8 @@ import com.oslofjorden.oslofjordenturguide.usecase.removeAds.AppPurchasedListene
 import com.oslofjorden.oslofjordenturguide.usecase.welcomeUser.WelcomeDialog
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.bottomsheet.*
-import org.jetbrains.anko.longToast
 
-class MapsActivity : AppCompatActivity(), OnMapReadyCallback, mapDataChangedListener, LifecycleOwner, ActivityCompat.OnRequestPermissionsResultCallback, AppPurchasedListener {
+class MapFragment : Fragment(), OnMapReadyCallback, mapDataChangedListener, LifecycleOwner, ActivityCompat.OnRequestPermissionsResultCallback, AppPurchasedListener {
 
     private val LOCATION_PERMISSION_REQUEST_CODE = 1
     private lateinit var clickedClusterItem: Marker
@@ -68,18 +60,15 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, mapDataChangedList
     private lateinit var viewModel: MapsActivityViewModel
 
 
-
-    @SuppressLint("MissingPermission")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
 
-
         setupViewModel()
-        removeSplashScreen()
-        setToolbar()
-        initMap()
-        showBottomSheetLoading()
+        viewModel = MapsActivityViewModel(activity?.application!!)
+        //   removeSplashScreen()
+        // setToolbar()
+        // showBottomSheetLoading()
 
         viewModel.mapData.observe(this, Observer {
             when (it) {
@@ -93,14 +82,14 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, mapDataChangedList
                 // The polylines and markers are finished loading
                 currentMapItems?.let { mapItems ->
                     loadCheckedItems(mapItems)
-                    bottomSheetController.finishLoading()
+                    //   bottomSheetController.finishLoading()
                 }
             }
         })
 
         viewModel.hasPurchasedRemoveAds.observe(this, Observer { inAppPurchased ->
             when (inAppPurchased) {
-                false -> AdHandler.createAd(this)
+                //   false -> AdHandler.createAd(this)
                 // when inAppPurchased is true, the ad is removed by itself by data binding.
             }
         })
@@ -117,7 +106,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, mapDataChangedList
         viewModel.firstTimeLaunchingApp.observe(this, Observer { firstTimeLaunchingApp ->
             when (firstTimeLaunchingApp) {
                 true -> {
-                    showWelcomeDialog()
+                    //showWelcomeDialog()
                     viewModel.setInfoMessageShown()
                 }
             }
@@ -126,38 +115,57 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, mapDataChangedList
         viewModel.currentLocation.observe(this, Observer { currentLocation ->
             currentLocation?.let {
                 updateCameraPosition(currentLocation)
-                setLocationDot(mMap)
+
+                //    setLocationDot(mMap)
             }
         })
 
         viewModel.inAppPurchaseStatus.observeOnce(this, Observer { statusMessage ->
             statusMessage?.let {
-                longToast(it)
+                //  longToast(it)
             }
         })
 
-        onofflocationbutton.setOnClickListener {
-            if (!hasPermission()) {
-                requestPermission()
-                return@setOnClickListener
-            } else {
+        //  onofflocationbutton.setOnClickListener {
+        /*   if (!hasPermission()) {
+               requestPermission()
+               return@setOnClickListener
+           } else {
 
-                if (viewModel.locationEnabled.value!!) {
-                    disableLocationUpdates(viewModel, mMap)
-                } else {
-                    enableLocationUpdates()
-                }
-            }
-        }
+               if (viewModel.locationEnabled.value!!) {
+                  disableLocationUpdates(viewModel, mMap)
+               } else {
+                   enableLocationUpdates()
+               }
+           }*/
+        //}
 
-        buyButton.setOnClickListener {
-            viewModel.purchase(this)
-        }
+        //        buyButton.setOnClickListener {
+        // viewModel.purchase(this)
+        //      }
 
-        layersButton.setOnClickListener {
-            // Show the choose map info dialog
-            showMapInfoDialog(viewModel.currentMapItems)
-        }
+        //    layersButton.setOnClickListener {
+        // Show the choose map info dialog
+        //      showMapInfoDialog(viewModel.currentMapItems)
+        // }
+
+    }
+
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+
+
+        // Inflate view and obtain an instance of the binding class.
+        val binding: FragmentMapBinding = DataBindingUtil.inflate(inflater, R.layout.fragment_map, container, false)
+
+        binding.viewmodel = viewModel
+        binding.lifecycleOwner = this
+
+
+        initMap()
+
+
+
+        return binding.root
     }
 
     @RequiresPermission(allOf = [Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION])
@@ -176,19 +184,16 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, mapDataChangedList
         viewModel.getLocationUpdates()
     }
 
-    fun setupViewModel() {
-        viewModel = MapsActivityViewModel(application)
 
-        // Inflate view and obtain an instance of the binding class.
-        val binding: ActivityMainBinding = DataBindingUtil.setContentView(this, R.layout.activity_main)
-        binding.viewmodel = viewModel
-        binding.lifecycleOwner = this
+    fun setupViewModel() {
+
     }
 
-    private fun removeSplashScreen() = window.setBackgroundDrawableResource(R.drawable.graybackground)
+    // private fun removeSplashScreen() = window.setBackgroundDrawableResource(R.drawable
+    //     .graybackground)
 
     private fun showBottomSheetLoading() {
-        bottomSheetController = BottomSheetController(bottom_sheet, this)
+        bottomSheetController = BottomSheetController(bottom_sheet, activity!!)
         bottomSheetController.setLoadingText()
         bottomSheetController.expandBottomSheet()
     }
@@ -197,9 +202,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, mapDataChangedList
         adLayout.visibility = View.GONE
     }
 
-    private fun requestPermission() = PermissionUtils.requestPermission(this, LOCATION_PERMISSION_REQUEST_CODE, Manifest.permission.ACCESS_FINE_LOCATION, true)
+    //   private fun requestPermission() = PermissionUtils.requestPermission(this,
+    //         LOCATION_PERMISSION_REQUEST_CODE, Manifest.permission.ACCESS_FINE_LOCATION, true)
 
-    private fun hasPermission(): Boolean = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+    // private fun hasPermission(): Boolean = ContextCompat.checkSelfPermission(this, Manifest
+    //       .permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         // If the request code is something other than what we requested
@@ -217,8 +224,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, mapDataChangedList
     }
 
     private fun initMap() {
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-        val mapFragment = supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
+        val mapFragment = childFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
     }
 
@@ -228,14 +234,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, mapDataChangedList
         bundle.putBooleanArray("userChecks", userChecks.value)
 
         mapInfoDialog.arguments = bundle
-        mapInfoDialog.show(supportFragmentManager, "test")
+        mapInfoDialog.show(fragmentManager!!, "test")
     }
 
-    override fun onCreateContextMenu(menu: ContextMenu, v: View, menuInfo: ContextMenu.ContextMenuInfo) {
-        super.onCreateContextMenu(menu, v, menuInfo)
-        val inflater = menuInflater
-        inflater.inflate(R.menu.toolbar_menu, menu)
-    }
 
     private fun loadCheckedItems(checkedList: BooleanArray) {
         clusterManager?.clearItems()
@@ -280,12 +281,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, mapDataChangedList
         }
     }
 
-    private fun setToolbar() {
-        setSupportActionBar(my_toolbar)
-        supportActionBar?.title = getString(R.string.app_name)
-        my_toolbar.setTitleTextColor(Color.WHITE)
-    }
-
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
 
@@ -322,17 +317,17 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, mapDataChangedList
         previousPolylineClicked?.color = polylineData?.polylines?.get(previousPolylineClicked?.points)?.options!!.color
     }
 
-    private fun showWelcomeDialog() = WelcomeDialog().show(supportFragmentManager, "test")
+    //  private fun showWelcomeDialog() = WelcomeDialog().show(fragmentManager!!, "test")
 
     private fun updateCameraPosition(coordinates: LatLng) = mMap?.animateCamera(CameraUpdateFactory.newLatLngZoom(coordinates, 13f))
 
     private fun setUpClusterer(googleMap: GoogleMap) {
-        clusterManager = ClusterManager(this, googleMap)
+        clusterManager = ClusterManager(context, googleMap)
 
         clusterManager?.let { clusterManager ->
 
             clusterManager.algorithm = PreCachingAlgorithmDecorator(GridBasedAlgorithm())
-            clusterManager.renderer = DefaultClusterRenderer(applicationContext, googleMap, this.clusterManager)
+            clusterManager.renderer = DefaultClusterRenderer(context, googleMap, this.clusterManager)
 
             clusterManager.setOnClusterItemClickListener { item ->
                 setOriginalPolylineColor()

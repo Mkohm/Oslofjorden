@@ -35,7 +35,7 @@
             android:value="@string/google_maps_key" />
 
         <activity
-            android:name=".oslofjordenturguide.usecase.browseMap.MapsActivity"
+            android:name=".oslofjordenturguide.usecase.browseMap.MainActivity"
 
             android:label="@string/title_activity_maps"
             android:screenOrientation="portrait">
@@ -45,6 +45,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".oslofjordenturguide.usecase.browseMap.MapsActivity" />
 
         <!-- Sample AdMob App ID: ca-app-pub-3940256099942544~3347511713 -->
         <meta-data

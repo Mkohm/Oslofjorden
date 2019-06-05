@@ -1,5 +1,6 @@
 package com.oslofjorden.oslofjordenturguide.usecase.browseMap
 
+import android.app.Activity
 import android.net.Uri
 import android.view.View
 import android.widget.Button
@@ -12,7 +13,7 @@ import com.oslofjorden.R
 import com.oslofjorden.oslofjordenturguide.model.Marker
 import com.oslofjorden.oslofjordenturguide.model.MarkerTypes
 
-class BottomSheetController(private val view: LinearLayout, private val activity: MapsActivity) {
+class BottomSheetController(private val view: LinearLayout, private val activity: Activity) {
     private val behavior: BottomSheetBehavior<LinearLayout> = BottomSheetBehavior.from(view)
 
     fun expandBottomSheet() {
