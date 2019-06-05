@@ -12,7 +12,7 @@ class ChooseMapInfoDialog : DialogFragment() {
     // Use this instance of the interface to deliver action events
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        val mListener: mapDataChangedListener = activity as mapDataChangedListener
+        val mListener: MapDataChangedListener = activity as MapDataChangedListener
 
         val arguments = arguments
 

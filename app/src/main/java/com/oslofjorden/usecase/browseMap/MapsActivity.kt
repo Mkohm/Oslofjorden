@@ -34,15 +34,14 @@ import com.oslofjorden.model.MarkerTypes
 import com.oslofjorden.model.PolylineData
 import com.oslofjorden.permissions.PermissionUtils
 import com.oslofjorden.usecase.chooseMapData.ChooseMapInfoDialog
-import com.oslofjorden.usecase.chooseMapData.mapDataChangedListener
+import com.oslofjorden.usecase.chooseMapData.MapDataChangedListener
 import com.oslofjorden.usecase.removeAds.AdHandler
-import com.oslofjorden.usecase.removeAds.AppPurchasedListener
 import com.oslofjorden.usecase.welcomeUser.WelcomeDialog
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.bottomsheet.*
 import org.jetbrains.anko.longToast
 
-class MapsActivity : AppCompatActivity(), OnMapReadyCallback, mapDataChangedListener, LifecycleOwner, ActivityCompat.OnRequestPermissionsResultCallback, AppPurchasedListener {
+class MapsActivity : AppCompatActivity(), OnMapReadyCallback, MapDataChangedListener, LifecycleOwner, ActivityCompat.OnRequestPermissionsResultCallback {
 
     private val LOCATION_PERMISSION_REQUEST_CODE = 1
     private lateinit var clickedClusterItem: Marker
@@ -65,7 +64,36 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, mapDataChangedList
         setToolbar()
         initMap()
         showBottomSheetLoading()
+        observeViewModelValues()
+        initButtons()
+    }
 
+    private fun initButtons() {
+        onofflocationbutton.setOnClickListener {
+            if (!hasPermission()) {
+                requestPermission()
+                return@setOnClickListener
+            } else {
+
+                if (viewModel.locationEnabled.value!!) {
+                    disableLocationUpdates(viewModel, mMap)
+                } else {
+                    enableLocationUpdates()
+                }
+            }
+        }
+
+        buyButton.setOnClickListener {
+            viewModel.purchase(this)
+        }
+
+        layersButton.setOnClickListener {
+            // Show the choose map info dialog
+            showMapInfoDialog(viewModel.currentMapItems)
+        }
+    }
+
+    private fun observeViewModelValues() {
         viewModel.mapData.observe(this, Observer {
             when (it) {
                 is PolylineData -> polylineData = it
@@ -120,29 +148,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, mapDataChangedList
                 longToast(it)
             }
         })
-
-        onofflocationbutton.setOnClickListener {
-            if (!hasPermission()) {
-                requestPermission()
-                return@setOnClickListener
-            } else {
-
-                if (viewModel.locationEnabled.value!!) {
-                    disableLocationUpdates(viewModel, mMap)
-                } else {
-                    enableLocationUpdates()
-                }
-            }
-        }
-
-        buyButton.setOnClickListener {
-            viewModel.purchase(this)
-        }
-
-        layersButton.setOnClickListener {
-            // Show the choose map info dialog
-            showMapInfoDialog(viewModel.currentMapItems)
-        }
     }
 
     @RequiresPermission(allOf = [Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION])
@@ -161,7 +166,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, mapDataChangedList
         viewModel.getLocationUpdates()
     }
 
-    fun setupViewModel() {
+    private fun setupViewModel() {
         viewModel = MapsActivityViewModel(application)
 
         // Inflate view and obtain an instance of the binding class.
@@ -207,7 +212,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, mapDataChangedList
         mapFragment.getMapAsync(this)
     }
 
-    fun showMapInfoDialog(userChecks: MutableLiveData<BooleanArray>) {
+    private fun showMapInfoDialog(userChecks: MutableLiveData<BooleanArray>) {
         val mapInfoDialog = ChooseMapInfoDialog()
         val bundle = Bundle()
         bundle.putBooleanArray("userChecks", userChecks.value)

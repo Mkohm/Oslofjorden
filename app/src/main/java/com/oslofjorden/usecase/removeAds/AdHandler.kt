@@ -14,8 +14,8 @@ import kotlinx.android.synthetic.main.activity_main.*
 
 // Static helper class for creating an adview
 object AdHandler {
-    private val testID = "ca-app-pub-3940256099942544/6300978111"
-    private val prodID = "ca-app-pub-8816231201193091/8419082785"
+    private const val testID = "ca-app-pub-3940256099942544/6300978111"
+    private const val prodID = "ca-app-pub-8816231201193091/8419082785"
 
     fun createAd(activity: AppCompatActivity) {
         // Since both size and id have to be set programatically or via xml and we want to change
