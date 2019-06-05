@@ -1,6 +1,6 @@
 <resources>
     <string name="title_activity_maps">Oslofjorden</string>
-    <string name="google_app_id">29427722334</string>
+    <string name="google_app_id">1:29427722334:android:4b2faf8feeabea01</string>
     <string name="kyststier">Kyststier</string>
     <string name="badeplasser">Badeplasser</string>
     <string name="b_tramper">Båtramper</string>
@@ -26,7 +26,7 @@
     <string name="kj_p">Kjøp</string>
     <string name="app_name">Oslofjorden Båt og Turguide</string>
     <string name="developer_error">Developer error</string>
-    <string name="error">An error occured</string>
+    <string name="error">An error occurred</string>
     <string name="billing_unavailable">Billing unavailable</string>
     <string name="feature_not_supported">Feature not supported</string>
     <string name="service_disconnected">Service disconnected</string>

@@ -20,6 +20,7 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
+import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Polyline
 import com.google.maps.android.clustering.ClusterManager
@@ -250,6 +251,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, mapDataChangedList
         val markersToAdd = markerData?.markers?.filter { marker -> marker.markerTypes.contains(markerType) }
         markersToAdd?.let {
             clusterManager?.addItems(markersToAdd)
+            clusterManager?.cluster()
         }
     }
 
@@ -274,9 +276,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, mapDataChangedList
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
 
-        viewModel.currentLocation.value?.let {
-            updateCameraPosition(it)
-        }
+        setInitialZoomLevel()
 
         setUpClusterer(googleMap)
 
@@ -303,13 +303,17 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, mapDataChangedList
         }
     }
 
+    private fun setInitialZoomLevel() {
+        mMap?.moveCamera(CameraUpdateFactory.newLatLngZoom(viewModel.currentLocation.value, 13f))
+    }
+
     private fun setOriginalPolylineColor() {
         previousPolylineClicked?.color = polylineData?.polylines?.get(previousPolylineClicked?.points)?.options!!.color
     }
 
     private fun showWelcomeDialog() = WelcomeDialog().show(supportFragmentManager, "test")
 
-    private fun updateCameraPosition(coordinates: LatLng) = mMap?.animateCamera(CameraUpdateFactory.newLatLngZoom(coordinates, 13f))
+    private fun updateCameraPosition(coordinates: LatLng) = mMap?.animateCamera(CameraUpdateFactory.newLatLng(coordinates))
 
     private fun setUpClusterer(googleMap: GoogleMap) {
         clusterManager = ClusterManager(this, googleMap)
