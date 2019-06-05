@@ -1,42 +1,27 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <!-- Settings, should always be in the overflow, this is not used!!!!!!!!!!!!!!!!!!!!    -->
-
     <group android:checkableBehavior="all">
         <item
             android:id="@+id/kyststier"
-            android:title="@string/kyststier"
-            app:showAsAction="always"
             android:checkable="true"
-
-            >
-
-        </item>
+            android:title="@string/kyststier"
+            app:showAsAction="ifRoom" />
 
         <item
             android:id="@+id/badeplasser"
             android:title="@string/badeplasser"
-            app:showAsAction="always">
-
-
-        </item>
+            app:showAsAction="always" />
 
         <item
             android:id="@+id/baatramper"
             android:title="@string/b_tramper"
-            app:showAsAction="always">
-
-        </item>
+            app:showAsAction="always" />
 
         <item
             android:id="@+id/butikk"
             android:title="@string/butikk"
-            app:showAsAction="never"
-
-            >
-
-        </item>
+            app:showAsAction="never" />
 
         <item
             android:id="@+id/spisested"
@@ -95,8 +80,8 @@
 
         <item
             android:id="@+id/mer"
-            android:title="@string/mer"
-            android:checkable="false">
+            android:checkable="false"
+            android:title="@string/mer">
 
             <menu>
                 <group android:checkableBehavior="all">
@@ -135,9 +120,5 @@
             </menu>
 
         </item>
-
-
     </group>
-
-
 </menu>

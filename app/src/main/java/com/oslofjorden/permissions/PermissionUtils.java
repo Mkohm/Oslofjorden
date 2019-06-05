@@ -17,8 +17,9 @@
 package com.oslofjorden.permissions;
 
 import android.content.pm.PackageManager;
-import androidx.core.app.ActivityCompat;
+
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 
 /**
  * Utility class for access to runtime permissions.

@@ -48,7 +48,7 @@
                     android:background="@android:color/transparent"
                     android:clickable="@{viewmodel.mapData != null}"
                     android:contentDescription="@string/velg_info_knapp"
-                    android:paddingRight="8dp"
+                    android:layout_marginEnd="8dp"
                     android:src="@{viewmodel.mapData != null ? @drawable/ic_layers_white_24dp : @drawable/ic_layers_gray}" />
 
                 <ImageButton
@@ -59,7 +59,7 @@
                     android:adjustViewBounds="false"
                     android:background="@android:color/transparent"
                     android:contentDescription="@string/skru_p_posisjon"
-                    android:paddingRight="8dp"
+                    android:layout_marginEnd="8dp"
                     android:src="@{viewmodel.locationEnabled ? @drawable/ic_location_on : @drawable/ic_location_off}" />
 
             </androidx.appcompat.widget.Toolbar>
@@ -79,9 +79,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_below="@id/my_toolbar"
-                android:background="@color/gray"
                 android:clickable="true"
                 android:focusable="true"
+                android:background="@color/gray"
                 android:visibility="@{viewmodel.hasPurchasedRemoveAds ? View.GONE : View.VISIBLE}">
 
                 <LinearLayout
@@ -113,7 +113,6 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
-                        android:layout_marginLeft="8dp"
                         android:text="@string/kj_p"
                         tools:text="Kjøp" />
 

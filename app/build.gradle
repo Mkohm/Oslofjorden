@@ -51,6 +51,7 @@ android {
 
     lintOptions {
         baseline file("lint-baseline.xml")
+        disable 'GradleDependency'
         warningsAsErrors true
         abortOnError true
     }
@@ -80,5 +81,4 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     testImplementation "androidx.arch.core:core-testing:2.0.1"
 
-    kapt "androidx.lifecycle:lifecycle-compiler:2.0.0"
 }

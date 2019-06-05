@@ -32,11 +32,11 @@ import com.oslofjorden.model.Marker
 import com.oslofjorden.model.MarkerData
 import com.oslofjorden.model.MarkerTypes
 import com.oslofjorden.model.PolylineData
-import com.oslofjorden.usecase.removeAds.AppPurchasedListener
 import com.oslofjorden.permissions.PermissionUtils
 import com.oslofjorden.usecase.chooseMapData.ChooseMapInfoDialog
 import com.oslofjorden.usecase.chooseMapData.mapDataChangedListener
 import com.oslofjorden.usecase.removeAds.AdHandler
+import com.oslofjorden.usecase.removeAds.AppPurchasedListener
 import com.oslofjorden.usecase.welcomeUser.WelcomeDialog
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.bottomsheet.*
@@ -297,7 +297,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, mapDataChangedList
             previousPolylineClicked = polyline
         }
 
-        googleMap.setOnMapClickListener { latLng ->
+        googleMap.setOnMapClickListener {
             bottomSheetController.hideBottomSheet()
             setOriginalPolylineColor()
         }

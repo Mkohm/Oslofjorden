@@ -1,8 +1,8 @@
 package com.oslofjorden.data
 
-import androidx.lifecycle.MutableLiveData
 import android.content.Context
 import android.util.Log
+import androidx.lifecycle.MutableLiveData
 import com.oslofjorden.usecase.browseMap.MapsActivity
 
 class SharedPreferencesReader(private val context: Context) : SharedPreferencesDAO {

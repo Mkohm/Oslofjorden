@@ -1,10 +1,10 @@
 package com.oslofjorden.usecase.removeAds
 
-import androidx.appcompat.app.AppCompatActivity
 import android.view.ViewGroup
 import android.widget.RelativeLayout
 import android.widget.RelativeLayout.BELOW
 import android.widget.RelativeLayout.CENTER_IN_PARENT
+import androidx.appcompat.app.AppCompatActivity
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView

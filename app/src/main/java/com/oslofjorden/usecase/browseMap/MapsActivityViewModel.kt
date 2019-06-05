@@ -10,17 +10,22 @@ import com.android.billingclient.api.Purchase
 import com.android.billingclient.api.PurchasesUpdatedListener
 import com.google.android.gms.maps.model.LatLng
 import com.oslofjorden.R
-import com.oslofjorden.data.*
+import com.oslofjorden.data.MarkerDataRepository
+import com.oslofjorden.data.MarkerReaderFromGPX
+import com.oslofjorden.data.PolylineReader
+import com.oslofjorden.data.PolylineRepository
+import com.oslofjorden.data.SharedPreferencesRepository
+import com.oslofjorden.data.SharedPreferencesReader
+import com.oslofjorden.data.LocationInteractor
+import com.oslofjorden.data.AndroidLocationProvider
 import com.oslofjorden.model.MergedData
 import com.oslofjorden.usecase.removeAds.InAppPurchaseInteractor
 
-class MapsActivityViewModel(private val myApplication: Application) : AndroidViewModel(Application()),
-    PurchasesUpdatedListener {
+class MapsActivityViewModel(private val myApplication: Application) : AndroidViewModel(Application()), PurchasesUpdatedListener {
 
     private val markerDataRepository = MarkerDataRepository(MarkerReaderFromGPX(myApplication.applicationContext))
     private val polylineRepository = PolylineRepository(PolylineReader(myApplication.applicationContext))
-    private val sharedPreferencesRepository =
-        SharedPreferencesRepository(SharedPreferencesReader(myApplication.applicationContext))
+    private val sharedPreferencesRepository = SharedPreferencesRepository(SharedPreferencesReader(myApplication.applicationContext))
 
     private val locationInteractor = LocationInteractor(AndroidLocationProvider(myApplication.applicationContext))
     private val inAppPurchaseInteractor = InAppPurchaseInteractor

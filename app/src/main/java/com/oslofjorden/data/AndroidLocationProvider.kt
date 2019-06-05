@@ -2,9 +2,9 @@ package com.oslofjorden.data
 
 import android.Manifest.permission.ACCESS_COARSE_LOCATION
 import android.Manifest.permission.ACCESS_FINE_LOCATION
-import androidx.lifecycle.MutableLiveData
 import android.content.Context
 import androidx.annotation.RequiresPermission
+import androidx.lifecycle.MutableLiveData
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
