@@ -1,10 +1,8 @@
 apply plugin: 'com.android.application'
-
 apply plugin: 'kotlin-android'
-
 apply plugin: 'kotlin-android-extensions'
-
 apply plugin: 'kotlin-kapt'
+apply plugin: 'com.google.gms.google-services'
 
 /**
  * Use the number of seconds/10 since Jan 1 2016 as the versionCode.
@@ -29,7 +27,7 @@ android {
     compileSdkVersion 28
     defaultConfig {
         applicationId "com.oslofjorden"
-        minSdkVersion 15
+        minSdkVersion 21
         targetSdkVersion 28
         versionCode vcode
         versionName "2.1." + getDate()
@@ -53,6 +51,7 @@ android {
 
     lintOptions {
         baseline file("lint-baseline.xml")
+        disable 'GradleDependency'
         warningsAsErrors true
         abortOnError true
     }
@@ -70,15 +69,16 @@ dependencies {
     implementation 'com.google.android.material:material:1.0.0'
     implementation 'com.android.billingclient:billing:1.1'
     implementation 'com.google.android.gms:play-services-location:16.0.0'
-    implementation 'com.google.android.gms:play-services-maps:16.1.0'
+    implementation 'com.google.android.gms:play-services-maps:16.0.0'
     implementation 'com.google.maps.android:android-maps-utils:0.5'
-    implementation 'com.google.android.gms:play-services-ads:17.2.1'
+    implementation 'com.google.android.gms:play-services-ads:16.0.0'
 
+    implementation 'com.google.firebase:firebase-messaging:18.0.0'
+    implementation 'com.google.firebase:firebase-core:16.0.0'
     androidTestImplementation 'androidx.test:runner:1.2.0'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
 
     testImplementation 'junit:junit:4.12'
     testImplementation "androidx.arch.core:core-testing:2.0.1"
 
-    kapt "androidx.lifecycle:lifecycle-compiler:2.0.0"
 }
