@@ -96,6 +96,62 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, MapDataChangedList
 
     @SuppressLint("MissingPermission")
     private fun observeViewModelValues() {
+        observeMapData()
+        observeHasPurchasedRemovedAds()
+        observeSelectedMapItems()
+        observeFirstTimeLaunchingApp()
+        observeCurrentLocation()
+        observeInAppPurchaseStatus()
+    }
+
+    private fun observeInAppPurchaseStatus() {
+        viewModel.inAppPurchaseStatus.observeOnce(this, Observer { statusMessage ->
+            longToast(statusMessage)
+        })
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun observeCurrentLocation() {
+        viewModel.currentLocation.observe(this, Observer { currentLocation ->
+            currentLocation?.let {
+                updateCameraPosition(currentLocation)
+                setLocationDot(mMap)
+            }
+        })
+    }
+
+    private fun observeFirstTimeLaunchingApp() {
+        viewModel.firstTimeLaunchingApp.observe(this, Observer { firstTimeLaunchingApp ->
+            when (firstTimeLaunchingApp) {
+                true -> {
+                    showWelcomeDialog()
+                    viewModel.setWelcomeDialogShown()
+                }
+            }
+        })
+    }
+
+    private fun observeSelectedMapItems() {
+        viewModel.currentMapItems.observe(this, Observer { currentMapItems ->
+            // When there is a change in the app items we want to reload the items on the map
+            currentMapItems?.let { _ ->
+                clusterManager?.let {
+                    loadCheckedItems(currentMapItems)
+                }
+            }
+        })
+    }
+
+    private fun observeHasPurchasedRemovedAds() {
+        viewModel.hasPurchasedRemoveAds.observe(this, Observer { inAppPurchased ->
+            when (inAppPurchased) {
+                false -> AdHandler.createAd(this)
+                // when inAppPurchased is true, the ad is removed by itself by data binding.
+            }
+        })
+    }
+
+    private fun observeMapData() {
         viewModel.mapData.observe(this, Observer {
             when (it) {
                 is PolylineData -> polylineData = it
@@ -106,42 +162,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, MapDataChangedList
             if (polylineData != null && markerData != null) {
                 addDataToMap()
             }
-        })
-
-        viewModel.hasPurchasedRemoveAds.observe(this, Observer { inAppPurchased ->
-            when (inAppPurchased) {
-                false -> AdHandler.createAd(this)
-                // when inAppPurchased is true, the ad is removed by itself by data binding.
-            }
-        })
-
-        viewModel.currentMapItems.observe(this, Observer { currentMapItems ->
-            // When there is a change in the app items we want to reload the items on the map
-            currentMapItems?.let { _ ->
-                clusterManager?.let {
-                    loadCheckedItems(currentMapItems)
-                }
-            }
-        })
-
-        viewModel.firstTimeLaunchingApp.observe(this, Observer { firstTimeLaunchingApp ->
-            when (firstTimeLaunchingApp) {
-                true -> {
-                    showWelcomeDialog()
-                    viewModel.setWelcomeDialogShown()
-                }
-            }
-        })
-
-        viewModel.currentLocation.observe(this, Observer { currentLocation ->
-            currentLocation?.let {
-                updateCameraPosition(currentLocation)
-                setLocationDot(mMap)
-            }
-        })
-
-        viewModel.inAppPurchaseStatus.observeOnce(this, Observer { statusMessage ->
-            longToast(statusMessage)
         })
     }
 
