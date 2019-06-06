@@ -183,10 +183,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, MapDataChangedList
         bottomSheetController.expandBottomSheet()
     }
 
-    override fun onPurchaseSuccess() {
-        adLayout.visibility = View.GONE
-    }
-
     private fun requestPermission() = PermissionUtils.requestPermission(this, LOCATION_PERMISSION_REQUEST_CODE, Manifest.permission.ACCESS_FINE_LOCATION, true)
 
     private fun hasPermission(): Boolean = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
