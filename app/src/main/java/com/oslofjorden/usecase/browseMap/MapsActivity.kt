@@ -100,14 +100,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, MapDataChangedList
                 is MarkerData -> markerData = it
             }
 
-            val currentMapItems = viewModel.currentMapItems.value
+            // The polylines and markers are finished loading
             if (polylineData != null && markerData != null) {
-
-                // The polylines and markers are finished loading
-                currentMapItems?.let { mapItems ->
-                    loadCheckedItems(mapItems)
-                    bottomSheetController.finishLoading()
-                }
+                addDataToMap()
             }
         })
 
@@ -131,7 +126,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, MapDataChangedList
             when (firstTimeLaunchingApp) {
                 true -> {
                     showWelcomeDialog()
-                    viewModel.setInfoMessageShown()
+                    viewModel.setWelcomeDialogShown()
                 }
             }
         })
@@ -144,10 +139,15 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, MapDataChangedList
         })
 
         viewModel.inAppPurchaseStatus.observeOnce(this, Observer { statusMessage ->
-            statusMessage?.let {
-                longToast(it)
-            }
+            longToast(statusMessage)
         })
+    }
+
+    private fun addDataToMap() {
+        viewModel.currentMapItems.value?.let { mapItems ->
+            loadCheckedItems(mapItems)
+            bottomSheetController.finishLoading()
+        }
     }
 
     @RequiresPermission(allOf = [Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION])

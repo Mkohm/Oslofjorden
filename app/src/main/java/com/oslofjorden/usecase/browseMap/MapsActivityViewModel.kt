@@ -70,7 +70,7 @@ class MapsActivityViewModel(private val myApplication: Application) : AndroidVie
         }
     }
 
-    fun setInfoMessageShown() {
+    fun setWelcomeDialogShown() {
         sharedPreferencesRepository.setAppOpenedBefore(firstTimeLaunchingApp)
     }
 
