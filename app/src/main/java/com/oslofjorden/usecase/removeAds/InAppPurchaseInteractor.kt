@@ -17,6 +17,7 @@ object InAppPurchaseInteractor {
             override fun onBillingSetupFinished(@BillingClient.BillingResponse billingResponseCode: Int) {
                 if (billingResponseCode == BillingClient.BillingResponse.OK) {
                     // The billing client is ready. We will now enable the buy button
+                    // TODO: Enable the buy button
                 }
             }
 

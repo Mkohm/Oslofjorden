@@ -34,15 +34,14 @@ import com.oslofjorden.model.MarkerTypes
 import com.oslofjorden.model.PolylineData
 import com.oslofjorden.permissions.PermissionUtils
 import com.oslofjorden.usecase.chooseMapData.ChooseMapInfoDialog
-import com.oslofjorden.usecase.chooseMapData.mapDataChangedListener
+import com.oslofjorden.usecase.chooseMapData.MapDataChangedListener
 import com.oslofjorden.usecase.removeAds.AdHandler
-import com.oslofjorden.usecase.removeAds.AppPurchasedListener
 import com.oslofjorden.usecase.welcomeUser.WelcomeDialog
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.bottomsheet.*
 import org.jetbrains.anko.longToast
 
-class MapsActivity : AppCompatActivity(), OnMapReadyCallback, mapDataChangedListener, LifecycleOwner, ActivityCompat.OnRequestPermissionsResultCallback, AppPurchasedListener {
+class MapsActivity : AppCompatActivity(), OnMapReadyCallback, MapDataChangedListener, LifecycleOwner, ActivityCompat.OnRequestPermissionsResultCallback {
 
     private val LOCATION_PERMISSION_REQUEST_CODE = 1
     private lateinit var clickedClusterItem: Marker
@@ -65,62 +64,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, mapDataChangedList
         setToolbar()
         initMap()
         showBottomSheetLoading()
+        observeViewModelValues()
+        initButtons()
+    }
 
-        viewModel.mapData.observe(this, Observer {
-            when (it) {
-                is PolylineData -> polylineData = it
-                is MarkerData -> markerData = it
-            }
-
-            val currentMapItems = viewModel.currentMapItems.value
-            if (polylineData != null && markerData != null) {
-
-                // The polylines and markers are finished loading
-                currentMapItems?.let { mapItems ->
-                    loadCheckedItems(mapItems)
-                    bottomSheetController.finishLoading()
-                }
-            }
-        })
-
-        viewModel.hasPurchasedRemoveAds.observe(this, Observer { inAppPurchased ->
-            when (inAppPurchased) {
-                false -> AdHandler.createAd(this)
-                // when inAppPurchased is true, the ad is removed by itself by data binding.
-            }
-        })
-
-        viewModel.currentMapItems.observe(this, Observer { currentMapItems ->
-            // When there is a change in the app items we want to reload the items on the map
-            currentMapItems?.let { _ ->
-                clusterManager?.let {
-                    loadCheckedItems(currentMapItems)
-                }
-            }
-        })
-
-        viewModel.firstTimeLaunchingApp.observe(this, Observer { firstTimeLaunchingApp ->
-            when (firstTimeLaunchingApp) {
-                true -> {
-                    showWelcomeDialog()
-                    viewModel.setInfoMessageShown()
-                }
-            }
-        })
-
-        viewModel.currentLocation.observe(this, Observer { currentLocation ->
-            currentLocation?.let {
-                updateCameraPosition(currentLocation)
-                setLocationDot(mMap)
-            }
-        })
-
-        viewModel.inAppPurchaseStatus.observeOnce(this, Observer { statusMessage ->
-            statusMessage?.let {
-                longToast(it)
-            }
-        })
-
+    @SuppressLint("MissingPermission")
+    private fun initButtons() {
         onofflocationbutton.setOnClickListener {
             if (!hasPermission()) {
                 requestPermission()
@@ -145,6 +94,84 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, mapDataChangedList
         }
     }
 
+    @SuppressLint("MissingPermission")
+    private fun observeViewModelValues() {
+        observeMapData()
+        observeHasPurchasedRemovedAds()
+        observeSelectedMapItems()
+        observeFirstTimeLaunchingApp()
+        observeCurrentLocation()
+        observeInAppPurchaseStatus()
+    }
+
+    private fun observeInAppPurchaseStatus() {
+        viewModel.inAppPurchaseStatus.observeOnce(this, Observer { statusMessage ->
+            longToast(statusMessage)
+        })
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun observeCurrentLocation() {
+        viewModel.currentLocation.observe(this, Observer { currentLocation ->
+            currentLocation?.let {
+                updateCameraPosition(currentLocation)
+                setLocationDot(mMap)
+            }
+        })
+    }
+
+    private fun observeFirstTimeLaunchingApp() {
+        viewModel.firstTimeLaunchingApp.observe(this, Observer { firstTimeLaunchingApp ->
+            when (firstTimeLaunchingApp) {
+                true -> {
+                    showWelcomeDialog()
+                    viewModel.setWelcomeDialogShown()
+                }
+            }
+        })
+    }
+
+    private fun observeSelectedMapItems() {
+        viewModel.currentMapItems.observe(this, Observer { currentMapItems ->
+            // When there is a change in the app items we want to reload the items on the map
+            currentMapItems?.let { _ ->
+                clusterManager?.let {
+                    loadCheckedItems(currentMapItems)
+                }
+            }
+        })
+    }
+
+    private fun observeHasPurchasedRemovedAds() {
+        viewModel.hasPurchasedRemoveAds.observe(this, Observer { inAppPurchased ->
+            when (inAppPurchased) {
+                false -> AdHandler.createAd(this)
+                // when inAppPurchased is true, the ad is removed by itself by data binding.
+            }
+        })
+    }
+
+    private fun observeMapData() {
+        viewModel.mapData.observe(this, Observer {
+            when (it) {
+                is PolylineData -> polylineData = it
+                is MarkerData -> markerData = it
+            }
+
+            // The polylines and markers are finished loading
+            if (polylineData != null && markerData != null) {
+                addDataToMap()
+            }
+        })
+    }
+
+    private fun addDataToMap() {
+        viewModel.currentMapItems.value?.let { mapItems ->
+            loadCheckedItems(mapItems)
+            bottomSheetController.finishLoading()
+        }
+    }
+
     @RequiresPermission(allOf = [Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION])
     private fun setLocationDot(mMap: GoogleMap?) {
         mMap?.isMyLocationEnabled = true
@@ -161,7 +188,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, mapDataChangedList
         viewModel.getLocationUpdates()
     }
 
-    fun setupViewModel() {
+    private fun setupViewModel() {
         viewModel = MapsActivityViewModel(application)
 
         // Inflate view and obtain an instance of the binding class.
@@ -176,10 +203,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, mapDataChangedList
         bottomSheetController = BottomSheetController(bottom_sheet, this)
         bottomSheetController.setLoadingText()
         bottomSheetController.expandBottomSheet()
-    }
-
-    override fun onPurchaseSuccess() {
-        adLayout.visibility = View.GONE
     }
 
     private fun requestPermission() = PermissionUtils.requestPermission(this, LOCATION_PERMISSION_REQUEST_CODE, Manifest.permission.ACCESS_FINE_LOCATION, true)
@@ -207,7 +230,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, mapDataChangedList
         mapFragment.getMapAsync(this)
     }
 
-    fun showMapInfoDialog(userChecks: MutableLiveData<BooleanArray>) {
+    private fun showMapInfoDialog(userChecks: MutableLiveData<BooleanArray>) {
         val mapInfoDialog = ChooseMapInfoDialog()
         val bundle = Bundle()
         bundle.putBooleanArray("userChecks", userChecks.value)
@@ -230,14 +253,14 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, mapDataChangedList
             val type = MarkerTypes.getTypeFromIndex(i)
 
             if (checkedList[i]) {
-                if (type.equals(MarkerTypes.PATHS)) {
+                if (type == MarkerTypes.PATHS) {
                     addPolylines()
                 } else {
                     addMarkersToMap(type)
                 }
                 // It was not checked
             } else {
-                if (type.equals(MarkerTypes.PATHS)) {
+                if (type == MarkerTypes.PATHS) {
                     removePolylines()
                 }
             }

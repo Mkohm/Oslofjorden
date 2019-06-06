@@ -17,11 +17,9 @@ import java.io.Reader
 class MarkerReaderFromGPX(private val context: Context) : MarkerDAO {
     override fun readMarkers(markers: MutableLiveData<MarkerData>) {
         doAsync {
-
             val result = read(context)
 
             uiThread {
-
                 // Update the livedata with the loaded markers
                 markers.postValue(result)
             }

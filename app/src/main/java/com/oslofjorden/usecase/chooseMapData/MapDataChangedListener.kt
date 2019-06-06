@@ -1,6 +1,6 @@
 package com.oslofjorden.usecase.chooseMapData
 
-interface mapDataChangedListener {
+interface MapDataChangedListener {
     fun onDialogPositiveClick(newMapItems: BooleanArray)
     fun onDialogNegativeClick()
 }
