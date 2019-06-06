@@ -68,6 +68,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, MapDataChangedList
         initButtons()
     }
 
+    @SuppressLint("MissingPermission")
     private fun initButtons() {
         onofflocationbutton.setOnClickListener {
             if (!hasPermission()) {
@@ -93,6 +94,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, MapDataChangedList
         }
     }
 
+    @SuppressLint("MissingPermission")
     private fun observeViewModelValues() {
         viewModel.mapData.observe(this, Observer {
             when (it) {
