@@ -23,7 +23,7 @@
         app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior">
 
         <TextView
-            android:id="@+id/title"
+            android:id="@+id/loading_text"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
@@ -33,6 +33,21 @@
             android:textSize="16sp"
             android:textStyle="bold"
             tools:text="Tur bygdøy rundt." />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"
+            tools:text="Personvern"
+            android:id="@+id/title"
+            android:textStyle="bold"
+            android:textSize="16sp"
+            android:textColor="@android:color/black"
+            android:layout_height="wrap_content">
+
+
+        </TextView>
 
         <TextView
             android:id="@+id/description"
