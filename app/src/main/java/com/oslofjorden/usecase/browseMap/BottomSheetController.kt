@@ -46,12 +46,6 @@ class BottomSheetController(private val view: LinearLayout, private val activity
                activity.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://mkohm.github.io")))
             }
         }
-
-     /*   val descriptionTextview = view.findViewById<TextView>(R.id.description)
-        descriptionTextview.visibility = View.GONE
-
-        val button = view.findViewById<Button>(R.id.url)
-        button.visibility = View.GONE*/
     }
 
     fun finishLoading() {
