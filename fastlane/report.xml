@@ -5,32 +5,29 @@
     
     
       
-      <testcase classname="fastlane.lanes" name="0: update_fastlane" time="0.167739">
+      <testcase classname="fastlane.lanes" name="0: update_fastlane" time="0.208548">
         
       </testcase>
     
       
-      <testcase classname="fastlane.lanes" name="1: default_platform" time="0.000976">
+      <testcase classname="fastlane.lanes" name="1: default_platform" time="0.001776">
         
       </testcase>
     
       
-      <testcase classname="fastlane.lanes" name="2: gradle" time="9.50074">
+      <testcase classname="fastlane.lanes" name="2: gradle" time="9.718744">
         
       </testcase>
     
       
-      <testcase classname="fastlane.lanes" name="3: gradle" time="49.682108">
+      <testcase classname="fastlane.lanes" name="3: gradle" time="72.090427">
         
       </testcase>
     
       
-      <testcase classname="fastlane.lanes" name="4: supply" time="117.383596">
+      <testcase classname="fastlane.lanes" name="4: supply" time="0.169163">
         
-      </testcase>
-    
-      
-      <testcase classname="fastlane.lanes" name="5: slack" time="0.503343">
+          <failure message="/Library/Ruby/Gems/2.3.0/gems/fastlane-2.125.2/fastlane/lib/fastlane/actions/actions_helper.rb:48:in `execute_action'&#10;/Library/Ruby/Gems/2.3.0/gems/fastlane-2.125.2/fastlane/lib/fastlane/runner.rb:235:in `block in execute_action'&#10;/Library/Ruby/Gems/2.3.0/gems/fastlane-2.125.2/fastlane/lib/fastlane/runner.rb:227:in `chdir'&#10;/Library/Ruby/Gems/2.3.0/gems/fastlane-2.125.2/fastlane/lib/fastlane/runner.rb:227:in `execute_action'&#10;/Library/Ruby/Gems/2.3.0/gems/fastlane-2.125.2/fastlane/lib/fastlane/runner.rb:157:in `trigger_action_by_name'&#10;/Library/Ruby/Gems/2.3.0/gems/fastlane-2.125.2/fastlane/lib/fastlane/fast_file.rb:154:in `method_missing'&#10;Fastfile:47:in `block (2 levels) in parsing_binding'&#10;/Library/Ruby/Gems/2.3.0/gems/fastlane-2.125.2/fastlane/lib/fastlane/lane.rb:33:in `call'&#10;/Library/Ruby/Gems/2.3.0/gems/fastlane-2.125.2/fastlane/lib/fastlane/runner.rb:49:in `block in execute'&#10;/Library/Ruby/Gems/2.3.0/gems/fastlane-2.125.2/fastlane/lib/fastlane/runner.rb:45:in `chdir'&#10;/Library/Ruby/Gems/2.3.0/gems/fastlane-2.125.2/fastlane/lib/fastlane/runner.rb:45:in `execute'&#10;/Library/Ruby/Gems/2.3.0/gems/fastlane-2.125.2/fastlane/lib/fastlane/lane_manager.rb:56:in `cruise_lane'&#10;/Library/Ruby/Gems/2.3.0/gems/fastlane-2.125.2/fastlane/lib/fastlane/command_line_handler.rb:36:in `handle'&#10;/Library/Ruby/Gems/2.3.0/gems/fastlane-2.125.2/fastlane/lib/fastlane/commands_generator.rb:108:in `block (2 levels) in run'&#10;/Library/Ruby/Gems/2.3.0/gems/commander-fastlane-4.4.6/lib/commander/command.rb:178:in `call'&#10;/Library/Ruby/Gems/2.3.0/gems/commander-fastlane-4.4.6/lib/commander/command.rb:153:in `run'&#10;/Library/Ruby/Gems/2.3.0/gems/commander-fastlane-4.4.6/lib/commander/runner.rb:476:in `run_active_command'&#10;/Library/Ruby/Gems/2.3.0/gems/fastlane-2.125.2/fastlane_core/lib/fastlane_core/ui/fastlane_runner.rb:76:in `run!'&#10;/Library/Ruby/Gems/2.3.0/gems/commander-fastlane-4.4.6/lib/commander/delegates.rb:15:in `run!'&#10;/Library/Ruby/Gems/2.3.0/gems/fastlane-2.125.2/fastlane/lib/fastlane/commands_generator.rb:333:in `run'&#10;/Library/Ruby/Gems/2.3.0/gems/fastlane-2.125.2/fastlane/lib/fastlane/commands_generator.rb:41:in `start'&#10;/Library/Ruby/Gems/2.3.0/gems/fastlane-2.125.2/fastlane/lib/fastlane/cli_tools_distributor.rb:119:in `take_off'&#10;/Library/Ruby/Gems/2.3.0/gems/fastlane-2.125.2/bin/fastlane:23:in `&lt;top (required)&gt;'&#10;/usr/local/bin/fastlane:22:in `load'&#10;/usr/local/bin/fastlane:22:in `&lt;main&gt;'&#10;&#10;Failed to open TCP connection to www.googleapis.com:443 (getaddrinfo: nodename nor servname provided, or not known)" />
         
       </testcase>
     

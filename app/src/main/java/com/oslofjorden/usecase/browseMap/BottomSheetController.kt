@@ -28,7 +28,6 @@ class BottomSheetController(private val view: LinearLayout, private val activity
         val titleTextview = view.findViewById<TextView>(R.id.loading_text)
         titleTextview.text = activity.getString(R.string.bottom_sheet_loading_data)
 
-
         view.findViewById<TextView>(R.id.title).apply {
             text = activity.getString(R.string.privacy_policy)
             visibility = View.VISIBLE
@@ -43,7 +42,7 @@ class BottomSheetController(private val view: LinearLayout, private val activity
         view.findViewById<Button>(R.id.url).apply {
             visibility = View.VISIBLE
             setOnClickListener {
-               activity.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://mkohm.github.io")))
+                activity.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://mkohm.github.io")))
             }
         }
     }
