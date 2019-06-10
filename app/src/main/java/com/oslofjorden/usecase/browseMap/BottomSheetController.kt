@@ -6,12 +6,16 @@ import android.view.View
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.appcompat.widget.AppCompatCheckBox
 import androidx.browser.customtabs.CustomTabsIntent
 import com.google.android.gms.maps.model.Polyline
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.oslofjorden.R
+import com.oslofjorden.data.SharedPreferencesReader
+import com.oslofjorden.data.SharedPreferencesRepository
 import com.oslofjorden.model.Marker
 import com.oslofjorden.model.MarkerTypes
+import org.jetbrains.anko.find
 
 class BottomSheetController(private val view: LinearLayout, private val activity: MapsActivity) {
     private val behavior: BottomSheetBehavior<LinearLayout> = BottomSheetBehavior.from(view)
@@ -28,28 +32,56 @@ class BottomSheetController(private val view: LinearLayout, private val activity
         val titleTextview = view.findViewById<TextView>(R.id.loading_text)
         titleTextview.text = activity.getString(R.string.bottom_sheet_loading_data)
 
-        view.findViewById<TextView>(R.id.title).apply {
-            text = activity.getString(R.string.privacy_policy)
-            visibility = View.VISIBLE
-        }
-
-        // Enable the views that was disabled during loading
-        view.findViewById<TextView>(R.id.description).apply {
-            visibility = View.VISIBLE
-            text = activity.getString(R.string.privacy_policy_description)
-        }
-
-        view.findViewById<Button>(R.id.url).apply {
-            visibility = View.VISIBLE
-            setOnClickListener {
-                activity.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://mkohm.github.io")))
-            }
-        }
+        view.findViewById<TextView>(R.id.title).visibility = View.GONE
+        view.findViewById<TextView>(R.id.description).visibility = View.GONE
+        view.findViewById<TextView>(R.id.url).visibility = View.GONE
+        view.findViewById<AppCompatCheckBox>(R.id.checkBox).visibility = View.GONE
     }
 
     fun finishLoading() {
-        behavior.state = BottomSheetBehavior.STATE_EXPANDED
         view.findViewById<TextView>(R.id.loading_text).visibility = View.GONE
+
+        val privacyPolicyShouldBeShown = !SharedPreferencesRepository(SharedPreferencesReader(activity)).getPrivacyPolicyShown()
+        if (privacyPolicyShouldBeShown) {
+            behavior.state = BottomSheetBehavior.STATE_EXPANDED
+
+            view.findViewById<TextView>(R.id.title).apply {
+                visibility = View.VISIBLE
+                text = activity.getString(R.string.privacy_policy)
+            }
+
+            view.findViewById<TextView>(R.id.description).apply {
+                visibility = View.VISIBLE
+                text = activity.getString(R.string.privacy_policy_description)
+            }
+
+            view.findViewById<Button>(R.id.url).apply {
+                visibility = View.VISIBLE
+                setOnClickListener {
+                    activity.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://mkohm.github.io")))
+                }
+            }
+
+            view.findViewById<AppCompatCheckBox>(R.id.checkBox).apply {
+                visibility = View.VISIBLE
+
+                // Write the current set value
+                SharedPreferencesRepository(SharedPreferencesReader(activity)).setPrivacyPolicyShown(isChecked)
+
+                // Write on update to new value
+                setOnCheckedChangeListener { _, isChecked ->
+                    SharedPreferencesRepository(SharedPreferencesReader(activity)).setPrivacyPolicyShown(isChecked)
+                }
+            }
+
+
+        } else {
+            animateDown()
+        }
+    }
+
+    private fun animateDown() {
+        behavior.state = BottomSheetBehavior.STATE_HIDDEN
     }
 
     fun setPolylineContent(polyline: Polyline) {

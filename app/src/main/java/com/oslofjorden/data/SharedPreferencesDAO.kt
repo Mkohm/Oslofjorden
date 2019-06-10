@@ -11,4 +11,6 @@ interface SharedPreferencesDAO {
 
     fun setCurrentMapItems(newMapItems: BooleanArray, currentMapItems: MutableLiveData<BooleanArray>)
     fun getCurrentMapItems(currentMapItems: MutableLiveData<BooleanArray>)
+    fun getPrivacyPolicyShown(): Boolean
+    fun setPrivacyPolicyShown(boolean: Boolean)
 }
