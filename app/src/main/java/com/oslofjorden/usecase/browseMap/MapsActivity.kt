@@ -22,16 +22,14 @@ import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Polyline
+import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.maps.android.clustering.ClusterManager
 import com.google.maps.android.clustering.algo.GridBasedAlgorithm
 import com.google.maps.android.clustering.algo.PreCachingAlgorithmDecorator
 import com.google.maps.android.clustering.view.DefaultClusterRenderer
 import com.oslofjorden.R
 import com.oslofjorden.databinding.ActivityMainBinding
-import com.oslofjorden.model.Marker
-import com.oslofjorden.model.MarkerData
-import com.oslofjorden.model.MarkerTypes
-import com.oslofjorden.model.PolylineData
+import com.oslofjorden.model.*
 import com.oslofjorden.permissions.PermissionUtils
 import com.oslofjorden.usecase.chooseMapData.ChooseMapInfoDialog
 import com.oslofjorden.usecase.chooseMapData.MapDataChangedListener
@@ -52,6 +50,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, MapDataChangedList
     private var polylineData: PolylineData? = null
     private var markerData: MarkerData? = null
     private var polylinesOnMap = ArrayList<Polyline>()
+    private lateinit var firebaseAnalytics: FirebaseAnalytics
 
     private lateinit var viewModel: MapsActivityViewModel
 
@@ -59,6 +58,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, MapDataChangedList
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        initFirebaseAnalytics()
         setupViewModel()
         removeSplashScreen()
         setToolbar()
@@ -66,6 +66,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, MapDataChangedList
         showBottomSheetLoading()
         observeViewModelValues()
         initButtons()
+    }
+
+    private fun initFirebaseAnalytics() {
+        firebaseAnalytics = FirebaseAnalytics.getInstance(this)
     }
 
     @SuppressLint("MissingPermission")
@@ -309,6 +313,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, MapDataChangedList
         googleMap.uiSettings.isCompassEnabled = true
 
         googleMap.setOnPolylineClickListener { polyline: Polyline ->
+            logPolylineTapped(polyline)
+
             setOriginalPolylineColor()
 
             polyline.color = Color.BLACK
@@ -322,6 +328,13 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, MapDataChangedList
         googleMap.setOnMapClickListener {
             bottomSheetController.hideBottomSheet()
             setOriginalPolylineColor()
+        }
+    }
+
+    private fun logPolylineTapped(polyline: Polyline) {
+        Bundle().apply {
+            putString(FirebaseAnalytics.Param.ITEM_NAME, (polyline.tag as OslofjordenPolyline).title)
+            firebaseAnalytics.logEvent(FirebaseAnalytics.Event.VIEW_ITEM, this)
         }
     }
 
@@ -346,6 +359,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, MapDataChangedList
             clusterManager.renderer = DefaultClusterRenderer(applicationContext, googleMap, this.clusterManager)
 
             clusterManager.setOnClusterItemClickListener { item ->
+                logMarkerTapped(item)
                 setOriginalPolylineColor()
 
                 clickedClusterItem = item
@@ -365,6 +379,13 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, MapDataChangedList
             // Point the map's listeners at the listeners implemented by the cluster manager.
             googleMap.setOnCameraIdleListener(clusterManager)
             googleMap.setOnMarkerClickListener(clusterManager)
+        }
+    }
+
+    private fun logMarkerTapped(item: Marker) {
+        Bundle().apply {
+            putString(FirebaseAnalytics.Param.ITEM_NAME, item.title)
+            firebaseAnalytics.logEvent(FirebaseAnalytics.Event.VIEW_ITEM, this)
         }
     }
 
