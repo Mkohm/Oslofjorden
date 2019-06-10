@@ -1,5 +1,6 @@
 package com.oslofjorden.usecase.browseMap
 
+import android.content.Intent
 import android.net.Uri
 import android.view.View
 import android.widget.Button
@@ -24,25 +25,31 @@ class BottomSheetController(private val view: LinearLayout, private val activity
     }
 
     fun setLoadingText() {
-        val titleTextview = view.findViewById<TextView>(R.id.title)
+        val titleTextview = view.findViewById<TextView>(R.id.loading_text)
         titleTextview.text = activity.getString(R.string.bottom_sheet_loading_data)
 
-        val descriptionTextview = view.findViewById<TextView>(R.id.description)
-        descriptionTextview.visibility = View.GONE
+        view.findViewById<TextView>(R.id.title).apply {
+            text = activity.getString(R.string.privacy_policy)
+            visibility = View.VISIBLE
+        }
 
-        val button = view.findViewById<Button>(R.id.url)
-        button.visibility = View.GONE
+        // Enable the views that was disabled during loading
+        view.findViewById<TextView>(R.id.description).apply {
+            visibility = View.VISIBLE
+            text = activity.getString(R.string.privacy_policy_description)
+        }
+
+        view.findViewById<Button>(R.id.url).apply {
+            visibility = View.VISIBLE
+            setOnClickListener {
+                activity.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://mkohm.github.io")))
+            }
+        }
     }
 
     fun finishLoading() {
-        behavior.state = BottomSheetBehavior.STATE_HIDDEN
-
-        // Enable the views that was disabled during loading
-        val descriptionTextview = view.findViewById<TextView>(R.id.description)
-        descriptionTextview.visibility = View.VISIBLE
-
-        val button = view.findViewById<Button>(R.id.url)
-        button.visibility = View.VISIBLE
+        behavior.state = BottomSheetBehavior.STATE_EXPANDED
+        view.findViewById<TextView>(R.id.loading_text).visibility = View.GONE
     }
 
     fun setPolylineContent(polyline: Polyline) {

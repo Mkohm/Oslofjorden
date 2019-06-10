@@ -35,4 +35,7 @@
     <string name="item_not_owned">Item not owned</string>
     <string name="service_unavailable">Service unavailable</string>
     <string name="bottom_sheet_loading_data">Oslofjorden laster inn - vennligst vent…</string>
+    <string name="privacy_policy_description">Vi samler inn data for å gi deg en best mulig
+        app.</string>
+    <string name="privacy_policy">Personvernserklæring</string>
 </resources>
