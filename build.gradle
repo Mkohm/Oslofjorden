@@ -28,6 +28,7 @@ configurations {
 }
 
 repositories {
+    jcenter()
     mavenCentral()
 }
 dependencies {

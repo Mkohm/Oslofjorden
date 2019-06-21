@@ -17,7 +17,6 @@ import com.oslofjorden.model.Marker
 import com.oslofjorden.model.MarkerTypes
 import com.oslofjorden.model.OslofjordenPolyline
 
-
 class BottomSheetController(private val view: LinearLayout, private val activity: MapsActivity) {
     private val behavior: BottomSheetBehavior<LinearLayout> = BottomSheetBehavior.from(view)
 
