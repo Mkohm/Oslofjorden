@@ -27,4 +27,12 @@ class SharedPreferencesRepository(private val sharedPreferencesReader: SharedPre
     fun setAppOpenedBefore(isAppOpenedBefore: MutableLiveData<Boolean>) {
         sharedPreferencesReader.setAppOpenedBefore(isAppOpenedBefore)
     }
+
+    fun setPrivacyPolicyShown(boolean: Boolean) {
+        sharedPreferencesReader.setPrivacyPolicyShown(boolean)
+    }
+
+    fun getPrivacyPolicyShown(): Boolean {
+        return sharedPreferencesReader.getPrivacyPolicyShown()
+    }
 }

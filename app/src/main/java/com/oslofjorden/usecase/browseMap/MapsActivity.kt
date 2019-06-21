@@ -172,7 +172,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, MapDataChangedList
     private fun addDataToMap() {
         viewModel.currentMapItems.value?.let { mapItems ->
             loadCheckedItems(mapItems)
-            bottomSheetController.finishLoading()
+            bottomSheetController.finishLoadingAndShowPrivacyPolicy()
         }
     }
 

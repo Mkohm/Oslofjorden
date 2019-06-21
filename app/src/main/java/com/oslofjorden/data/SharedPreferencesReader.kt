@@ -6,6 +6,7 @@ import androidx.lifecycle.MutableLiveData
 import com.oslofjorden.usecase.browseMap.MapsActivity
 
 class SharedPreferencesReader(private val context: Context) : SharedPreferencesDAO {
+
     override fun isFirstTimeLaunchingApp(isFirstTimeLaunchingApp: MutableLiveData<Boolean>) {
 
         val sharedPref = context.getSharedPreferences("myPrefs", Context.MODE_PRIVATE)
@@ -81,4 +82,8 @@ class SharedPreferencesReader(private val context: Context) : SharedPreferencesD
         val sharedPref = context.getSharedPreferences("myPrefs", Context.MODE_PRIVATE)
         hasPurchasedRemoveAds.value = sharedPref.getBoolean("userHasBoughtRemoveAds", false)
     }
+
+    override fun setPrivacyPolicyShown(boolean: Boolean) = context.getSharedPreferences("myPrefs", Context.MODE_PRIVATE).edit().putBoolean("privacyPolicyShown", boolean).apply()
+
+    override fun getPrivacyPolicyShown(): Boolean = context.getSharedPreferences("myPrefs", Context.MODE_PRIVATE).getBoolean("privacyPolicyShown", false)
 }
