@@ -6,7 +6,7 @@ import androidx.lifecycle.MutableLiveData
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.PolylineOptions
 import com.oslofjorden.R
-import com.oslofjorden.model.Polyline
+import com.oslofjorden.model.OslofjordenPolyline
 import com.oslofjorden.model.PolylineData
 import org.jetbrains.anko.doAsync
 import org.jetbrains.anko.uiThread
@@ -26,7 +26,7 @@ class PolylineReader(val context: Context) : PolylineDAO {
     }
 
     fun readBinaryData(resource: Int): PolylineData {
-        val polylines = HashMap<List<LatLng>, Polyline>()
+        val polylines = HashMap<List<LatLng>, OslofjordenPolyline>()
 
         val inputStream = context.resources.openRawResource(resource)
         val objectInputStream = ObjectInputStream(inputStream)
@@ -41,7 +41,7 @@ class PolylineReader(val context: Context) : PolylineDAO {
                 val binaryCoordinates = objectInputStream.readObject() as ArrayList<Pair<Double, Double>>
                 val coordinates = convertToLatLngObjects(binaryCoordinates)
 
-                polylines.put(coordinates, Polyline(PolylineOptions().addAll(coordinates).clickable(true).color(Color.parseColor(color)), name, description, url))
+                polylines.put(coordinates, OslofjordenPolyline(PolylineOptions().addAll(coordinates).clickable(true).color(Color.parseColor(color)), name, description, url))
             } catch (e: EOFException) {
                 objectInputStream.close()
                 break

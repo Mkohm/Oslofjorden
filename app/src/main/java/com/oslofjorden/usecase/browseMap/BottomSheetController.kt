@@ -12,6 +12,7 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.oslofjorden.R
 import com.oslofjorden.model.Marker
 import com.oslofjorden.model.MarkerTypes
+import com.oslofjorden.model.OslofjordenPolyline
 
 class BottomSheetController(private val view: LinearLayout, private val activity: MapsActivity) {
     private val behavior: BottomSheetBehavior<LinearLayout> = BottomSheetBehavior.from(view)
@@ -57,8 +58,8 @@ class BottomSheetController(private val view: LinearLayout, private val activity
         val descriptionTextview = view.findViewById<TextView>(R.id.description)
         val button = view.findViewById<Button>(R.id.url)
 
-        // Get the google maps polyline and convert the tag object into our own Polyline object
-        val ourPolylineType = (polyline.tag as com.oslofjorden.model.Polyline)
+        // Get the google maps polyline and convert the tag object into our own OslofjordenPolyline object
+        val ourPolylineType = (polyline.tag as OslofjordenPolyline)
 
         val title = ourPolylineType.title
         val description = ourPolylineType.description
