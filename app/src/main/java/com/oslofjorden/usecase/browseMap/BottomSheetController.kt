@@ -40,43 +40,53 @@ class BottomSheetController(private val view: LinearLayout, private val activity
     }
 
     fun finishLoadingAndShowPrivacyPolicy() {
-        view.findViewById<TextView>(R.id.loading_text).visibility = View.GONE
+        hideLoadingText()
+        showPrivacyPolicyIfNotShownToUser()
+    }
 
+    private fun showPrivacyPolicyIfNotShownToUser() {
         val privacyPolicyShouldBeShown = !SharedPreferencesRepository(SharedPreferencesReader(activity)).getPrivacyPolicyShown()
         if (privacyPolicyShouldBeShown) {
-            behavior.state = BottomSheetBehavior.STATE_EXPANDED
-
-            showTitleAndDescription(
-                    view.findViewById(R.id.title),
-                    activity.getString(R.string.privacy_policy),
-                    view.findViewById(R.id.description),
-                    activity.getString(R.string.privacy_policy_description)
-            )
-
-
-            view.findViewById<Button>(R.id.url).apply {
-                visibility = View.VISIBLE
-                setOnClickListener {
-                    activity.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://mkohm.github.io")))
-                }
-            }
-
-            view.findViewById<AppCompatCheckBox>(R.id.checkBox).apply {
-                visibility = View.VISIBLE
-
-                // Write the current set value
-                SharedPreferencesRepository(SharedPreferencesReader(activity)).setPrivacyPolicyShown(isChecked)
-
-                // Write on update to new value
-                setOnCheckedChangeListener { _, isChecked ->
-                    SharedPreferencesRepository(SharedPreferencesReader(activity)).setPrivacyPolicyShown(
-                            isChecked
-                    )
-                }
-            }
+            showAndHandlePrivacyPolicy()
         } else {
             animateDown()
         }
+    }
+
+    private fun showAndHandlePrivacyPolicy() {
+        behavior.state = BottomSheetBehavior.STATE_EXPANDED
+
+        showTitleAndDescription(
+                view.findViewById(R.id.title),
+                activity.getString(R.string.privacy_policy),
+                view.findViewById(R.id.description),
+                activity.getString(R.string.privacy_policy_description)
+        )
+
+        view.findViewById<Button>(R.id.url).apply {
+            visibility = View.VISIBLE
+            setOnClickListener {
+                activity.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://mkohm.github.io")))
+            }
+        }
+
+        view.findViewById<AppCompatCheckBox>(R.id.checkBox).apply {
+            visibility = View.VISIBLE
+
+            // Write the current set value
+            SharedPreferencesRepository(SharedPreferencesReader(activity)).setPrivacyPolicyShown(isChecked)
+
+            // Write on update to new value
+            setOnCheckedChangeListener { _, isChecked ->
+                SharedPreferencesRepository(SharedPreferencesReader(activity)).setPrivacyPolicyShown(
+                        isChecked
+                )
+            }
+        }
+    }
+
+    private fun hideLoadingText() {
+        view.findViewById<TextView>(R.id.loading_text).visibility = View.GONE
     }
 
     private fun animateDown() {
@@ -84,21 +94,17 @@ class BottomSheetController(private val view: LinearLayout, private val activity
     }
 
     fun setPolylineContent(polyline: Polyline) {
-        val titleTextview = view.findViewById<TextView>(R.id.title)
-        val descriptionTextview = view.findViewById<TextView>(R.id.description)
-        val button = view.findViewById<Button>(R.id.url)
-
         // Get the google maps polyline and convert the tag object into our own OslofjordenPolyline object
         val ourPolylineType = (polyline.tag as OslofjordenPolyline)
 
-        val title = ourPolylineType.title
-        val description = ourPolylineType.description
-        val url = ourPolylineType.url
+        showTitleAndDescription(
+                view.findViewById(R.id.title), ourPolylineType.title, view.findViewById(R.id.description), ourPolylineType.description
+        )
 
+        val button = view.findViewById<Button>(R.id.url)
+        val url = ourPolylineType.url
         // Do not show the button if there is no link
         setButtonVisibility(button, url)
-
-        showTitleAndDescription(titleTextview, title, descriptionTextview, description)
 
         button.setOnClickListener {
             // open link with custom tabs
