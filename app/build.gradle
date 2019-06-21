@@ -38,6 +38,13 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            resValue("string", "google_maps_api_key", "AIzaSyCAn7hLkQZ6yXwfkvCRzFXc7cE0XSJuNgU")
+            resValue("string", "google_ads_id", "ca-app-pub-8816231201193091/8419082785")
+        }
+
+        debug {
+            resValue("string", "google_maps_api_key", "AIzaSyD9RxexeActt11Lc7DOPYOFR12Il_OAT7I")
+            resValue("string", "google_ads_id", "ca-app-pub-3940256099942544/6300978111")
         }
     }
     compileOptions {

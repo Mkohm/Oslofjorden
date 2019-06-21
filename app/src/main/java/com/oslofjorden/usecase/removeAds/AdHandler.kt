@@ -8,22 +8,21 @@ import androidx.appcompat.app.AppCompatActivity
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
-import com.oslofjorden.BuildConfig
 import com.oslofjorden.R
 import kotlinx.android.synthetic.main.activity_main.*
 
 // Static helper class for creating an adview
 object AdHandler {
-    private const val testID = "ca-app-pub-3940256099942544/6300978111"
-    private const val prodID = "ca-app-pub-8816231201193091/8419082785"
 
     fun createAd(activity: AppCompatActivity) {
-        // Since both size and id have to be set programatically or via xml and we want to change
-        // the id based on debug/release builds we have to do initialize it programmatically
+        // todo: Since both size and id have to be set programatically or via xml and we want to change
+        // the id based on debug/release builds we have to do initialize it programmatically.
+        // Since i now managed to change the google_ads_id with build variants this can now be
+        // refactored to be in the xml file.
 
         val adView = AdView(activity)
         adView.adSize = AdSize.BANNER
-        adView.adUnitId = if (BuildConfig.DEBUG) testID else prodID
+        adView.adUnitId = activity.getString(R.string.google_ads_id)
 
         val params = RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
         params.addRule(BELOW, R.id.buyLayout)
