@@ -46,15 +46,13 @@ class BottomSheetController(private val view: LinearLayout, private val activity
         if (privacyPolicyShouldBeShown) {
             behavior.state = BottomSheetBehavior.STATE_EXPANDED
 
-            view.findViewById<TextView>(R.id.title).apply {
-                visibility = View.VISIBLE
-                text = activity.getString(R.string.privacy_policy)
-            }
+            showTitleAndDescription(
+                    view.findViewById(R.id.title),
+                    activity.getString(R.string.privacy_policy),
+                    view.findViewById(R.id.description),
+                    activity.getString(R.string.privacy_policy_description)
+            )
 
-            view.findViewById<TextView>(R.id.description).apply {
-                visibility = View.VISIBLE
-                text = activity.getString(R.string.privacy_policy_description)
-            }
 
             view.findViewById<Button>(R.id.url).apply {
                 visibility = View.VISIBLE
@@ -71,7 +69,9 @@ class BottomSheetController(private val view: LinearLayout, private val activity
 
                 // Write on update to new value
                 setOnCheckedChangeListener { _, isChecked ->
-                    SharedPreferencesRepository(SharedPreferencesReader(activity)).setPrivacyPolicyShown(isChecked)
+                    SharedPreferencesRepository(SharedPreferencesReader(activity)).setPrivacyPolicyShown(
+                            isChecked
+                    )
                 }
             }
         } else {
@@ -125,18 +125,11 @@ class BottomSheetController(private val view: LinearLayout, private val activity
     }
 
     fun setMarkerContent(item: Marker) {
-        val titleTextview = view.findViewById<TextView>(R.id.title)
-        val descriptionTextview = view.findViewById<TextView>(R.id.description)
         val button = view.findViewById<Button>(R.id.url)
-
-        val title = item.title
-        val markertypes = item.markerTypes
         val url = item.link
-
-
         setButtonVisibility(button, url)
 
-        showTitleAndDescription(titleTextview, title, descriptionTextview, buildDescription(markertypes))
+        showTitleAndDescription(view.findViewById(R.id.title), item.title, view.findViewById(R.id.description), buildDescription(item.markerTypes))
 
         button.setOnClickListener {
             // open link with custom tabs
