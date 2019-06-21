@@ -39,7 +39,7 @@ class BottomSheetController(private val view: LinearLayout, private val activity
         view.findViewById<AppCompatCheckBox>(R.id.checkBox).visibility = View.GONE
     }
 
-    fun finishLoading() {
+    fun finishLoadingAndShowPrivacyPolicy() {
         view.findViewById<TextView>(R.id.loading_text).visibility = View.GONE
 
         val privacyPolicyShouldBeShown = !SharedPreferencesRepository(SharedPreferencesReader(activity)).getPrivacyPolicyShown()
@@ -74,8 +74,6 @@ class BottomSheetController(private val view: LinearLayout, private val activity
                     SharedPreferencesRepository(SharedPreferencesReader(activity)).setPrivacyPolicyShown(isChecked)
                 }
             }
-
-
         } else {
             animateDown()
         }
@@ -98,14 +96,25 @@ class BottomSheetController(private val view: LinearLayout, private val activity
         val url = ourPolylineType.url
 
         // Do not show the button if there is no link
-        setVisibility(url, button)
+        setButtonVisibility(button, url)
 
-        titleTextview.text = title
-        descriptionTextview.text = description
+        showTitleAndDescription(titleTextview, title, descriptionTextview, description)
 
         button.setOnClickListener {
             // open link with custom tabs
             openCustomTab(url)
+        }
+    }
+
+    private fun showTitleAndDescription(titleTextview: TextView, title: String, descriptionTextview: TextView, description: String) {
+        titleTextview.apply {
+            text = title
+            visibility = View.VISIBLE
+        }
+
+        descriptionTextview.apply {
+            text = description
+            visibility = View.VISIBLE
         }
     }
 
@@ -124,14 +133,10 @@ class BottomSheetController(private val view: LinearLayout, private val activity
         val markertypes = item.markerTypes
         val url = item.link
 
-        setVisibility(url, button)
 
-        titleTextview.text = title
-        titleTextview.visibility = View.VISIBLE
+        setButtonVisibility(button, url)
 
-        val description = buildDescription(markertypes)
-
-        descriptionTextview.text = description
+        showTitleAndDescription(titleTextview, title, descriptionTextview, buildDescription(markertypes))
 
         button.setOnClickListener {
             // open link with custom tabs
@@ -139,24 +144,19 @@ class BottomSheetController(private val view: LinearLayout, private val activity
         }
     }
 
-    private fun buildDescription(markertypes: List<MarkerTypes>): StringBuilder {
+    private fun setButtonVisibility(button: Button, url: String?) {
+        button.visibility = if (url == null) View.GONE else View.VISIBLE
+    }
+
+    private fun buildDescription(markertypes: List<MarkerTypes>): String {
         val builder = StringBuilder()
         for (i in 0 until markertypes.size) {
             if (i == markertypes.size - 1) {
                 builder.append(markertypes[i].toString())
             } else {
-
                 builder.append(markertypes[i].toString() + ", ")
             }
         }
-        return builder
-    }
-
-    private fun setVisibility(url: String?, button: Button) {
-        if (url == null) {
-            button.visibility = View.GONE
-        } else {
-            button.visibility = View.VISIBLE
-        }
+        return builder.toString()
     }
 }
