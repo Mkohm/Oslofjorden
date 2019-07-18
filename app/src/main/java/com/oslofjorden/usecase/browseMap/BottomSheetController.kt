@@ -4,6 +4,7 @@ import android.content.Intent
 import android.net.Uri
 import android.view.View
 import android.widget.Button
+import android.widget.CheckBox
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.widget.AppCompatCheckBox
@@ -104,11 +105,16 @@ class BottomSheetController(private val view: LinearLayout, private val activity
         val url = ourPolylineType.url
         // Do not show the button if there is no link
         setButtonVisibility(button, url)
+        hideCheckBox(view.findViewById(R.id.checkBox))
 
         button.setOnClickListener {
             // open link with custom tabs
             openCustomTab(url)
         }
+    }
+
+    private fun hideCheckBox(checkBox: CheckBox?) {
+        checkBox?.visibility = View.GONE
     }
 
     private fun showTitleAndDescription(titleTextview: TextView, title: String, descriptionTextview: TextView, description: String) {
@@ -135,7 +141,7 @@ class BottomSheetController(private val view: LinearLayout, private val activity
         setButtonVisibility(button, url)
 
         showTitleAndDescription(view.findViewById(R.id.title), item.title, view.findViewById(R.id.description), buildDescription(item.markerTypes))
-
+        hideCheckBox(view.findViewById(R.id.checkBox))
         button.setOnClickListener {
             // open link with custom tabs
             openCustomTab(url)
